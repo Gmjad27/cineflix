@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styles from './Watch.module.css';
+import styles from '../../components/Watch/detail.module.css';
 import Card from '../Card/Card';
 import { fetchTMDBDetails, fetchTMDBSeasonDetails } from '../../content/tmdb.js';
 
