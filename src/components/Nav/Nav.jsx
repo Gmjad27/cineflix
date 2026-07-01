@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import './Nav.css';
 import { NavLink, Link } from 'react-router-dom';
-import logo from '../../assets/image.png';
+// import logo from '../../assets';
 
 const Nav = () => {
 
@@ -36,7 +36,7 @@ const Nav = () => {
     return (
         <div className='nav'>
             <Link to="/">
-                <img className="applogo" src={logo} alt="cineflix" />
+                <img className="applogo" src='../../assets/cineflix.png' alt="cineflix" />
             </Link>
             <div className="logos">
                 {navItems.map((item) => (

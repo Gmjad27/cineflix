@@ -174,11 +174,7 @@ function App() {
                   <MovieViewAll {...sharedProps} sow={sow} />
                 </></ProtectedRoute>
               } />
-              <Route path="/watch" element={
-                <ProtectedRoute><><Nav />
-                  <Watch {...sharedProps} />
-                </></ProtectedRoute>
-              } />
+
 
               <Route path="*" element={<Navigate to="/" />} />
 
