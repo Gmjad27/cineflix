@@ -1,0 +1,133 @@
+/* MovieViewAll.module.css */
+
+.container {
+    min-height: 100vh;
+    background-color: #0f0f13;
+    color: #ffffff;
+    padding: 40px 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.header {
+    position: relative;
+    /* Required for absolute positioning of the back button */
+    text-align: center;
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.backButton {
+    position: absolute;
+    left: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    color: #8e8e93;
+    border: none;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.backButton:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.header p {
+    color: #8e8e93;
+    font-size: 1.1rem;
+}
+
+.utilities {
+    max-width: 1400px;
+    margin: 0 auto 30px auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.searchBar {
+    padding: 14px 20px;
+    width: 100%;
+    max-width: 400px;
+    background-color: #1c1c1e;
+    border: 1px solid #333;
+    color: #fff;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.searchBar::placeholder {
+    color: #636366;
+}
+
+.searchBar:focus {
+    outline: none;
+    border-color: #0a84ff;
+}
+
+.resultsCount {
+    color: #8e8e93;
+    font-weight: 500;
+}
+
+.grid {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 25px;
+    justify-items: center;
+}
+
+.noResults {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    background: #1c1c1e;
+    border-radius: 12px;
+    border: 1px dashed #333;
+}
+
+.noResults h2 {
+    margin-bottom: 10px;
+    color: #fff;
+}
+
+.noResults p {
+    color: #8e8e93;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+    .utilities {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .searchBar {
+        max-width: 100%;
+    }
+
+    .grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+    }
+}

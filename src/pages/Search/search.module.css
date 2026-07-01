@@ -1,0 +1,308 @@
+/* =========================
+   SEARCH PAGE
+========================= */
+
+.con {
+  min-height: 100vh;
+  background: #050505;
+  color: #fff;
+}
+
+.extra {
+  height: 90px;
+}
+
+.shell {
+  width: 100%;
+  padding: 0 4%;
+}
+
+/* =========================
+   SEARCH HEADER
+========================= */
+
+.searchHeader {
+  margin-bottom: 35px;
+}
+
+.searchWrap {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  margin: auto;
+}
+
+.search {
+  width: 100%;
+  height: 65px;
+
+  padding: 0 25px 0 65px;
+
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 18px;
+
+  background: rgba(255,255,255,.06);
+  backdrop-filter: blur(20px);
+
+  color: white;
+  font-size: 1rem;
+
+  outline: none;
+
+  transition: .3s ease;
+}
+
+.search:focus {
+  border-color: #00bfff;
+  box-shadow:
+    0 0 0 2px rgba(0,191,255,.15),
+    0 10px 25px rgba(0,0,0,.35);
+}
+
+.search::placeholder {
+  color: rgba(255,255,255,.5);
+}
+
+.icon {
+  position: absolute;
+  left: 25px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  color: rgba(255,255,255,.6);
+  font-size: 1.1rem;
+}
+
+/* =========================
+   TAGS
+========================= */
+
+.tags {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  margin-top: 20px;
+  justify-content: center;
+}
+
+.tag {
+  border: none;
+  cursor: pointer;
+
+  padding: 10px 18px;
+
+  border-radius: 50px;
+
+  background: rgba(255,255,255,.08);
+  color: white;
+
+  transition: .3s;
+}
+
+.tag:hover {
+  background: #00bfff;
+}
+
+/* =========================
+   META
+========================= */
+
+.meta {
+  margin: 25px 0;
+
+  color: rgba(255,255,255,.65);
+  font-size: .95rem;
+}
+
+/* =========================
+   SECTIONS
+========================= */
+
+.section {
+  margin-bottom: 50px;
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: 800;
+
+  margin-bottom: 20px;
+}
+
+/* =========================
+   CARD RAIL
+========================= */
+
+.rowTrack {
+  display: flex;
+  gap: 18px;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  scroll-behavior: smooth;
+
+  padding-bottom: 10px;
+}
+
+.rowTrack::-webkit-scrollbar {
+  height: 6px;
+}
+
+.rowTrack::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rowTrack::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.15);
+  border-radius: 20px;
+}
+
+/* =========================
+   EMPTY STATE
+========================= */
+
+.empty {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  padding: 100px 20px;
+}
+
+.empty h3 {
+  font-size: 2rem;
+  margin-bottom: 12px;
+}
+
+.empty p {
+  color: rgba(255,255,255,.6);
+  max-width: 450px;
+  line-height: 1.7;
+}
+
+/* =========================
+   LOADING TEXT
+========================= */
+
+.loading {
+  text-align: center;
+  padding: 40px 0;
+  color: #00bfff;
+}
+
+/* =========================
+   ANIMATIONS
+========================= */
+
+.section {
+  animation: fadeUp .4s ease;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 1024px) {
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .search {
+    height: 60px;
+  }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 768px) {
+
+  .extra {
+    height: 75px;
+  }
+
+  .shell {
+    padding: 0 15px;
+  }
+
+  .search {
+    height: 55px;
+    font-size: .95rem;
+    padding-left: 55px;
+  }
+
+  .icon {
+    left: 18px;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+
+  .meta {
+    font-size: .85rem;
+  }
+
+  .rowTrack {
+    gap: 12px;
+  }
+
+  .empty {
+    padding: 70px 20px;
+  }
+
+  .empty h3 {
+    font-size: 1.5rem;
+  }
+}
+
+/* =========================
+   SMALL MOBILE
+========================= */
+
+@media (max-width: 480px) {
+
+  .search {
+    border-radius: 14px;
+    height: 52px;
+  }
+
+  .title {
+    font-size: 1.1rem;
+  }
+
+  .tag {
+    font-size: .8rem;
+    padding: 8px 14px;
+  }
+
+  .empty h3 {
+    font-size: 1.3rem;
+  }
+
+  .empty p {
+    font-size: .9rem;
+  }
+}

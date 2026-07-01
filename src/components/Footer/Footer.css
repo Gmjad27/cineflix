@@ -1,0 +1,222 @@
+.footer {
+    padding-top: 70px;
+    background-color: rgba(11, 10, 10, 0.793);
+    color: aliceblue;
+    display: flex;
+    justify-content: space-around;
+    padding-top: 40px;
+    padding-bottom: 40px;
+    /* font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; */
+}
+
+.l {
+    background-position: center;
+    background-size: cover;
+    width: 130px;
+    height: 40px;
+}
+
+.f1 {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 50px;
+    color: rgb(211, 211, 211);
+}
+
+.footer h3 {
+    margin-bottom: 30px;
+    margin-top: 30px;
+    color: rgba(255, 255, 255, 0.759);
+}
+
+.footer p {
+    margin-bottom: 10px;
+    color: rgba(128, 128, 128, 0.527);
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 1024px) {
+    .footer {
+        padding-top: 30px;
+        padding-bottom: 30px;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    
+    .footer > div {
+        flex: 0 0 calc(50% - 20px);
+        margin-bottom: 30px;
+        padding-right: 20px;
+    }
+    
+    .f1 {
+        margin-top: 30px;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: flex-start;
+    }
+    
+    .footer h3 {
+        margin-bottom: 20px;
+        margin-top: 20px;
+        font-size: 18px;
+    }
+    
+    .footer p {
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+    
+    .l {
+        width: 110px;
+        height: 35px;
+    }
+}
+
+@media (max-width: 768px) {
+    .footer {
+        padding-top: 25px;
+        padding-bottom: 25px;
+        padding-left: 15px;
+        padding-right: 15px;
+        flex-direction: column;
+    }
+    
+    .footer > div {
+        flex: 0 0 100%;
+        margin-bottom: 25px;
+        padding-right: 0;
+        width: 100%;
+    }
+    
+    /* .f1 {
+        margin-top: 25px;
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    } */
+    
+    .footer h3 {
+        margin-bottom: 15px;
+        margin-top: 0;
+        font-size: 16px;
+        padding-top: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .footer > div:first-child h3 {
+        border-top: none;
+        padding-top: 0;
+    }
+    
+    .footer p {
+        margin-bottom: 6px;
+        font-size: 13px;
+    }
+    
+    .l {
+        width: 100px;
+        height: 30px;
+        margin-bottom: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .footer {
+        padding-top: 20px;
+        padding-bottom: 20px;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    
+    .footer h3 {
+        font-size: 15px;
+        margin-bottom: 12px;
+    }
+    
+    .footer p {
+        font-size: 12px;
+        margin-bottom: 5px;
+    }
+
+    .sec1{
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        /* padding-top: 50px; */
+    }
+    
+    .f1 {
+        display: flex;
+        /* justify-content: space-between; */
+        margin-top: 10px;
+        gap: 12px;
+    }
+    .f1 h1{
+        font-size: 20px;
+    }
+
+    
+    .l {
+        display: flex;
+        width: 60px;
+        height: 20px;
+    }
+    
+    /* Accordion-style footer sections for very small screens */
+    .footer h3 {
+        cursor: pointer;
+        position: relative;
+        padding-right: 25px;
+    }
+    
+    
+}
+
+/* For very small screens */
+@media (max-width: 360px) {
+    .footer {
+        padding-top: 15px;
+        padding-bottom: 15px;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .footer h3 {
+        font-size: 14px;
+    }
+    
+    .footer p {
+        font-size: 11px;
+    }
+    
+    .l {
+        width: 80px;
+        height: 25px;
+    }
+}
+
+/* Landscape orientation */
+@media (max-height: 600px) and (orientation: landscape) {
+    .footer {
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+    
+    .footer > div {
+        margin-bottom: 20px;
+    }
+    
+    .f1 {
+        margin-top: 20px;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+}
+
+
+
+
+

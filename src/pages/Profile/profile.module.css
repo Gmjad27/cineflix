@@ -1,0 +1,335 @@
+/* =========================================
+   Theme Variables (Premium Streaming System)
+   ========================================= */
+
+
+/* =========================================
+   Base Layout
+   ========================================= */
+.page {
+  min-height: 100vh;
+  width: 100%;
+  background: radial-gradient(circle at 20% 0%, var(--bg-light) 0%, var(--bg-mid) 45%, var(--bg-dark) 100%);
+  color: var(--text-main);
+  font-family: 'Outfit', 'Segoe UI', sans-serif;
+  overflow-x: hidden;
+  /* Adjust this based on your side-nav width */
+  padding-left: 0; 
+  padding-bottom: 60px;
+}
+
+/* =========================================
+   Hero / Profile Header
+   ========================================= */
+.hero {
+  position: relative;
+  /* Assuming top nav: padding-top accounts for it. If side nav, adjust left padding. */
+  padding: 100px 6% 40px 140px; 
+  background: linear-gradient(to bottom, rgba(26, 92, 255, 0.08) 0%, transparent 100%);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+/* Sleek top accent line */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(to right, var(--accent), transparent 50%);
+}
+
+.info {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.p_img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  border: 3px solid var(--bg-dark); /* Creates a cutout effect */
+  box-shadow: 0 0 0 2px var(--accent), 0 8px 24px var(--accent-glow);
+  flex-shrink: 0;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.name {
+  margin: 0 0 6px 0;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-main);
+}
+
+.sub {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* =========================================
+   Stats & Actions Panel
+   ========================================= */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 14px 24px;
+  min-width: 90px;
+  transition: transform var(--transition), background var(--transition);
+}
+
+.stat:hover {
+  background: var(--glass-hover);
+  transform: translateY(-2px);
+}
+
+.stat span {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.stat p {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.logout {
+  background: rgba(229, 9, 20, 0.1);
+  color: #e50914; /* Red for destructive actions */
+  border: 1px solid rgba(229, 9, 20, 0.3);
+  border-radius: var(--radius-md);
+  padding: 14px 28px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition);
+  margin-left: 8px; /* Slight separation from stats */
+}
+
+.logout:hover {
+  background: rgba(229, 9, 20, 0.2);
+  border-color: rgba(229, 9, 20, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(229, 9, 20, 0.15);
+}
+
+/* =========================================
+   Watchlist / Rails Section
+   ========================================= */
+.rails {
+  padding: 20px 0 40px 140px; /* 140px matches hero offset */
+}
+
+.section {
+  margin-top: 40px;
+}
+
+.heading {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.heading::before {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 20px;
+  background: var(--accent-gradient);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.track {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  overflow-x: auto;
+  overflow-y: visible; /* Prevents cards from clipping when hovered */
+  scrollbar-width: none;
+  padding: 8px 6% 32px 0; /* Padding allows for drop shadows */
+  scroll-behavior: smooth;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+/* =========================================
+   Empty State (Nothing Added)
+   ========================================= */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 16px;
+  margin: 40px 6% 40px 0;
+  padding: 80px 24px;
+  border: 2px dashed var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+}
+
+.empty h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.empty p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1rem;
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+.empty button {
+  margin-top: 8px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px 28px;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.empty button:hover {
+  background: #0044eb;
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px var(--accent-glow);
+}
+
+/* =========================================
+   Responsive / Mobile
+   ========================================= */
+@media (max-width: 768px) {
+  .page {
+    padding-left: 0;
+    padding-bottom: 100px; /* Space for bottom nav bar */
+  }
+
+  .hero {
+    padding: 60px 20px 30px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 24px;
+  }
+
+  .info {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .label {
+    margin-bottom: 4px;
+  }
+
+  .name {
+    font-size: 1.8rem;
+  }
+
+  .actions {
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .stat {
+    padding: 12px 16px;
+    flex: 1; /* Stats share equal width */
+  }
+
+  .logout {
+    width: 100%; /* Full width logout button on mobile */
+    margin-left: 0;
+    margin-top: 8px;
+  }
+
+  .rails {
+    padding: 10px 0 32px 20px;
+  }
+
+  .section {
+    margin-top: 32px;
+  }
+
+  .heading {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+  }
+
+  .track {
+    gap: 12px;
+    padding: 8px 20px 24px 0;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .track > * {
+    scroll-snap-align: start;
+  }
+
+  .empty {
+    margin: 20px 20px 20px 0;
+    padding: 60px 20px;
+  }
+
+  .empty h2 {
+    font-size: 1.3rem;
+  }
+}

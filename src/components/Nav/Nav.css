@@ -1,0 +1,196 @@
+/* ── Nav.css ── */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─── Desktop Nav ─────────────────────────────────────── */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  height: 64px;
+  background: rgba(10, 10, 15, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* ─── Logo ────────────────────────────────────────────── */
+.applogo {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
+  transition: opacity 0.2s ease;
+}
+
+.applogo:hover {
+  opacity: 0.8;
+}
+
+/* ─── Nav Links Container ─────────────────────────────── */
+.logos {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* ─── Individual Nav Item ─────────────────────────────── */
+.navlink {
+  display: flex;
+}
+
+/* ─── NavLink Anchor ──────────────────────────────────── */
+a.l {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  transition: background 0.2s ease, color 0.2s ease;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+a.l:hover {
+  /* background: rgba(255, 255, 255, 0.07); */
+  color: rgba(255, 255, 255, 0.85);
+}
+
+a.l.active {
+  /* background: rgba(229, 57, 53, 0.15); */
+  color: #e53935;
+}
+
+/* ─── Icon + Label Stack ──────────────────────────────── */
+.la {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+/* ─── Icon ────────────────────────────────────────────── */
+.button {
+  font-size: 1.1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Label ───────────────────────────────────────────── */
+p.name.button {
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+/* ─── Body offset so content isn't hidden behind fixed nav ── */
+body {
+  padding-top: 64px;
+}
+
+/* ─── Tablet ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .nav {
+    padding: 0 1.25rem;
+    height: 56px;
+  }
+
+  .applogo {
+    height: 28px;
+  }
+
+  .logos {
+    gap: 0;
+  }
+
+  a.l {
+    padding: 0.4rem 0.55rem;
+  }
+
+  p.name.button {
+    font-size: 0.5rem;
+  }
+}
+
+/* ─── Mobile: Bottom Nav ──────────────────────────────── */
+@media (max-width: 540px) {
+  body {
+    padding-top: 0;
+    padding-bottom: 68px;
+  }
+
+  .nav {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 68px;
+    padding: 0 0.5rem;
+    border-bottom: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 20px 20px 0 0;
+    justify-content: center;
+    background: rgba(10, 10, 15, 0.95);
+  }
+
+  /* hide logo on mobile — save space */
+  .nav > a:first-child {
+    display: none;
+  }
+
+  .logos {
+    width: 100%;
+    justify-content: space-around;
+    gap: 0;
+  }
+
+  .navlink {
+    flex: 1;
+    justify-content: center;
+  }
+
+  a.l {
+    flex-direction: column;
+    padding: 0.5rem 0.25rem;
+    border-radius: 10px;
+    width: 100%;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  a.l:hover {
+    /* background: rgba(255, 255, 255, 0.05); */
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  a.l.active {
+    /* background: rgba(229, 57, 53, 0.12); */
+    color: #e53935;
+  }
+
+  .la {
+    gap: 5px;
+  }
+
+  .button {
+    font-size: 1.25rem;
+  }
+
+  p.name.button {
+    font-size: 0.52rem;
+    letter-spacing: 0.06em;
+  }
+}

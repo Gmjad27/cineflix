@@ -1,0 +1,220 @@
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+.skeletonGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 30px;
+    padding: 0 20px;
+}
+
+.skeletonCard {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skeletonImage {
+    width: 100%;
+    height: 220px;
+    background: linear-gradient(90deg,
+            #1e1e1e 0%,
+            #2d2d2d 50%,
+            #1e1e1e 100%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+    border-radius: 8px;
+}
+
+.skeletonTitle {
+    height: 12px;
+    background: linear-gradient(90deg,
+            #1e1e1e 0%,
+            #2d2d2d 50%,
+            #1e1e1e 100%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+    border-radius: 4px;
+    margin-top: 4px;
+}
+
+.skeletonRating {
+    height: 10px;
+    width: 40px;
+    background: linear-gradient(90deg,
+            #1e1e1e 0%,
+            #2d2d2d 50%,
+            #1e1e1e 100%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+    border-radius: 4px;
+}
+
+/* Banner Skeleton */
+.skeletonBanner {
+    height: 400px;
+    background: linear-gradient(90deg,
+            #0f0f0f 0%,
+            #1a1a1a 50%,
+            #0f0f0f 100%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+.bannerContent {
+    padding: 40px 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 100%;
+    justify-content: center;
+}
+
+.skeletonBadge {
+    height: 24px;
+    width: 80px;
+    background: linear-gradient(90deg,
+            #1e1e1e 0%,
+            #2d2d2d 50%,
+            #1e1e1e 100%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+    border-radius: 4px;
+}
+
+.skeletonLargeTitle {
+    height: 48px;
+    width: 600px;
+    background: linear-gradient(90deg,
+            #1e1e1e 0%,
+            #2d2d2d 50%,
+            #1e1e1e 100%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+    border-radius: 6px;
+}
+
+.skeletonMeta {
+    height: 16px;
+    width: 300px;
+    background: linear-gradient(90deg,
+            #1e1e1e 0%,
+            #2d2d2d 50%,
+            #1e1e1e 100%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+    border-radius: 4px;
+}
+
+.skeletonDescription {
+    height: 60px;
+    width: 800px;
+    background: linear-gradient(90deg,
+            #1e1e1e 0%,
+            #2d2d2d 50%,
+            #1e1e1e 100%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+    border-radius: 6px;
+    margin-top: 8px;
+}
+
+.skeletonButtons {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.skeletonButton {
+    height: 44px;
+    width: 140px;
+    background: linear-gradient(90deg,
+            #1e1e1e 0%,
+            #2d2d2d 50%,
+            #1e1e1e 100%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+    border-radius: 6px;
+}
+
+/* Section Skeleton */
+.skeletonSection {
+    margin-bottom: 50px;
+    padding: 0 20px;
+}
+
+.skeletonSectionTitle {
+    height: 28px;
+    width: 200px;
+    background: linear-gradient(90deg,
+            #1e1e1e 0%,
+            #2d2d2d 50%,
+            #1e1e1e 100%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+    border-radius: 6px;
+    margin-bottom: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .skeletonGrid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 8px;
+        padding: 0 12px;
+    }
+
+    .skeletonImage {
+        height: 160px;
+    }
+
+    .skeletonBanner {
+        height: 300px;
+    }
+
+    .bannerContent {
+        padding: 24px 24px;
+    }
+
+    .skeletonLargeTitle {
+        height: 32px;
+        width: 100%;
+    }
+
+    .skeletonDescription {
+        height: 50px;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .skeletonGrid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 6px;
+        padding: 0 8px;
+    }
+
+    .skeletonImage {
+        height: 140px;
+    }
+
+    .skeletonBanner {
+        height: 250px;
+    }
+
+    .bannerContent {
+        padding: 16px 16px;
+    }
+}
