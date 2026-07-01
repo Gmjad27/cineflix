@@ -26,8 +26,8 @@
 
 /* ─── Logo ────────────────────────────────────────────── */
 .applogo {
-  height: 36px;
-  width: auto;
+  height: 130px;
+  width: 200px;
   object-fit: contain;
   display: block;
   flex-shrink: 0;
