@@ -1,6 +1,8 @@
 import { getStudioConfig } from "./studios";
 const TMDB_API_KEY =
   import.meta.env.VITE_TMDB_API_KEY;
+const YOUTUBE_API_KEY =
+  import.meta.env.VITE_YOUTUBE_API_KEY;
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_URL = "https://image.tmdb.org/t/p/original";
@@ -97,36 +99,79 @@ const pickTVAgeRating = (contentRatings) => {
   return normalizeAgeRating(fallback) || "UA 13+";
 };
 
-const pickTrailer = (videos) => {
-  const results = Array.isArray(videos?.results) ? videos.results : [];
-  const trailer = results.find(
-    (item) =>
-      item?.site === "YouTube" &&
-      item?.key &&
-      (item?.type === "Trailer" || item?.type === "Teaser") &&
-      item?.official !== false
-  );
+const pickYoutubeTrailerFromSearch = (items = []) => {
+  if (!Array.isArray(items) || items.length === 0) return "";
 
-  if (!trailer?.key) return "";
-  return trailer.key;
+  const scored = items
+    .map((item) => {
+      const title = String(item?.snippet?.title || "").toLowerCase();
+      const videoId = item?.id?.videoId;
+      if (!videoId) return null;
+
+      let score = 0;
+      if (title.includes("official")) score += 3;
+      if (title.includes("trailer")) score += 3;
+      if (title.includes("teaser")) score += 1;
+      if (title.includes("fan made")) score -= 4;
+      return { videoId, score };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score);
+
+  return scored[0]?.videoId || "";
+};
+
+const fetchYouTubeTrailer = async ({ title, year, mediaType }) => {
+  if (!YOUTUBE_API_KEY) return "";
+  if (!title) return "";
+
+  const query = `${title} ${year || ""} ${mediaType === "tv" ? "series" : "movie"} official trailer`.trim();
+  const params = new URLSearchParams({
+    part: "snippet",
+    q: query,
+    key: YOUTUBE_API_KEY,
+    type: "video",
+    maxResults: "6",
+    videoEmbeddable: "true",
+    safeSearch: "strict",
+  });
+
+  const response = await fetch(`https://www.googleapis.com/youtube/v3/search?${params.toString()}`);
+  if (!response.ok) {
+    console.error(`YouTube trailer search failed (${response.status})`);
+    return "";
+  }
+
+  const payload = await response.json();
+  return pickYoutubeTrailerFromSearch(payload?.items);
+};
+
+// FIX: centralizes the movie/tv resolution so we never repeat the
+// `item.media_type || mediaType === "movie"` operator-precedence bug,
+// which previously evaluated as `item.media_type || (mediaType === "movie")`
+// and mis-typed almost every TV item.
+const resolveMediaType = (item, mediaType) => {
+  const resolved = item?.media_type || mediaType;
+  return resolved === "movie" || resolved === "tv" ? resolved : null;
 };
 
 const normalizeItem = (item, mediaType) => {
-  // console.log(item);
-
   if (!item || typeof item !== "object") return null;
-  if ((item.media_type || mediaType) !== "movie" && (item.media_type || mediaType) !== "tv") return null;
 
-  const title = (item.media_type || mediaType) !== "tv" ? item.title : item.name;
-  const releaseDate = (item.media_typ || mediaType) === "movie" ? item.release_date : item.first_air_date;
+  const resolvedType = resolveMediaType(item, mediaType);
+  if (!resolvedType) return null;
+
+  const isMovie = resolvedType === "movie";
+  const title = isMovie ? item.title : item.name;
+  // FIX: was `item.media_typ` (typo) instead of `item.media_type`
+  const releaseDate = isMovie ? item.release_date : item.first_air_date;
   const releaseYear = Number(String(releaseDate || "").slice(0, 4)) || 0;
   const tmdbId = Number(item.id) || 0;
-  // console.log(item);
 
   if (!tmdbId) return null;
 
   return {
-    id: item.media_type || mediaType === "movie" ? tmdbId : tmdbId + 10000000,
+    id: isMovie ? tmdbId : tmdbId + 10000000,
     tmdbId,
     img: toImageUrl(item.backdrop_path || item.poster_path),
     nameImg: toImageUrl(item.poster_path || item.backdrop_path),
@@ -134,13 +179,13 @@ const normalizeItem = (item, mediaType) => {
     name2: title || "Untitled",
     releaseYear,
     ua: "UA 13+",
-    season: item.media_type || mediaType === "movie" ? "Movie" : "1+ Seasons",
+    season: isMovie ? "Movie" : "1+ Seasons",
     language: [langMap[item.original_language] || "English"],
     desc: item.overview || "No description available.",
     category: item.genre_ids?.map((genreId) => genreMap[genreId]).filter(Boolean) || [],
-    type: item.media_type || mediaType,
-    studio: (item.media_type || mediaType === "movie") ? "TMDB Movies" : "TMDB TV",
-    episodes: (item.media_type || mediaType === "tv") ? { s1: 10 } : undefined,
+    type: resolvedType,
+    studio: isMovie ? "TMDB Movies" : "TMDB TV",
+    episodes: isMovie ? undefined : { s1: 10 },
     rating: item.vote_average,
   };
 };
@@ -277,82 +322,131 @@ export const fetchTMDBTrending = async ({ window = "week", limit = 12 } = {}) =>
   return merged.slice(0, limit);
 };
 
+// Netflix/Prime-style home layout:
+// Hero -> Top 10 Today (ranked) -> Trending -> New Releases -> Popular ->
+// Top Rated -> Genre rows -> curated saga collections
 export const fetchTMDBHomeSections = async () => {
   const [
     heroRaw,
-    trendingMoviesRaw,
+    trendingTodayRaw,
+    trendingWeekMoviesRaw,
+    trendingWeekTvRaw,
+    nowPlayingMoviesRaw,
+    onTheAirTvRaw,
+    popularMoviesRaw,
+    popularTvRaw,
+    topRatedMoviesRaw,
+    topRatedTvRaw,
+    actionMoviesRaw,
+    comedyMoviesRaw,
+    horrorMoviesRaw,
+    scifiMoviesRaw,
     WizardingRaw,
     WizardingRaw2,
     lordoftheringsRaw,
     lordoftheringsRaw2,
     lordoftheringsRaw3,
-    popularMoviesRaw,
-    popularShowsRaw,
-    topRatedRaw,
-    actionMoviesRaw,
-    comedyMoviesRaw,
-    newEpisodesRaw,
   ] = await Promise.all([
     requestTMDB("/trending/all/week"),
     requestTMDB("/trending/all/day"),
+    requestTMDB("/trending/movie/week"),
+    requestTMDB("/trending/tv/week"),
+    requestTMDB("/movie/now_playing"),
+    requestTMDB("/tv/on_the_air"),
+    requestTMDB("/movie/popular"),
+    requestTMDB("/tv/popular"),
+    requestTMDB("/movie/top_rated"),
+    requestTMDB("/tv/top_rated"),
+    requestTMDB("/discover/movie", { with_genres: "28" }),
+    requestTMDB("/discover/movie", { with_genres: "35" }),
+    requestTMDB("/discover/movie", { with_genres: "27" }),
+    requestTMDB("/discover/movie", { with_genres: "878" }),
     requestTMDB("/collection/1241"),
     requestTMDB("/collection/435259"),
     requestTMDB("/collection/119"),
     requestTMDB("/collection/121938"),
-    requestTMDB("/search/tv", {
-      query: "The Lord of the Rings: The Rings of Power"
-    }),
-    requestTMDB("/movie/popular"),
-    requestTMDB("/collection/9485"),
-    requestTMDB("/movie/top_rated"),
-    requestTMDB("/discover/movie", { with_genres: "878" }),
-    requestTMDB("/discover/movie", { with_genres: "35" }),
-    requestTMDB("/list/28"),
+    requestTMDB("/search/tv", { query: "The Lord of the Rings: The Rings of Power" }),
   ]);
 
   const heroBanner = dedupeMedia(normalizeMixedMediaList(heroRaw)).slice(0, 12);
-  const trendingNow = dedupeMedia(normalizeList(trendingMoviesRaw, "movie")).slice(0, 10);
-  const Wizarding = dedupeMedia(normalizeList(WizardingRaw, "movie")).slice(0, 20);
-  const Wizarding2 = dedupeMedia(normalizeList(WizardingRaw2, "movie")).slice(0, 20);
-  const lordoftherings = dedupeMedia(normalizeList(lordoftheringsRaw, "movie")).slice(0, 20);
-  const lordoftherings2 = dedupeMedia(normalizeList(lordoftheringsRaw2, "movie")).slice(0, 20);
-  const lordoftherings3 = dedupeMedia(normalizeList(lordoftheringsRaw3, "tv")).slice(0, 10);
+
+  // "Top 10 Today" — ranked, mixed movies + tv, like Netflix's numbered row
+  const top10Today = dedupeMedia(normalizeMixedMediaList(trendingTodayRaw)).slice(0, 10);
+
+  const trendingNow = dedupeMedia([
+    ...normalizeList(trendingWeekMoviesRaw, "movie"),
+    ...normalizeList(trendingWeekTvRaw, "tv"),
+  ]).slice(0, 20);
+
+  const newReleases = dedupeMedia([
+    ...normalizeList(nowPlayingMoviesRaw, "movie"),
+    ...normalizeList(onTheAirTvRaw, "tv"),
+  ]).slice(0, 20);
+
   const popularMovies = dedupeMedia(normalizeList(popularMoviesRaw, "movie")).slice(0, 20);
-  const popularShows = dedupeMedia(normalizeList(popularShowsRaw, "movie")).slice(0, 20);
-  const topRated = dedupeMedia(normalizeList(topRatedRaw, "movie")).slice(0, 20);
+  const popularShows = dedupeMedia(normalizeList(popularTvRaw, "tv")).slice(0, 20);
+
+  const topRated = dedupeMedia([
+    ...normalizeList(topRatedMoviesRaw, "movie"),
+    ...normalizeList(topRatedTvRaw, "tv"),
+  ]).slice(0, 20);
+
   const actionMovies = dedupeMedia(normalizeList(actionMoviesRaw, "movie")).slice(0, 20);
   const comedyMovies = dedupeMedia(normalizeList(comedyMoviesRaw, "movie")).slice(0, 20);
-  const newEpisodes = dedupeMedia(normalizeList(newEpisodesRaw)).slice(0, 20);
+  const horrorMovies = dedupeMedia(normalizeList(horrorMoviesRaw, "movie")).slice(0, 20);
+  const scifiMovies = dedupeMedia(normalizeList(scifiMoviesRaw, "movie")).slice(0, 20);
 
-  const combined = [...lordoftherings, ...lordoftherings2, ...lordoftherings3];
-  const wiz = [...Wizarding, ...Wizarding2];
-  // console.log(trendingNow);
+  const wizardingWorld = dedupeMedia([
+    ...normalizeList(WizardingRaw, "movie"),
+    ...normalizeList(WizardingRaw2, "movie"),
+  ]).slice(0, 20);
 
+  const middleEarth = dedupeMedia([
+    ...normalizeList(lordoftheringsRaw, "movie"),
+    ...normalizeList(lordoftheringsRaw2, "movie"),
+    ...normalizeList(lordoftheringsRaw3, "tv"),
+  ]).slice(0, 20);
 
   return {
     heroBanner,
     rails: [
+      { title: "Top 10 Today", items: top10Today, ranked: true },
+      { title: "Trending Now", items: trendingNow },
+      { title: "New Releases", items: newReleases },
       { title: "Popular Movies", items: popularMovies },
-      { title: "TOP 10", items: trendingNow },
-      { title: "Middle-earth Saga", items: combined },
-      { title: "Wizarding World Collection", items: wiz },
-      { title: "The Fast and the Furious Collection", items: popularShows },
-      { title: "Oscar Winners", items: newEpisodes },
+      { title: "Popular TV Shows", items: popularShows },
       { title: "Top Rated", items: topRated },
       { title: "Action Movies", items: actionMovies },
       { title: "Comedy Movies", items: comedyMovies },
+      { title: "Horror Movies", items: horrorMovies },
+      { title: "Sci-Fi Movies", items: scifiMovies },
+      { title: "Wizarding World Collection", items: wizardingWorld },
+      { title: "Middle-earth Saga", items: middleEarth },
     ],
   };
 };
 
 export const fetchTMDBMovieSections = async () => {
-  const [heroRaw, trendingMoviesRaw, popularMoviesRaw, topRatedRaw, actionMoviesRaw, comedyMoviesRaw] = await Promise.all([
+  const [
+    heroRaw,
+    trendingMoviesRaw,
+    nowPlayingRaw,
+    popularMoviesRaw,
+    topRatedRaw,
+    actionMoviesRaw,
+    comedyMoviesRaw,
+    horrorMoviesRaw,
+    romanceMoviesRaw,
+  ] = await Promise.all([
     requestTMDB("/trending/all/week"),
     requestTMDB("/trending/movie/week"),
+    requestTMDB("/movie/now_playing"),
     requestTMDB("/movie/popular"),
     requestTMDB("/movie/top_rated"),
     requestTMDB("/discover/movie", { with_genres: "28" }),
     requestTMDB("/discover/movie", { with_genres: "35" }),
+    requestTMDB("/discover/movie", { with_genres: "27" }),
+    requestTMDB("/discover/movie", { with_genres: "10749" }),
   ]);
 
   const heroBanner = dedupeMedia(normalizeMixedMediaList(heroRaw))
@@ -363,35 +457,49 @@ export const fetchTMDBMovieSections = async () => {
     heroBanner,
     rails: [
       { title: "Trending Now", items: dedupeMedia(normalizeList(trendingMoviesRaw, "movie")).slice(0, 20) },
+      { title: "New Releases", items: dedupeMedia(normalizeList(nowPlayingRaw, "movie")).slice(0, 20) },
       { title: "Popular Movies", items: dedupeMedia(normalizeList(popularMoviesRaw, "movie")).slice(0, 20) },
       { title: "Top Rated", items: dedupeMedia(normalizeList(topRatedRaw, "movie")).slice(0, 20) },
       { title: "Action Movies", items: dedupeMedia(normalizeList(actionMoviesRaw, "movie")).slice(0, 20) },
       { title: "Comedy Movies", items: dedupeMedia(normalizeList(comedyMoviesRaw, "movie")).slice(0, 20) },
+      { title: "Horror Movies", items: dedupeMedia(normalizeList(horrorMoviesRaw, "movie")).slice(0, 20) },
+      { title: "Romance Movies", items: dedupeMedia(normalizeList(romanceMoviesRaw, "movie")).slice(0, 20) },
     ],
   };
 };
 
 export const fetchTMDBTVSections = async () => {
-  const [heroRaw, popularShowsRaw, newEpisodesRaw] = await Promise.all([
+  const [
+    heroRaw,
+    trendingShowsRaw,
+    onTheAirRaw,
+    popularShowsRaw,
+    topRatedRaw,
+    dramaShowsRaw,
+    comedyShowsRaw,
+  ] = await Promise.all([
     requestTMDB("/trending/all/week"),
+    requestTMDB("/trending/tv/week"),
+    requestTMDB("/tv/on_the_air"),
     requestTMDB("/tv/popular"),
-    requestTMDB("/tv/airing_today"),
+    requestTMDB("/tv/top_rated"),
+    requestTMDB("/discover/tv", { with_genres: "18" }),
+    requestTMDB("/discover/tv", { with_genres: "35" }),
   ]);
 
   const heroBanner = dedupeMedia(normalizeMixedMediaList(heroRaw))
     .filter((item) => item.type === "tv")
     .slice(0, 12);
 
-  const trendingShows = dedupeMedia(normalizeMixedMediaList(heroRaw))
-    .filter((item) => item.type === "tv")
-    .slice(0, 20);
-
   return {
     heroBanner,
     rails: [
-      { title: "Trending Now", items: trendingShows },
+      { title: "Trending Now", items: dedupeMedia(normalizeList(trendingShowsRaw, "tv")).slice(0, 20) },
+      { title: "New Episodes", items: dedupeMedia(normalizeList(onTheAirRaw, "tv")).slice(0, 20) },
       { title: "Popular Shows", items: dedupeMedia(normalizeList(popularShowsRaw, "tv")).slice(0, 20) },
-      { title: "New Episodes", items: dedupeMedia(normalizeList(newEpisodesRaw, "tv")).slice(0, 20) },
+      { title: "Top Rated", items: dedupeMedia(normalizeList(topRatedRaw, "tv")).slice(0, 20) },
+      { title: "Drama Shows", items: dedupeMedia(normalizeList(dramaShowsRaw, "tv")).slice(0, 20) },
+      { title: "Comedy Shows", items: dedupeMedia(normalizeList(comedyShowsRaw, "tv")).slice(0, 20) },
     ],
   };
 };
@@ -437,36 +545,26 @@ export const fetchTMDBDetails = async (mediaType, id) => {
   if (!tmdbId) return null;
 
   const detail = await requestTMDBObject(`/${mediaType}/${tmdbId}`, {
-    append_to_response: mediaType === "movie" ? "release_dates,videos" : "content_ratings,videos",
+    append_to_response: mediaType === "movie" ? "release_dates" : "content_ratings",
   });
   const credits = await requestTMDBObject(`/${mediaType}/${tmdbId}/credits`, {
     append_to_response: "credits",
   });
   const tmdbData = await requestTMDBObject(`/${mediaType}/${tmdbId}`, {
     append_to_response: mediaType === "movie"
-      ? "images,release_dates,videos"
-      : "images,content_ratings,videos",
+      ? "images,release_dates"
+      : "images,content_ratings",
   });
   if (!detail || typeof detail !== "object") return null;
 
-  // console.log(detail);
+  const resolvedTrailer = await fetchYouTubeTrailer({
+    title: mediaType === "movie" ? detail.title : detail.name,
+    year: Number(String((mediaType === "movie" ? detail.release_date : detail.first_air_date) || "").slice(0, 4)) || "",
+    mediaType,
+  });
 
   if (mediaType === "movie") {
     return {
-      // img: toImageUrl(detail.backdrop_path || detail.poster_path),
-      // nameImg: toImageUrl(detail.poster_path || detail.backdrop_path),
-      // name: toImageUrl(detail.poster_path || detail.backdrop_path),
-      // name2: title || "Untitled",
-      // releaseYear,
-      // ua: "UA 13+",
-      // season: detail.media_type || mediaType === "movie" ? "Movie" : "1+ Seasons",
-      // language: [langMap[detail.original_language] || "English"],
-      // desc: detail.overview || "No description available.",
-      // category: detail.genre_ids?.map((genreId) => genreMap[genreId]).filter(Boolean) || [],
-      // type: detail.media_type || mediaType,
-      // studio: (detail.media_type || mediaType === "movie") ? "TMDB Movies" : "TMDB TV",
-      // episodes: (detail.media_type || mediaType === "tv") ? { s1: 10 } : undefined,
-      // rating: detail.vote_average,
       mbg: toImageUrl(detail.backdrop_path),
       cast: Array.isArray(credits?.cast) ? credits.cast.slice(0, 10) : [],
       nameImg2: toImageUrl(tmdbData.images.logos?.[0]?.file_path),
@@ -482,7 +580,7 @@ export const fetchTMDBDetails = async (mediaType, id) => {
         : [],
       desc: detail.overview || "",
       ageRating: pickMovieAgeRating(detail.release_dates),
-      trailerUrl: pickTrailer(detail.videos),
+      trailerUrl: resolvedTrailer,
     };
   }
 
@@ -512,7 +610,7 @@ export const fetchTMDBDetails = async (mediaType, id) => {
       : [],
     desc: detail.overview || "",
     ageRating: pickTVAgeRating(detail.content_ratings),
-    trailerUrl: pickTrailer(detail.videos),
+    trailerUrl: resolvedTrailer,
   };
 };
 
@@ -524,7 +622,6 @@ export const fetchTMDBSeasonDetails = async (tvId, seasonNumber) => {
 
   const detail = await requestTMDBObject(`/tv/${normalizedId}/season/${normalizedSeason}`);
   if (!detail || typeof detail !== "object") return null;
-  // console.log(detail);
 
   return {
     name: detail.name || `Season ${normalizedSeason}`,
@@ -592,18 +689,5 @@ export const fetchTMDBStudioTitles = async (studioKey, { moviePages = 2, tvPages
     return dateB - dateA;
   });
 };
-
-// export const topTen = () => {
-// const url = `https://api.themoviedb.org/3/trending/all/day?api_key=${TMDB_API_KEY}`;
-
-// fetch(url)
-//   .then(res => res.json())
-//   .then(data => {
-//     const item = data.results.slice(0, 10);
-//     console.log(item);
-//     normalizeItem(item, item.media_type);
-
-//   });
-// }
 
 export const fetchTMDBDataSet = fetchTMDBCatalog;

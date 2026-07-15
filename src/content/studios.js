@@ -21,7 +21,7 @@ export const STUDIO_COLLECTIONS = [
     key: "NETFLIX",
     label: "NETFLIX",
     img: "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
-    bg: "https://akm-img-a-in.tosshub.com/indiatoday/images/story/202012/Netflix-New-Feature-Audio-Only_1200x768.jpeg?size=1200:675",
+    bg: "https://wallpapercave.com/wp/wp14818830.webp",
     color: "#E50914",
     companyIds: [178464],
     networkIds: [213]
@@ -79,7 +79,81 @@ export const STUDIO_COLLECTIONS = [
     color: "#0074E8",
     companyIds: [429, 9993],
     networkIds: []
-  }
+  },
+  // ── New additions ──
+  {
+    key: "HULU",
+    label: "HULU",
+    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Hulu%20logo%20(2018).svg",
+    bg: "https://wallpapers.com/images/hd/hulu-streaming-service-background-9r1x0q0z1s7v9y2g.jpg",
+    color: "#1CE783",
+    companyIds: [],
+    networkIds: [453]
+  },
+  {
+    key: "WARNER BROS",
+    label: "WARNER BROS",
+    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Warner%20Bros%20logo.svg",
+    bg: "https://wallpapers.com/images/hd/warner-bros-studio-lot-background-default.jpg",
+    color: "#003057",
+    companyIds: [174],
+    networkIds: []
+  },
+  {
+    key: "UNIVERSAL",
+    label: "UNIVERSAL",
+    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Universal%20Pictures%20logo.svg",
+    bg: "https://wallpapers.com/images/hd/universal-pictures-globe-background-default.jpg",
+    color: "#000000",
+    companyIds: [33],
+    networkIds: []
+  },
+  {
+    key: "SONY PICTURES",
+    label: "SONY PICTURES",
+    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Sony%20Pictures%20Television%20Logo.svg",
+    bg: "https://wallpapers.com/images/hd/sony-pictures-studio-background-default.jpg",
+    color: "#FFFFFF",
+    companyIds: [34],
+    networkIds: []
+  },
+  {
+    key: "LIONSGATE",
+    label: "LIONSGATE",
+    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Lionsgate.svg",
+    bg: "https://wallpapers.com/images/hd/lionsgate-films-background-default.jpg",
+    color: "#000000",
+    companyIds: [1632],
+    networkIds: []
+  },
+  {
+    key: "A24",
+    label: "A24",
+    img: "https://commons.wikimedia.org/wiki/Special:FilePath/A24%20Logo.svg",
+    bg: "https://wallpapers.com/images/hd/a24-films-minimal-background-default.jpg",
+    color: "#000000",
+    companyIds: [41077],
+    networkIds: []
+  },
+  {
+    key: "PIXAR",
+    label: "PIXAR",
+    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Pixar%20logo.svg",
+    bg: "https://wallpapers.com/images/hd/pixar-animation-studios-background-default.jpg",
+    color: "#0F9DD7",
+    companyIds: [3],
+    networkIds: []
+  },
+  {
+    key: "LUCASFILM",
+    label: "LUCASFILM / STAR WARS",
+    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Lucasfilm%20logo.svg",
+    bg: "https://wallpapers.com/images/hd/star-wars-galaxy-background-default.jpg",
+    color: "#FFE81F",
+    companyIds: [1],
+    networkIds: []
+  },
+
 ];
 
 export const getStudioConfig = (studioKey) => {

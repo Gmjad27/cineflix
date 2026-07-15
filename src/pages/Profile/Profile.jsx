@@ -1,6 +1,5 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import styles from './profile.module.css';
 import Card from '../../components/Card/Card';
 import Footer from '../../components/Footer/Footer';
 import Watch from '../../components/Watch/Watch';
@@ -11,8 +10,10 @@ const Profile = (props) => {
   const location = useLocation();
   const data = Array.isArray(props.data) ? props.data : [];
   const [watchItem, setWatchItem] = useState(data[0] || null);
+  const [watchOpen, setWatchOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
 
-  // 1. Convert user to state so the UI updates instantly when a picture is uploaded
+  // User data from localStorage
   const [userData, setUserData] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('user') || '{}');
@@ -21,13 +22,13 @@ const Profile = (props) => {
     }
   });
 
-  // 2. Reference for the hidden file input
   const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!watchItem && data.length > 0) setWatchItem(data[0]);
   }, [data, watchItem]);
 
+  // Watchlist logic
   const watchListItems = useMemo(() => {
     if (!Array.isArray(props.E)) return [];
     return data.filter((item) => props.E.includes(item.id));
@@ -36,54 +37,49 @@ const Profile = (props) => {
   const movieItems = watchListItems.filter((item) => item.type === 'movie');
   const seriesItems = watchListItems.filter((item) => item.type === 'tv');
 
-  // ==========================================
-  // Image Upload Logic
-  // ==========================================
+  const displayedItems = useMemo(() => {
+    if (activeTab === 'movies') return movieItems;
+    if (activeTab === 'series') return seriesItems;
+    return watchListItems;
+  }, [activeTab, movieItems, seriesItems, watchListItems]);
+
+  // Profile picture upload
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result;
-        
-        // Update state
         const updatedUser = { ...userData, profilePic: base64String };
         setUserData(updatedUser);
-        
-        // Save to localStorage
         localStorage.setItem('user', JSON.stringify(updatedUser));
       };
-      
-      // Read the file as a data URL (Base64)
       reader.readAsDataURL(file);
     }
   };
 
-  const openWatch = (id) => {
+  // Watch modal logic
+  const openWatch = useCallback((id) => {
     const selected = data.find((item) => item.id === id);
     if (!selected) return;
-
     setWatchItem(selected);
-    const watch = document.querySelector('#watch');
-    if (watch) watch.style.display = 'block';
+    setWatchOpen(true);
     navigate(`${location.pathname}?watch=${selected.id}&name=${encodeURIComponent(selected.name2)}`);
-  };
+  }, [data, navigate, location.pathname]);
 
-  const clearWatchFromUrl = () => {
+  const clearWatchFromUrl = useCallback(() => {
+    setWatchOpen(false);
     navigate(location.pathname);
-  };
+  }, [navigate, location.pathname]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const watchId = Number(params.get('watch'));
     if (!watchId) return;
-
     const selected = data.find((item) => item.id === watchId);
     if (!selected) return;
-
     setWatchItem(selected);
-    const watch = document.querySelector('#watch');
-    if (watch) watch.style.display = 'block';
+    setWatchOpen(true);
   }, [data, location.search]);
 
   const logout = () => {
@@ -91,129 +87,168 @@ const Profile = (props) => {
     window.location.href = '/login';
   };
 
-  const renderRail = (items) => (
-    <div className={styles.track}>
-      {items.map((item) => (
-        <Card
-          key={item.id}
-          sow={openWatch}
-          id={item.id}
-          img={item.name}
-          name={item.name2}
-          ry={item.releaseYear}
-          ua={item.ua}
-          lan={item.language?.length || 0}
-          desc={item.desc}
-          s={item.season}
-          type={item.type}
-          tid={item.tmdbId}
-          add={props.add}
-          e={props.e}
-          play={props.play}
-        />
-      ))}
-    </div>
-  );
-
+  // Loading state
   if (props.loading) {
-    return <Skeleton type="card" count={6} />;
+    return (
+      <div className="min-h-screen bg-[#141414] text-white pt-20 px-6 md:px-12 lg:px-16">
+        <Skeleton type="card" count={6} />
+      </div>
+    );
   }
 
   return (
-    <>
-      <div className={styles.page}>
-        <section className={styles.hero}>
-          <div className={styles.info}>
-            
-            {/* 3. Clickable Profile Picture Area */}
-            <div 
-              className={styles.p_img} 
+    <div className="min-h-screen bg-[#141414] text-white font-sans selection:bg-[#E50914] selection:text-white">
+      
+      {/* Hero Profile Section */}
+      <section className="relative w-full bg-gradient-to-b from-[#202020] to-[#141414] pt-12 pb-8 px-6 md:px-12 lg:px-16 border-b border-[#2a2a2a]">
+        <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-10">
+          
+          {/* Netflix-style Avatar (Rounded Square) */}
+          <div className="relative group flex-shrink-0">
+            <div
+              className="w-32 h-32 md:w-40 md:h-40 rounded bg-[#2a2a2a] flex items-center justify-center overflow-hidden cursor-pointer shadow-2xl ring-1 ring-white/10 group-hover:ring-white/40 transition-all duration-300"
               onClick={() => fileInputRef.current?.click()}
-              title="Click to change profile picture"
+              title="Change Profile Icon"
               style={{
-                backgroundImage: userData.profilePic ? `url(${userData.profilePic})` : '',
+                backgroundImage: userData.profilePic ? `url(${userData.profilePic})` : 'none',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
-                cursor: 'pointer',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden'
               }}
             >
-              {/* Show a camera icon if no picture is set yet */}
               {!userData.profilePic && (
-                <i className="fa-solid fa-camera" style={{ color: '#fff', fontSize: '1.2rem', opacity: 0.8 }}></i>
+                <i className="fa-solid fa-user text-gray-500 text-5xl group-hover:scale-110 transition-transform" />
               )}
+              {/* Hover overlay for upload */}
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+                 <i className="fa-solid fa-camera text-white text-2xl drop-shadow-md" />
+              </div>
             </div>
-
-            {/* Hidden File Input */}
-            <input 
-              type="file" 
-              accept="image/*" 
-              ref={fileInputRef} 
-              style={{ display: 'none' }} 
-              onChange={handleImageUpload} 
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleImageUpload}
             />
+          </div>
 
-            <div>
-              <p className={styles.label}>PROFILE</p>
-              <h1 className={styles.name}>{String(userData?.name || 'Guest')}</h1>
-              <p className={styles.sub}>Manage your saved titles and continue watching.</p>
+          {/* User Info & Stats */}
+          <div className="flex-1 text-center md:text-left flex flex-col md:pb-2">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4 drop-shadow-lg">
+              {String(userData?.name || 'Guest')}
+            </h1>
+            
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 text-gray-300 mb-6 md:mb-0">
+              <div className="flex flex-col items-center md:items-start">
+                <span className="text-2xl font-bold text-white">{watchListItems.length}</span>
+                <span className="text-xs uppercase tracking-wider font-semibold text-gray-500">My List</span>
+              </div>
+              <div className="w-px h-8 bg-gray-700 hidden sm:block"></div>
+              <div className="flex flex-col items-center md:items-start">
+                <span className="text-2xl font-bold text-white">{movieItems.length}</span>
+                <span className="text-xs uppercase tracking-wider font-semibold text-gray-500">Movies</span>
+              </div>
+              <div className="w-px h-8 bg-gray-700 hidden sm:block"></div>
+              <div className="flex flex-col items-center md:items-start">
+                <span className="text-2xl font-bold text-white">{seriesItems.length}</span>
+                <span className="text-xs uppercase tracking-wider font-semibold text-gray-500">TV Shows</span>
+              </div>
             </div>
           </div>
 
-          <div className={styles.actions}>
-            <div className={styles.stat}>
-              <span>{watchListItems.length}</span>
-              <p>Watchlist</p>
-            </div>
-            <div className={styles.stat}>
-              <span>{movieItems.length}</span>
-              <p>Movies</p>
-            </div>
-            <div className={styles.stat}>
-              <span>{seriesItems.length}</span>
-              <p>Series</p>
-            </div>
-            <button type="button" className={styles.logout} onClick={logout}>
-              Logout
+          {/* Action Buttons */}
+          <div className="flex gap-4 md:pb-2">
+            <button
+              onClick={() => navigate('/account')} // Mock route for account settings
+              className="px-6 py-2 bg-transparent border border-gray-500 text-white rounded hover:border-white hover:bg-white/10 transition font-medium"
+            >
+              Account
+            </button>
+            <button
+              onClick={logout}
+              className="px-6 py-2 bg-transparent border border-gray-500 text-white rounded hover:border-[#E50914] hover:bg-[#E50914]/10 hover:text-[#E50914] transition font-medium"
+            >
+              Sign Out
             </button>
           </div>
-        </section>
+        </div>
+      </section>
 
+      {/* Content Area */}
+      <div className="max-w-[1400px] mx-auto px-6 md:px-12 lg:px-16 py-8 min-h-[40vh]">
+        
         {watchListItems.length === 0 ? (
-          <section className={styles.empty}>
-            <h2>Your watchlist is empty</h2>
-            <p>Add titles from Home, Movies, TV, or Search to see them here.</p>
-            <button type="button" onClick={() => navigate('/search')}>
-              Explore Titles
+          /* Empty State */
+          <div className="flex flex-col items-center justify-center py-20 text-center animate-[fadeIn_0.5s_ease-out]">
+            <div className="w-24 h-24 rounded-full border-2 border-[#2a2a2a] flex items-center justify-center mb-6">
+              <i className="fa-solid fa-list text-4xl text-gray-600"></i>
+            </div>
+            <h2 className="text-2xl font-bold mb-3 text-gray-200">Your List is empty</h2>
+            <p className="text-gray-400 mb-8 max-w-md">
+              Add shows and movies to your list to easily find them later.
+            </p>
+            <button
+              onClick={() => navigate('/search')}
+              className="px-8 py-3 bg-white text-black font-bold text-lg rounded hover:bg-white/80 active:scale-95 transition"
+            >
+              Find Something to Watch
             </button>
-          </section>
+          </div>
         ) : (
-          <div className={styles.rails}>
-            {movieItems.length > 0 && (
-              <section className={styles.section}>
-                <h2 className={styles.heading}>Saved Movies</h2>
-                {renderRail(movieItems)}
-              </section>
-            )}
+          /* Watchlist Grid with Tabs */
+          <div className="animate-[fadeIn_0.5s_ease-out]">
+            {/* Tabs */}
+            <div className="flex items-center gap-6 mb-8 border-b border-[#2a2a2a]">
+              {['all', 'movies', 'series'].map((tab) => (
+                <button
+                  key={tab}
+                  className={`pb-3 text-sm sm:text-base font-semibold uppercase tracking-wider transition-colors relative ${
+                    activeTab === tab ? 'text-white' : 'text-gray-500 hover:text-gray-300'
+                  }`}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab === 'all' ? 'My List' : tab}
+                  {activeTab === tab && (
+                    <span className="absolute bottom-[-1px] left-0 w-full h-[3px] bg-[#E50914] rounded-t-sm"></span>
+                  )}
+                </button>
+              ))}
+            </div>
 
-            {seriesItems.length > 0 && (
-              <section className={styles.section}>
-                <h2 className={styles.heading}>Saved Series</h2>
-                {renderRail(seriesItems)}
-              </section>
+            {/* Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-10">
+              {displayedItems.map((item) => (
+                <div key={item.id} className="w-full flex justify-center">
+                   <Card
+                    sow={openWatch}
+                    id={item.id}
+                    img={item.name}
+                    name={item.name2}
+                    type={item.type}
+                    rating={item.rating}
+                    add={props.add}
+                    e={props.e}
+                    play={props.play}
+                    // Removing strict width limits from Card so it fills the grid column
+                    width="100%"
+                  />
+                </div>
+              ))}
+            </div>
+            
+            {displayedItems.length === 0 && (
+              <div className="text-center py-12 text-gray-500">
+                No {activeTab} found in your list.
+              </div>
             )}
-
-            <section className={styles.section}>
-              <h2 className={styles.heading}>All Watchlist</h2>
-              {renderRail(watchListItems)}
-            </section>
           </div>
         )}
+      </div>
 
+      <Footer />
+
+      {/* Watch Modal */}
+      {watchOpen && (
         <Watch
           data={data}
           sow={openWatch}
@@ -239,10 +274,9 @@ const Profile = (props) => {
           e={props.e}
           play={props.play}
         />
-      </div>
-      <Footer />
-    </>
+      )}
+    </div>
   );
 };
 
-export default Profile;
+export default React.memo(Profile);
