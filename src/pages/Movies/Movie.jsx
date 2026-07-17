@@ -176,12 +176,7 @@ const Movie = (props) => {
             </p>
             
             <div className="mt-4 flex gap-3 sm:gap-4 w-full sm:w-auto">
-              <button
-                onClick={playFeatured}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-6 sm:px-8 py-2 md:py-2.5 bg-white text-black font-bold text-sm md:text-xl rounded hover:bg-white/80 active:scale-95 transition"
-              >
-                <i className="fa-solid fa-play" /> Play
-              </button>
+              
               <button
                 onClick={() => openWatch(featured.id)}
                 className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-6 sm:px-8 py-2 md:py-2.5 bg-[#6d6d6e]/70 text-white font-bold text-sm md:text-xl rounded hover:bg-[#6d6d6e] active:scale-95 transition backdrop-blur-sm"

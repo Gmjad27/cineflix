@@ -1,8 +1,7 @@
 import { getStudioConfig } from "./studios";
-const TMDB_API_KEY =
-  import.meta.env.VITE_TMDB_API_KEY;
-const YOUTUBE_API_KEY =
-  import.meta.env.VITE_YOUTUBE_API_KEY;
+
+const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_URL = "https://image.tmdb.org/t/p/original";
@@ -146,10 +145,6 @@ const fetchYouTubeTrailer = async ({ title, year, mediaType }) => {
   return pickYoutubeTrailerFromSearch(payload?.items);
 };
 
-// FIX: centralizes the movie/tv resolution so we never repeat the
-// `item.media_type || mediaType === "movie"` operator-precedence bug,
-// which previously evaluated as `item.media_type || (mediaType === "movie")`
-// and mis-typed almost every TV item.
 const resolveMediaType = (item, mediaType) => {
   const resolved = item?.media_type || mediaType;
   return resolved === "movie" || resolved === "tv" ? resolved : null;
@@ -163,7 +158,6 @@ const normalizeItem = (item, mediaType) => {
 
   const isMovie = resolvedType === "movie";
   const title = isMovie ? item.title : item.name;
-  // FIX: was `item.media_typ` (typo) instead of `item.media_type`
   const releaseDate = isMovie ? item.release_date : item.first_air_date;
   const releaseYear = Number(String(releaseDate || "").slice(0, 4)) || 0;
   const tmdbId = Number(item.id) || 0;
@@ -219,14 +213,14 @@ const dedupeMedia = (items) => {
 
 export const requestTMDB = async (path, params = {}, options = {}) => {
   const query = new URLSearchParams({
-    api_key: TMDB_API_KEY, // Assuming this is defined in your environment
+    api_key: TMDB_API_KEY,
     language: "en-US",
+    include_adult: "false", // 1. GLOBAL API BLOCK FOR ADULT CONTENT
     ...params,
   }).toString();
 
   const url = `${TMDB_BASE_URL}${path}?${query}`;
 
-  // 1. Pass the signal to fetch so the AbortController can cancel it
   const response = await fetch(url, {
     signal: options.signal
   });
@@ -238,17 +232,19 @@ export const requestTMDB = async (path, params = {}, options = {}) => {
   const data = await response.json();
   const today = new Date();
 
-  // 2. Centralized validation helper (Fixes the logic bug and cleans up the code)
-  const isValidMedia = (movie) => {
-    if (movie.adult) return false; // Remove adult content
+  // 2. LOCAL FILTER: Catch anything the API missed
+  const isValidMedia = (item) => {
+    // Strictly remove if TMDB flagged it as adult
+    if (item.adult === true) return false;
 
-    const dateString = movie.release_date || movie.first_air_date;
-    if (!dateString) return false; // Remove if there is no date at all
+    // Remove if there is no release date
+    const dateString = item.release_date || item.first_air_date;
+    if (!dateString) return false;
 
-    return new Date(dateString) <= today; // Remove upcoming/future releases
+    // Remove future unreleased items
+    return new Date(dateString) <= today;
   };
 
-  // 3. Apply the clean filter to whichever array TMDB returns
   if (Array.isArray(data.results)) {
     return data.results.filter(isValidMedia);
   }
@@ -270,6 +266,7 @@ const requestTMDBObject = async (path, params = {}) => {
   const query = new URLSearchParams({
     api_key: TMDB_API_KEY,
     language: "en-US",
+    include_adult: "false", // GLOBAL API BLOCK FOR SINGLE OBJECT FETCHES
     ...params,
   }).toString();
   const url = `${TMDB_BASE_URL}${path}?${query}`;
@@ -322,9 +319,6 @@ export const fetchTMDBTrending = async ({ window = "week", limit = 12 } = {}) =>
   return merged.slice(0, limit);
 };
 
-// Netflix/Prime-style home layout:
-// Hero -> Top 10 Today (ranked) -> Trending -> New Releases -> Popular ->
-// Top Rated -> Genre rows -> curated saga collections
 export const fetchTMDBHomeSections = async () => {
   const [
     heroRaw,
@@ -346,6 +340,12 @@ export const fetchTMDBHomeSections = async () => {
     lordoftheringsRaw,
     lordoftheringsRaw2,
     lordoftheringsRaw3,
+    documentariesRaw,
+    crimeMoviesRaw,
+    romanceMoviesRaw,
+    animationFamilyRaw,
+    koreanDramasRaw,
+    bollywoodHitsRaw
   ] = await Promise.all([
     requestTMDB("/trending/all/week"),
     requestTMDB("/trending/all/day"),
@@ -366,11 +366,15 @@ export const fetchTMDBHomeSections = async () => {
     requestTMDB("/collection/119"),
     requestTMDB("/collection/121938"),
     requestTMDB("/search/tv", { query: "The Lord of the Rings: The Rings of Power" }),
+    requestTMDB("/discover/movie", { with_genres: "99" }),
+    requestTMDB("/discover/movie", { with_genres: "80" }),
+    requestTMDB("/discover/movie", { with_genres: "10749" }),
+    requestTMDB("/discover/movie", { with_genres: "16,10751" }),
+    requestTMDB("/discover/tv", { with_original_language: "ko", with_genres: "18" }),
+    requestTMDB("/discover/movie", { with_original_language: "hi", region: "IN", sort_by: "popularity.desc" })
   ]);
 
   const heroBanner = dedupeMedia(normalizeMixedMediaList(heroRaw)).slice(0, 12);
-
-  // "Top 10 Today" — ranked, mixed movies + tv, like Netflix's numbered row
   const top10Today = dedupeMedia(normalizeMixedMediaList(trendingTodayRaw)).slice(0, 10);
 
   const trendingNow = dedupeMedia([
@@ -396,6 +400,13 @@ export const fetchTMDBHomeSections = async () => {
   const horrorMovies = dedupeMedia(normalizeList(horrorMoviesRaw, "movie")).slice(0, 20);
   const scifiMovies = dedupeMedia(normalizeList(scifiMoviesRaw, "movie")).slice(0, 20);
 
+  const documentaries = dedupeMedia(normalizeList(documentariesRaw, "movie")).slice(0, 20);
+  const crimeMovies = dedupeMedia(normalizeList(crimeMoviesRaw, "movie")).slice(0, 20);
+  const romanceMovies = dedupeMedia(normalizeList(romanceMoviesRaw, "movie")).slice(0, 20);
+  const animationFamily = dedupeMedia(normalizeList(animationFamilyRaw, "movie")).slice(0, 20);
+  const koreanDramas = dedupeMedia(normalizeList(koreanDramasRaw, "tv")).slice(0, 20);
+  const bollywoodHits = dedupeMedia(normalizeList(bollywoodHitsRaw, "movie")).slice(0, 20);
+
   const wizardingWorld = dedupeMedia([
     ...normalizeList(WizardingRaw, "movie"),
     ...normalizeList(WizardingRaw2, "movie"),
@@ -411,17 +422,22 @@ export const fetchTMDBHomeSections = async () => {
     heroBanner,
     rails: [
       { title: "Top 10 Today", items: top10Today, ranked: true },
+      { title: "Kids & Family", items: animationFamily },
       { title: "Trending Now", items: trendingNow },
       { title: "New Releases", items: newReleases },
+      { title: "Wizarding World Collection", items: wizardingWorld },
+      { title: "Middle-earth Saga", items: middleEarth },
+      { title: "Bollywood Hits", items: bollywoodHits },
+      { title: "Binge-Worthy K-Dramas", items: koreanDramas },
       { title: "Popular Movies", items: popularMovies },
       { title: "Popular TV Shows", items: popularShows },
       { title: "Top Rated", items: topRated },
-      { title: "Action Movies", items: actionMovies },
+      { title: "Crime & Thrillers", items: crimeMovies },
+      { title: "Action & Adventure", items: actionMovies },
       { title: "Comedy Movies", items: comedyMovies },
       { title: "Horror Movies", items: horrorMovies },
-      { title: "Sci-Fi Movies", items: scifiMovies },
-      { title: "Wizarding World Collection", items: wizardingWorld },
-      { title: "Middle-earth Saga", items: middleEarth },
+      { title: "Sci-Fi & Fantasy", items: scifiMovies },
+      { title: "Heartfelt Romance", items: romanceMovies },
     ],
   };
 };
@@ -437,6 +453,8 @@ export const fetchTMDBMovieSections = async () => {
     comedyMoviesRaw,
     horrorMoviesRaw,
     romanceMoviesRaw,
+    thrillerMoviesRaw,
+    documentaryMoviesRaw
   ] = await Promise.all([
     requestTMDB("/trending/all/week"),
     requestTMDB("/trending/movie/week"),
@@ -447,6 +465,8 @@ export const fetchTMDBMovieSections = async () => {
     requestTMDB("/discover/movie", { with_genres: "35" }),
     requestTMDB("/discover/movie", { with_genres: "27" }),
     requestTMDB("/discover/movie", { with_genres: "10749" }),
+    requestTMDB("/discover/movie", { with_genres: "53" }),
+    requestTMDB("/discover/movie", { with_genres: "99" }),
   ]);
 
   const heroBanner = dedupeMedia(normalizeMixedMediaList(heroRaw))
@@ -456,14 +476,16 @@ export const fetchTMDBMovieSections = async () => {
   return {
     heroBanner,
     rails: [
-      { title: "Trending Now", items: dedupeMedia(normalizeList(trendingMoviesRaw, "movie")).slice(0, 20) },
-      { title: "New Releases", items: dedupeMedia(normalizeList(nowPlayingRaw, "movie")).slice(0, 20) },
-      { title: "Popular Movies", items: dedupeMedia(normalizeList(popularMoviesRaw, "movie")).slice(0, 20) },
-      { title: "Top Rated", items: dedupeMedia(normalizeList(topRatedRaw, "movie")).slice(0, 20) },
-      { title: "Action Movies", items: dedupeMedia(normalizeList(actionMoviesRaw, "movie")).slice(0, 20) },
-      { title: "Comedy Movies", items: dedupeMedia(normalizeList(comedyMoviesRaw, "movie")).slice(0, 20) },
-      { title: "Horror Movies", items: dedupeMedia(normalizeList(horrorMoviesRaw, "movie")).slice(0, 20) },
-      { title: "Romance Movies", items: dedupeMedia(normalizeList(romanceMoviesRaw, "movie")).slice(0, 20) },
+      { title: "Trending Movies", items: dedupeMedia(normalizeList(trendingMoviesRaw, "movie")).slice(0, 20) },
+      { title: "In Theaters", items: dedupeMedia(normalizeList(nowPlayingRaw, "movie")).slice(0, 20) },
+      { title: "Blockbuster Hits", items: dedupeMedia(normalizeList(popularMoviesRaw, "movie")).slice(0, 20) },
+      { title: "Critically Acclaimed", items: dedupeMedia(normalizeList(topRatedRaw, "movie")).slice(0, 20) },
+      { title: "Edge of Your Seat Thrillers", items: dedupeMedia(normalizeList(thrillerMoviesRaw, "movie")).slice(0, 20) },
+      { title: "Action Packed", items: dedupeMedia(normalizeList(actionMoviesRaw, "movie")).slice(0, 20) },
+      { title: "Laugh Out Loud Comedies", items: dedupeMedia(normalizeList(comedyMoviesRaw, "movie")).slice(0, 20) },
+      { title: "Chilling Horror", items: dedupeMedia(normalizeList(horrorMoviesRaw, "movie")).slice(0, 20) },
+      { title: "Romantic Favorites", items: dedupeMedia(normalizeList(romanceMoviesRaw, "movie")).slice(0, 20) },
+      { title: "Real Life Stories", items: dedupeMedia(normalizeList(documentaryMoviesRaw, "movie")).slice(0, 20) },
     ],
   };
 };
@@ -477,6 +499,9 @@ export const fetchTMDBTVSections = async () => {
     topRatedRaw,
     dramaShowsRaw,
     comedyShowsRaw,
+    animeRaw,
+    realityTvRaw,
+    mysteryShowsRaw
   ] = await Promise.all([
     requestTMDB("/trending/all/week"),
     requestTMDB("/trending/tv/week"),
@@ -485,6 +510,9 @@ export const fetchTMDBTVSections = async () => {
     requestTMDB("/tv/top_rated"),
     requestTMDB("/discover/tv", { with_genres: "18" }),
     requestTMDB("/discover/tv", { with_genres: "35" }),
+    requestTMDB("/discover/tv", { with_original_language: "ja", with_genres: "16" }),
+    requestTMDB("/discover/tv", { with_genres: "10764" }),
+    requestTMDB("/discover/tv", { with_genres: "9648" }),
   ]);
 
   const heroBanner = dedupeMedia(normalizeMixedMediaList(heroRaw))
@@ -494,12 +522,15 @@ export const fetchTMDBTVSections = async () => {
   return {
     heroBanner,
     rails: [
-      { title: "Trending Now", items: dedupeMedia(normalizeList(trendingShowsRaw, "tv")).slice(0, 20) },
-      { title: "New Episodes", items: dedupeMedia(normalizeList(onTheAirRaw, "tv")).slice(0, 20) },
-      { title: "Popular Shows", items: dedupeMedia(normalizeList(popularShowsRaw, "tv")).slice(0, 20) },
-      { title: "Top Rated", items: dedupeMedia(normalizeList(topRatedRaw, "tv")).slice(0, 20) },
-      { title: "Drama Shows", items: dedupeMedia(normalizeList(dramaShowsRaw, "tv")).slice(0, 20) },
-      { title: "Comedy Shows", items: dedupeMedia(normalizeList(comedyShowsRaw, "tv")).slice(0, 20) },
+      { title: "Trending TV Shows", items: dedupeMedia(normalizeList(trendingShowsRaw, "tv")).slice(0, 20) },
+      { title: "New Episodes This Week", items: dedupeMedia(normalizeList(onTheAirRaw, "tv")).slice(0, 20) },
+      { title: "Global Anime Hits", items: dedupeMedia(normalizeList(animeRaw, "tv")).slice(0, 20) },
+      { title: "Everyone's Watching", items: dedupeMedia(normalizeList(popularShowsRaw, "tv")).slice(0, 20) },
+      { title: "Award-Winning Television", items: dedupeMedia(normalizeList(topRatedRaw, "tv")).slice(0, 20) },
+      { title: "Gripping Mysteries", items: dedupeMedia(normalizeList(mysteryShowsRaw, "tv")).slice(0, 20) },
+      { title: "Drama Series", items: dedupeMedia(normalizeList(dramaShowsRaw, "tv")).slice(0, 20) },
+      { title: "Sitcoms & Comedy", items: dedupeMedia(normalizeList(comedyShowsRaw, "tv")).slice(0, 20) },
+      { title: "Reality TV & Talk Shows", items: dedupeMedia(normalizeList(realityTvRaw, "tv")).slice(0, 20) },
     ],
   };
 };
@@ -508,14 +539,10 @@ export const fetchMoreLikeThis = async (type, id, { page = 1 } = {}) => {
   if (!type || !id) return [];
 
   try {
-    // Dynamically injects 'movie' or 'tv' and the specific ID
     const results = await requestTMDB(`/${type}/${id}/recommendations`, {
       page: String(page)
     });
-
-    // We can use the same normalizeItem function from your search utility
     return results.map((item) => normalizeItem(item, type)).filter(Boolean);
-
   } catch (error) {
     console.error(`Failed to fetch recommendations for ${type} ${id}:`, error);
     return [];
@@ -526,12 +553,10 @@ export const searchTMDBTitles = async (query, { page = 1, signal } = {}) => {
   const q = String(query || "").trim();
   if (q.length < 2) return [];
 
-  // Note: We pass the 'signal' down to requestTMDB
   const results = await requestTMDB("/search/multi", {
     query: q,
     page: String(page),
-    include_adult: "false",
-  }, { signal }); // <-- Passing the signal here
+  }, { signal }); // Note: include_adult is now handled automatically by requestTMDB
 
   return results
     .filter((item) => item?.media_type === "movie" || item?.media_type === "tv")
@@ -565,11 +590,17 @@ export const fetchTMDBDetails = async (mediaType, id) => {
 
   if (mediaType === "movie") {
     return {
-      mbg: toImageUrl(detail.backdrop_path),
+      mbg: toImageUrl(tmdbData.images.backdrops?.[0]?.file_path || detail.backdrop_path),
       cast: Array.isArray(credits?.cast) ? credits.cast.slice(0, 10) : [],
-      nameImg2: toImageUrl(tmdbData.images.logos?.[0]?.file_path),
+      nameImg2: toImageUrl(
+        (
+          tmdbData.images.logos?.find(logo => logo.iso_639_1 === 'en') ||
+          tmdbData.images.logos?.[0]
+        )?.file_path
+      ),
       year: Number(detail.release_date.slice(0, 4)),
       runtime: Number(detail.runtime) || 0,
+
       seasonLabel: Number(detail.runtime) > 0 ? `${detail.runtime}m` : "Movie",
       episodes: undefined,
       categories: Array.isArray(detail.genres)
@@ -595,8 +626,14 @@ export const fetchTMDBDetails = async (mediaType, id) => {
   return {
     mbg: toImageUrl(tmdbData.images.backdrops?.[0]?.file_path || detail.backdrop_path),
     cast: Array.isArray(credits?.cast) ? credits.cast.slice(0, 10) : [],
-    nameImg2: toImageUrl(tmdbData.images.logos?.[0]?.file_path),
+    nameImg2: toImageUrl(
+      (
+        tmdbData.images.logos?.find(logo => logo.iso_639_1 === 'en') ||
+        tmdbData.images.logos?.[0]
+      )?.file_path
+    ),
     runtime: 0,
+    nextEp: detail?.next_episode_to_air?.air_date || undefined,
     seasonLabel:
       Number(detail.number_of_seasons) > 0
         ? `${detail.number_of_seasons} Season${detail.number_of_seasons > 1 ? "s" : ""}`
@@ -623,20 +660,30 @@ export const fetchTMDBSeasonDetails = async (tvId, seasonNumber) => {
   const detail = await requestTMDBObject(`/tv/${normalizedId}/season/${normalizedSeason}`);
   if (!detail || typeof detail !== "object") return null;
 
+  // Create a Date object for right now to compare against
+  const today = new Date();
+
   return {
     name: detail.name || `Season ${normalizedSeason}`,
     overview: detail.overview || "",
     poster: toImageUrl(detail.poster_path),
     episodes: Array.isArray(detail.episodes)
-      ? detail.episodes.map((episode) => ({
-        id: episode?.id || `${normalizedSeason}-${episode?.episode_number || 0}`,
-        number: Number(episode?.episode_number) || 0,
-        name: episode?.name || `Episode ${episode?.episode_number || ""}`.trim(),
-        overview: episode?.overview || "",
-        image: toImageUrl(episode?.still_path || detail.poster_path),
-        runtime: Number(episode?.runtime) || 0,
-        airDate: episode?.air_date || "",
-      }))
+      ? detail.episodes
+        // 1. FILTER: Only keep episodes with an air_date that has already passed
+        .filter(episode => {
+          if (!episode.air_date) return false; // Remove if no date exists
+          return new Date(episode.air_date) <= today; // Remove if future date
+        })
+        // 2. MAP: Format the remaining valid episodes
+        .map((episode) => ({
+          id: episode?.id || `${normalizedSeason}-${episode?.episode_number || 0}`,
+          number: Number(episode?.episode_number) || 0,
+          name: episode?.name || `Episode ${episode?.episode_number || ""}`.trim(),
+          overview: episode?.overview || "",
+          image: toImageUrl(episode?.still_path || detail.poster_path),
+          runtime: Number(episode?.runtime) || 0,
+          airDate: episode?.air_date || "",
+        }))
       : [],
   };
 };

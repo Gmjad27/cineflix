@@ -11,7 +11,8 @@ const Footer = lazy(() => import('../../components/Footer/Footer'));
 
 import Skeleton from '../../components/Skeleton/Skeleton';
 import { STUDIO_COLLECTIONS, filterByStudioCollection } from '../../content/studios.js';
-import { getContinueWatching } from '../../utils/continueWatching';
+// ADDED: Imported removeContinueWatching
+import { getContinueWatching, removeContinueWatching } from '../../utils/continueWatching';
 
 const HERO_ROTATE_MS = 8000;
 
@@ -118,6 +119,15 @@ function Home(props) {
     navigate(`/stream?${query.toString()}`);
   }, [navigate, props]);
 
+  // ADDED: Handler to remove an item from the Continue Watching array
+  const handleRemoveContinueWatching = useCallback((e, streamId) => {
+    e.stopPropagation(); // Prevents the click from firing resumeContinueWatching
+    if (typeof removeContinueWatching === 'function') {
+      removeContinueWatching(streamId);
+    }
+    setContinueWatching((prev) => prev.filter((item) => item.streamId !== streamId));
+  }, []);
+
   const rails = useMemo(
     () => (Array.isArray(homeSections.rails) && homeSections.rails.length > 0 ? homeSections.rails : [
       { title: 'TOP 10', items: data.slice(0, 10) },
@@ -174,7 +184,7 @@ function Home(props) {
   return (
     <div className="relative min-h-screen bg-[#141414] text-white overflow-hidden" id="homepage">
       <PrivacyPolicyPopup open={privacyPopupOpen} onClose={() => setPrivacyPopupOpen(false)} />
-      
+
       {/* ===== HERO BANNER ===== */}
       <section className="relative w-full h-[75vh] sm:h-[85vh] md:h-[90vh] lg:h-[100vh] overflow-hidden bg-black">
         {/* Background arts */}
@@ -188,7 +198,7 @@ function Home(props) {
             style={currentHero?.img ? { backgroundImage: `url(${currentHero.img})` } : undefined}
           />
         </div>
-        
+
         {/* Netflix Signature Gradients */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.6)_100%)]" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#141414]/90 via-[#141414]/40 to-transparent w-[80%]" />
@@ -196,10 +206,10 @@ function Home(props) {
 
         {/* Hero content */}
         <div className="absolute bottom-[10%] sm:bottom-[15%] left-0 w-full px-6 md:px-12 lg:px-16 flex flex-col items-start gap-4 z-10 w-full max-w-[90%] md:max-w-[50%]">
-          
+
           {/* Logo or Title */}
           {currentHero?.nameImg2 ? (
-             <img src={currentHero.nameImg2} alt={currentHero.name2} className="max-w-[200px] md:max-w-[400px] lg:max-w-[500px] object-contain drop-shadow-2xl mb-2" />
+            <img src={currentHero.nameImg2} alt={currentHero.name2} className="max-w-[200px] md:max-w-[400px] lg:max-w-[500px] object-contain drop-shadow-2xl mb-2" />
           ) : (
             <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold leading-tight drop-shadow-2xl line-clamp-2">
               {currentHero?.name2}
@@ -215,10 +225,10 @@ function Home(props) {
               <span className="text-white">Film</span>
             </span>
           </div>
-          
+
           <h2 className="text-xl md:text-2xl font-bold drop-shadow-md flex items-center gap-2">
-             <span className="bg-[#E50914] text-white text-[10px] font-black px-1.5 py-0.5 rounded-sm">TOP 10</span>
-             #{heroIndex + 1} in Trending Today
+            <span className="bg-[#E50914] text-white text-[10px] font-black px-1.5 py-0.5 rounded-sm">TOP 10</span>
+            #{heroIndex + 1} in Trending Today
           </h2>
 
           <p className="hidden md:block text-base lg:text-lg text-gray-200 drop-shadow-lg line-clamp-3 leading-snug text-shadow-md">
@@ -226,14 +236,6 @@ function Home(props) {
           </p>
 
           <div className="mt-4 flex gap-3 sm:gap-4 w-full sm:w-auto">
-            <button
-              type="button"
-              onClick={playHero}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-6 sm:px-8 py-2 md:py-2.5 bg-white text-black font-bold text-sm md:text-xl rounded hover:bg-white/80 active:scale-95 transition"
-            >
-              <i className="fa-solid fa-play"></i>
-              Play
-            </button>
             <button
               type="button"
               onClick={() => openWatch(currentHero?.id)}
@@ -246,7 +248,7 @@ function Home(props) {
           </div>
         </div>
 
-        {/* Progress dots (Optional: Netflix rarely uses them now, but keeping for UX mapping) */}
+        {/* Progress dots */}
         <div className="absolute bottom-6 md:bottom-10 left-0 w-full flex justify-center gap-2 z-10">
           {mediaData.slice(0, 5).map((_, i) => (
             <button
@@ -261,11 +263,10 @@ function Home(props) {
       </section>
 
       {/* ===== MAIN CONTENT ===== */}
-      {/* Heavy negative margin to pull rails up over the hero gradient */}
-      <div className="px-6 md:px-12 lg:px-16 relative z-20 space-y-12 pb-12 -mt-0 md:-mt-[-5px]">
+      <div className="px-6 md:px-12 lg:px-16 relative z-20 space-y-12 pb-12 mt-6 md:-mt-0">
         <Suspense fallback={<Skeleton type="section" count={10} />}>
-          
-          {/* Continue Watching */}
+
+          {/* Continue Watching Section */}
           {continueWatching.length > 0 && (
             <RailRow
               title="Continue Watching"
@@ -278,33 +279,51 @@ function Home(props) {
               eager
               renderItem={(item) => (
                 <div
-                  className="relative flex-shrink-0 w-44 md:w-64 lg:w-72 aspect-video rounded overflow-hidden cursor-pointer group hover:ring-2 hover:ring-white transition-all bg-[#181818] duration-300"
+                  className="relative flex-shrink-0 w-56 sm:w-64 md:w-80 lg:w-96 aspect-video rounded-md overflow-hidden cursor-pointer group shadow-lg hover:shadow-2xl transition-all duration-300 bg-[#181818]"
                   onClick={() => resumeContinueWatching(item)}
                   title={item.title}
                 >
-                  <img 
-                     src={item.image || "https://via.placeholder.com/640x360.png?text=Resume"} 
-                     alt={item.title}
-                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                  {/* ADDED: Remove Button (X) */}
+                  <button
+                    onClick={(e) => handleRemoveContinueWatching(e, item.streamId)}
+                    className="absolute top-2 right-2 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white/70 hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 border border-transparent hover:border-white/50 backdrop-blur-sm"
+                    title="Remove from row"
+                  >
+                    <i className="fa-solid fa-xmark"></i>
+                  </button>
+
+                  {/* Thumbnail Image */}
+                  <img
+                    src={item.image || "https://via.placeholder.com/640x360.png?text=Resume"}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                   />
-                  {/* Hover Play Overlay */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <i className="fa-regular fa-circle-play text-5xl text-white drop-shadow-lg scale-90 group-hover:scale-100 transition-transform"></i>
+
+                  {/* Bottom Vignette for Text Legibility */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent opacity-90" />
+
+                  {/* Central Play Button Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-white flex items-center justify-center bg-black/50 transform scale-75 group-hover:scale-100 transition-transform duration-300 shadow-xl">
+                      <i className="fa-solid fa-play text-white text-xl md:text-2xl ml-1"></i>
+                    </div>
                   </div>
-                  {/* Progress Bar Mockup (Static 50% for visual effect if backend doesn't supply progress) */}
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-600">
-                    <div className="h-full bg-[#E50914]" style={{ width: '50%' }}></div>
+
+                  {/* Title & Metadata */}
+                  <div className="absolute bottom-3 left-4 right-4 flex flex-col justify-end pointer-events-none">
+                    <h4 className="text-white font-bold text-sm md:text-base line-clamp-1 drop-shadow-md">
+                      {item.title}
+                    </h4>
+                    {item.type === 'tv' && (
+                      <span className="text-gray-300 text-xs md:text-sm font-medium drop-shadow-md mt-0.5">
+                        S{item.season}:E{item.episode}
+                      </span>
+                    )}
                   </div>
-                  {/* Episode Badge */}
-                  <div className="absolute bottom-3 left-3 flex items-center gap-2 drop-shadow-md">
-                     {item.type === 'tv' && (
-                        <span className="font-bold text-white text-xs sm:text-sm drop-shadow-md">
-                          S{item.season}:E{item.episode}
-                        </span>
-                     )}
-                     {!item.image && (
-                         <span className="font-bold text-white text-xs sm:text-sm drop-shadow-md line-clamp-1">{item.title}</span>
-                     )}
+
+                  {/* Authentic Red Progress Bar */}
+                  <div className="absolute bottom-0 left-0 right-0 h-1 md:h-1.5 bg-gray-500/50">
+                    <div className="h-full bg-[#E50914] rounded-r-full" style={{ width: '65%' }}></div>
                   </div>
                 </div>
               )}
@@ -330,15 +349,20 @@ function Home(props) {
                 eager={index === 0}
                 renderItem={(item, idx) =>
                   isTop10 ? (
-                    <div className="relative flex items-center justify-end pl-6 md:pl-10 overflow-hidden">
+                    <div className="relative flex items-center justify-end pl-10 sm:pl-12 md:pl-20 py-2 sm:py-4 group">
                       {/* Massive Netflix-style stroked number */}
-                      <div 
-                        className="absolute left-0 bottom-[-10px] md:bottom-[-20px] text-[100px] md:text-[180px] font-black leading-none text-[#141414] select-none z-0 tracking-tighter drop-shadow-md overflow-hidden"
-                        style={{ WebkitTextStroke: '3px #595959' }}
+                      <div
+                        className="absolute left-0 bottom-[2%] md:bottom-[5%] text-[100px] sm:text-[140px] md:text-[200px] lg:text-[230px] font-black leading-none text-[#141414] select-none z-0 tracking-tighter drop-shadow-2xl transition-transform duration-300 group-hover:scale-105 origin-bottom-left"
+                        style={{
+                          WebkitTextStroke: '4px #595959',
+                          textShadow: '0px 10px 20px rgba(0,0,0,0.8)'
+                        }}
                       >
                         {idx + 1}
                       </div>
-                      <div className="relative z-10 w-full ml-8 md:ml-16">
+
+                      {/* Floating Card overlapping the number */}
+                      <div className="relative z-10 w-full ml-4 md:ml-8 transform transition-transform duration-300 group-hover:-translate-y-2">
                         <Card
                           sow={openWatch}
                           id={item.id}

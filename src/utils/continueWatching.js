@@ -13,8 +13,6 @@ const readItems = () => {
 export const getContinueWatching = () =>
   readItems().sort((a, b) => (b.lastWatched || 0) - (a.lastWatched || 0));
 
-// This is deliberately stored by the parent application. A cross-origin
-// player cannot share its localStorage with localhost due to browser security.
 export const saveContinueWatching = (item) => {
   if (!item?.tmdbId || !item?.type) return;
 
@@ -29,5 +27,20 @@ export const saveContinueWatching = (item) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([entry, ...remaining].slice(0, MAX_ITEMS)));
   } catch (error) {
     console.warn('Unable to save continue watching item.', error);
+  }
+};
+
+// ADDED REMOVE FUNCTION HERE
+export const removeContinueWatching = (identifier) => {
+  if (!identifier) return;
+
+  const remaining = readItems().filter(
+    (saved) => saved.id !== identifier && saved.streamId !== identifier
+  );
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(remaining));
+  } catch (error) {
+    console.warn('Unable to remove continue watching item.', error);
   }
 };

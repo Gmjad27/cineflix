@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useInView from '../../hooks/useInView';
 
 export default function RailRow({
@@ -7,6 +8,7 @@ export default function RailRow({
     renderItem,
     eager = false,
 }) {
+    const navigate = useNavigate();
     const [sectionRef, inView] = useInView('500px 0px');
     const trackRef = useRef(null);
     
@@ -51,13 +53,28 @@ export default function RailRow({
         }
     }, [shouldRender, items, handleNativeScroll]);
 
+    // Handle View All navigation
+    const handleViewAll = () => {
+        if (!items || items.length === 0) return;
+        
+        // Serialize items and title for the MovieViewAll component
+        const itemsParam = encodeURIComponent(JSON.stringify(items));
+        const titleParam = encodeURIComponent(title || 'Explore All');
+        
+        navigate(`/viewall?title=${titleParam}&items=${itemsParam}`);
+    };
+
     return (
-        <section ref={sectionRef} className="relative flex flex-col space-y-2 md:space-y-3 mb-8 group/rail z-10 hover:z-20">
+        <section ref={sectionRef} className="relative flex flex-col space-y-2 md:space-y-3 mb-8 group/rail z-10 hover:z-30">
             
-            {/* Title with Netflix-style 'Explore All' hover interaction */}
+            {/* Title with Netflix/Hotstar 'Explore All' hover interaction */}
             {title && (
                 <div className="flex items-end px-2 md:px-0">
-                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#e5e5e5] group-hover/rail:text-white transition-colors cursor-pointer group/title flex items-center gap-3">
+                    <h2 
+                        className="text-lg sm:text-xl md:text-2xl font-bold text-[#e5e5e5] group-hover/rail:text-white transition-colors cursor-pointer group/title flex items-center gap-3"
+                        onClick={handleViewAll}
+                        title={`Explore all ${title}`}
+                    >
                         {title}
                         <div className="hidden sm:flex items-center text-[#54b9c5] text-[10px] md:text-xs font-bold tracking-wider opacity-0 -translate-x-4 group-hover/title:opacity-100 group-hover/title:translate-x-0 transition-all duration-500 ease-out">
                             Explore All 
@@ -86,8 +103,8 @@ export default function RailRow({
                     <div
                         ref={trackRef}
                         onScroll={handleNativeScroll}
-                        // py-8 & -my-8 creates invisible vertical padding so the Card's hover scale doesn't get clipped
-                        className="flex items-center gap-2 sm:gap-3 overflow-x-auto snap-x snap-mandatory md:snap-none scroll-smooth py-8 -my-8 px-2 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                        // Added arbitrary variants here to force the scaling origin of the first/last children
+                        className="flex items-center gap-2 sm:gap-3 overflow-x-auto snap-x snap-mandatory md:snap-none scroll-smooth py-10 -my-10 px-2 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&>div:first-child>div]:!origin-left [&>div:first-child>a]:!origin-left [&>div:last-child>div]:!origin-right [&>div:last-child>a]:!origin-right"
                     >
                         {items.map((item, idx) => (
                             <div className="snap-start flex-shrink-0" key={item.id ?? idx}>
@@ -96,8 +113,8 @@ export default function RailRow({
                         ))}
                     </div>
                 ) : (
-                    // Netflix-style Skeletons matching the new Card dimensions
-                    <div className="flex items-center gap-2 sm:gap-3 py-8 -my-8 px-2 md:px-0 overflow-hidden" aria-hidden="true">
+                    // Skeletons matching the new Card dimensions
+                    <div className="flex items-center gap-2 sm:gap-3 py-10 -my-10 px-2 md:px-0 overflow-hidden" aria-hidden="true">
                         {Array.from({ length: 8 }).map((_, idx) => (
                             <div
                                 key={idx}

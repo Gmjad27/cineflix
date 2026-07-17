@@ -174,9 +174,7 @@ const Tv = (props) => {
             {/* Meta Info */}
             <div className="flex items-center gap-3 text-sm md:text-base font-semibold drop-shadow-md text-gray-300">
                <span className="text-[#46d369] font-bold">New</span>
-               {/* <span>{featured.releaseYear}</span>
-               <span className="border border-gray-400 px-1.5 py-0.5 text-xs rounded-sm text-gray-300">{featured.ua || 'UA 16+'}</span>
-               {featured.season && <span>{featured.season} Seasons</span>} */}
+              
             </div>
 
             <p className="hidden md:block text-base lg:text-lg text-gray-200 drop-shadow-lg line-clamp-3 leading-snug text-shadow-md mt-2">
@@ -185,12 +183,6 @@ const Tv = (props) => {
 
             {/* Actions */}
             <div className="mt-4 flex gap-3 sm:gap-4 w-full sm:w-auto">
-              <button
-                onClick={playFeatured}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-6 sm:px-8 py-2 md:py-2.5 bg-white text-black font-bold text-sm md:text-xl rounded hover:bg-white/80 active:scale-95 transition"
-              >
-                <i className="fa-solid fa-play" /> Play
-              </button>
               <button
                 onClick={() => openWatch(featured.id)}
                 className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-6 sm:px-8 py-2 md:py-2.5 bg-[#6d6d6e]/70 text-white font-bold text-sm md:text-xl rounded hover:bg-[#6d6d6e] active:scale-95 transition backdrop-blur-sm"
