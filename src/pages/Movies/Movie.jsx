@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom'; // CHANGED: Imported useSearchParams
 import Card from '../../components/Card/Card';
 import Watch from '../../components/Watch/Watch';
 import Skeleton from '../../components/Skeleton/Skeleton';
@@ -10,13 +10,13 @@ import { fetchTMDBMovieSections } from '../../content/tmdb.js';
 
 const Movie = (props) => {
   const navigate = useNavigate();
-  const location = useLocation();
+  // CHANGED: Using search params to manage the modal's state directly in the URL
+  const [searchParams, setSearchParams] = useSearchParams();
+  
   const data = Array.isArray(props.data) ? props.data : [];
   const movies = useMemo(() => data.filter((item) => item.type === 'movie'), [data]);
   const [pageSections, setPageSections] = useState({ heroBanner: [], rails: [] });
   const [sectionsLoading, setSectionsLoading] = useState(true);
-  const [watchItem, setWatchItem] = useState(null);
-  const [isWatchOpen, setIsWatchOpen] = useState(false);
 
   // Fetch TMDB movie sections
   useEffect(() => {
@@ -70,34 +70,34 @@ const Movie = (props) => {
   const { scrollState, setTrackRef, onRailScroll, handleRailScroll } = useRailScroll(railKeys);
 
   // ==========================================
-  // Watch modal logic
+  // ADDED: Rock-Solid URL State Management for Watch Modal
   // ==========================================
+  const watchId = searchParams.get('watch');
+
+  // Derive watchItem directly from the URL. No useState needed!
+  const watchItem = useMemo(() => {
+    if (!watchId) return null;
+    return allItems.find((item) => String(item.id) === String(watchId));
+  }, [watchId, allItems]);
+
+  const isWatchOpen = !!watchItem;
+
   const openWatch = useCallback((id) => {
-    const selected = allItems.find((item) => item.id === id);
+    const selected = allItems.find((item) => String(item.id) === String(id));
     if (!selected) return;
-    setWatchItem(selected);
-    setIsWatchOpen(true);
-    navigate(`${location.pathname}?watch=${selected.id}&name=${encodeURIComponent(selected.name2)}`);
-  }, [allItems, navigate, location.pathname]);
+    
+    // Update URL seamlessly
+    searchParams.set('watch', selected.id);
+    if (selected.name2) searchParams.set('name', selected.name2);
+    setSearchParams(searchParams);
+  }, [allItems, searchParams, setSearchParams]);
 
   const clearWatchFromUrl = useCallback(() => {
-    setIsWatchOpen(false);
-    setWatchItem(null);
-    navigate(location.pathname);
-  }, [navigate, location.pathname]);
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const watchId = Number(params.get('watch'));
-    if (!watchId) {
-      setIsWatchOpen(false);
-      return;
-    }
-    const selected = allItems.find((item) => item.id === watchId);
-    if (!selected) return;
-    setWatchItem(selected);
-    setIsWatchOpen(true);
-  }, [allItems, location.search]);
+    searchParams.delete('watch');
+    searchParams.delete('name');
+    setSearchParams(searchParams);
+  }, [searchParams, setSearchParams]);
+  // ==========================================
 
   const playFeatured = useCallback(() => {
     if (!featured) return;
@@ -167,8 +167,6 @@ const Movie = (props) => {
 
             <div className="flex items-center gap-3 text-sm md:text-base font-semibold drop-shadow-md text-gray-300">
                <span className="text-[#46d369] font-bold">New</span>
-               {/* <span>{featured.releaseYear}</span>
-               <span className="border border-gray-400 px-1.5 py-0.5 text-xs rounded-sm text-gray-300">{featured.ua || 'UA 13+'}</span> */}
             </div>
             
             <p className="hidden md:block text-base lg:text-lg text-gray-200 drop-shadow-lg line-clamp-3 leading-snug text-shadow-md mt-2">
@@ -176,7 +174,6 @@ const Movie = (props) => {
             </p>
             
             <div className="mt-4 flex gap-3 sm:gap-4 w-full sm:w-auto">
-              
               <button
                 onClick={() => openWatch(featured.id)}
                 className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-6 sm:px-8 py-2 md:py-2.5 bg-[#6d6d6e]/70 text-white font-bold text-sm md:text-xl rounded hover:bg-[#6d6d6e] active:scale-95 transition backdrop-blur-sm"
@@ -189,7 +186,6 @@ const Movie = (props) => {
       )}
 
       {/* ── Movie Rails ── */}
-      {/* Heavy negative margin to pull rails up over the hero gradient */}
       <div className="px-6 md:px-12 lg:px-16 relative z-20 space-y-12 pb-12 -mt-26 md:-mt-32">
         {sections.map((section, idx) => {
           const railKey = `rail-${idx}`;

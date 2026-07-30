@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom'; // CHANGED: Imported useSearchParams
 import Card from '../../components/Card/Card';
 import Watch from '../../components/Watch/Watch';
 import { fetchTMDBTVSections } from '../../content/tmdb';
@@ -9,10 +9,10 @@ import { useRailScroll } from '../../hooks/useRailScroll';
 import Skeleton from '../../components/Skeleton/Skeleton';
 
 const Tv = (props) => {
-  const [watchOpen, setWatchOpen] = useState(false);
-  const [watchItem, setWatchItem] = useState(null);
   const navigate = useNavigate();
-  const location = useLocation();
+  // CHANGED: Using search params to manage the modal's state directly in the URL
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const data = Array.isArray(props.data) ? props.data : [];
   const series = useMemo(() => data.filter((item) => item.type === 'tv'), [data]);
   const [pageSections, setPageSections] = useState({ heroBanner: [], rails: [] });
@@ -36,11 +36,6 @@ const Tv = (props) => {
     return () => { active = false; };
   }, []);
 
-  // Set default watch item
-  useEffect(() => {
-    if (!watchItem && series.length > 0) setWatchItem(series[0]);
-  }, [series, watchItem]);
-
   // Featured hero item
   const featured = useMemo(() => {
     if (Array.isArray(pageSections.heroBanner) && pageSections.heroBanner.length > 0)
@@ -55,10 +50,10 @@ const Tv = (props) => {
       Array.isArray(pageSections.rails) && pageSections.rails.length > 0
         ? pageSections.rails
         : [
-            { title: 'Trending Now', items: series.slice(0, 20) },
-            { title: 'Popular Shows', items: series.slice(20, 40) },
-            { title: 'New Episodes', items: series.slice(40, 60) },
-          ],
+          { title: 'Trending Now', items: series.slice(0, 20) },
+          { title: 'Popular Shows', items: series.slice(20, 40) },
+          { title: 'New Episodes', items: series.slice(40, 60) },
+        ],
     [pageSections.rails, series]
   );
 
@@ -76,33 +71,34 @@ const Tv = (props) => {
   const { scrollState, setTrackRef, onRailScroll, handleRailScroll } = useRailScroll(railKeys);
 
   // ==========================================
-  // Watch modal logic
+  // ADDED: Rock-Solid URL State Management for Watch Modal
   // ==========================================
+  const watchId = searchParams.get('watch');
+
+  // Derive watchItem directly from the URL. No useState needed!
+  const watchItem = useMemo(() => {
+    if (!watchId) return null;
+    return allItems.find((item) => String(item.id) === String(watchId));
+  }, [watchId, allItems]);
+
+  const isWatchOpen = !!watchItem;
+
   const openWatch = useCallback((id) => {
-    const selected = allItems.find((item) => item.id === id);
+    const selected = allItems.find((item) => String(item.id) === String(id));
     if (!selected) return;
-    setWatchItem(selected);
-    setWatchOpen(true);
-    navigate(`${location.pathname}?watch=${selected.id}&name=${encodeURIComponent(selected.name2)}`);
-  }, [allItems, navigate, location.pathname]);
+
+    // Update URL seamlessly
+    searchParams.set('watch', selected.id);
+    if (selected.name2) searchParams.set('name', selected.name2);
+    setSearchParams(searchParams);
+  }, [allItems, searchParams, setSearchParams]);
 
   const clearWatchFromUrl = useCallback(() => {
-    setWatchOpen(false);
-    navigate(location.pathname);
-  }, [navigate, location.pathname]);
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const watchId = Number(params.get('watch'));
-    if (!watchId) {
-      setWatchOpen(false);
-      return;
-    }
-    const selected = allItems.find((item) => item.id === watchId);
-    if (!selected) return;
-    setWatchItem(selected);
-    setWatchOpen(true);
-  }, [allItems, location.search]);
+    searchParams.delete('watch');
+    searchParams.delete('name');
+    setSearchParams(searchParams);
+  }, [searchParams, setSearchParams]);
+  // ==========================================
 
   const playFeatured = useCallback(() => {
     if (!featured) return;
@@ -151,7 +147,7 @@ const Tv = (props) => {
 
           {/* Hero Content */}
           <div className="absolute bottom-[10%] sm:bottom-[15%] left-0 w-full px-6 md:px-12 lg:px-16 flex flex-col items-start gap-4 z-10 max-w-[90%] md:max-w-[50%]">
-            
+
             {/* Netflix Series Badge */}
             <div className="flex items-center gap-3 drop-shadow-md">
               <span className="flex items-center justify-center font-bold text-[#E50914] text-2xl md:text-4xl">
@@ -173,8 +169,7 @@ const Tv = (props) => {
 
             {/* Meta Info */}
             <div className="flex items-center gap-3 text-sm md:text-base font-semibold drop-shadow-md text-gray-300">
-               <span className="text-[#46d369] font-bold">New</span>
-              
+              <span className="text-[#46d369] font-bold">New</span>
             </div>
 
             <p className="hidden md:block text-base lg:text-lg text-gray-200 drop-shadow-lg line-clamp-3 leading-snug text-shadow-md mt-2">
@@ -238,7 +233,7 @@ const Tv = (props) => {
       </div>
 
       {/* ── Watch Modal (conditionally rendered) ── */}
-      {watchOpen && (
+      {isWatchOpen && watchItem && (
         <Watch
           data={allItems}
           sow={openWatch}

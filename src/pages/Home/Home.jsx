@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback, lazy, Suspense } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom'; // CHANGED: Imported useSearchParams
 import Watch from '../../components/Watch/Watch';
 import RailRow from '../../components/RailRow/RailRow.jsx';
 import { useRailScroll } from '../../hooks/useRailScroll';
@@ -11,20 +11,20 @@ const Footer = lazy(() => import('../../components/Footer/Footer'));
 
 import Skeleton from '../../components/Skeleton/Skeleton';
 import { STUDIO_COLLECTIONS, filterByStudioCollection } from '../../content/studios.js';
-// ADDED: Imported removeContinueWatching
 import { getContinueWatching, removeContinueWatching } from '../../utils/continueWatching';
 
 const HERO_ROTATE_MS = 8000;
 
 function Home(props) {
   const navigate = useNavigate();
-  const location = useLocation();
+  // CHANGED: Using search params to manage the modal's state directly in the URL
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const data = Array.isArray(props.data) ? props.data : [];
   const homeSections = props.homeSections || { heroBanner: [], rails: [] };
   const heroData = Array.isArray(homeSections.heroBanner) ? homeSections.heroBanner : [];
   const [heroIndex, setHeroIndex] = useState(0);
-  const [watchItem, setWatchItem] = useState(data[0] || null);
-  const [watchOpen, setWatchOpen] = useState(false);
+
   const [continueWatching, setContinueWatching] = useState(() => getContinueWatching());
   const [privacyPopupOpen, setPrivacyPopupOpen] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -45,10 +45,6 @@ function Home(props) {
   const currentHero = mediaData[heroIndex % Math.max(mediaData.length, 1)] || null;
 
   useEffect(() => {
-    if (!watchItem && data.length > 0) setWatchItem(data[0]);
-  }, [data, watchItem]);
-
-  useEffect(() => {
     if (mediaData.length < 2) return undefined;
     const interval = setInterval(() => {
       setHeroIndex((prev) => (prev + 1) % mediaData.length);
@@ -67,61 +63,53 @@ function Home(props) {
     });
   }, [heroIndex, mediaData]);
 
+
+  // ==========================================
+  // ADDED: Rock-Solid URL State Management
+  // ==========================================
+  const watchId = searchParams.get('watch');
+
+  // Derive watchItem directly from the URL. No useState needed!
+  // By forcing both sides to String(), we eliminate the strict equality bug.
+  const watchItem = useMemo(() => {
+    if (!watchId) return null;
+    return [...mediaData, ...data].find((item) => String(item.id) === String(watchId));
+  }, [watchId, mediaData, data]);
+
+  // Automatically open the modal if watchItem exists
+  const watchOpen = !!watchItem;
+
   const openWatch = useCallback((id) => {
-    const selected = [...mediaData, ...data].find((item) => item.id === id);
+    const selected = [...mediaData, ...data].find((item) => String(item.id) === String(id));
     if (!selected) return;
-    setWatchItem(selected);
-    setWatchOpen(true);
-    navigate(`${location.pathname}?watch=${selected.id}&name=${encodeURIComponent(selected.name2)}`);
-  }, [mediaData, data, navigate, location.pathname]);
+
+    // Updates the URL seamlessly without a full page reload
+    searchParams.set('watch', selected.id);
+    if (selected.name2) searchParams.set('name', selected.name2);
+    setSearchParams(searchParams);
+  }, [mediaData, data, searchParams, setSearchParams]);
 
   const clearWatchFromUrl = useCallback(() => {
-    setWatchOpen(false);
-    setWatchItem(null);
-    navigate(location.pathname);
-  }, [navigate, location.pathname]);
+    searchParams.delete('watch');
+    searchParams.delete('name');
+    setSearchParams(searchParams);
+  }, [searchParams, setSearchParams]);
+  // ==========================================
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const watchId = Number(params.get('watch'));
-    if (!watchId) return;
-    const selected = data.find((item) => item.id === watchId);
-    if (!selected) return;
-    setWatchItem(selected);
-    setWatchOpen(true);
-  }, [data, location.search]);
 
-  const playHero = useCallback(() => {
-    if (!currentHero) return;
-    const streamId =
-      currentHero.type === 'movie'
-        ? `${currentHero.type}/${currentHero.tmdbId}`
-        : `${currentHero.type}/${currentHero.tmdbId}/1/1`;
 
-    props.play(streamId);
-    const query = new URLSearchParams({
-      title: currentHero.name2 || 'Stream',
-      tmdb: streamId,
-      defaultImage: currentHero.img || currentHero.name || '',
-    });
-    navigate(`/stream?${query.toString()}`);
-  }, [currentHero, props, navigate]);
 
   const resumeContinueWatching = useCallback((item) => {
     if (!item?.streamId) return;
     props.play(item.streamId);
-    const query = new URLSearchParams({
-      title: item.title || 'Stream',
-      tmdb: item.streamId,
-      defaultImage: item.image || '',
-      episodes: JSON.stringify(item.episodes || []),
-    });
-    navigate(`/stream?${query.toString()}`);
+    // console.log('Navigating to streaming page for:', item);
+    const streamId = item.type === 'tv' ? `${item.tmdbId}/${item.season}/${item.episode}` : item.streamId;
+    
+    navigate(`/streaming/${streamId}`);
   }, [navigate, props]);
 
-  // ADDED: Handler to remove an item from the Continue Watching array
   const handleRemoveContinueWatching = useCallback((e, streamId) => {
-    e.stopPropagation(); // Prevents the click from firing resumeContinueWatching
+    e.stopPropagation();
     if (typeof removeContinueWatching === 'function') {
       removeContinueWatching(streamId);
     }
@@ -187,7 +175,6 @@ function Home(props) {
 
       {/* ===== HERO BANNER ===== */}
       <section className="relative w-full h-[75vh] sm:h-[85vh] md:h-[90vh] lg:h-[100vh] overflow-hidden bg-black">
-        {/* Background arts */}
         <div className="absolute inset-0">
           <div
             className="absolute inset-0 bg-cover bg-center block md:hidden transition-opacity duration-1000 ease-in-out"
@@ -199,15 +186,11 @@ function Home(props) {
           />
         </div>
 
-        {/* Netflix Signature Gradients */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.6)_100%)]" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#141414]/90 via-[#141414]/40 to-transparent w-[80%]" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/30 to-transparent bottom-0 h-[100%]" />
 
-        {/* Hero content */}
         <div className="absolute bottom-[10%] sm:bottom-[15%] left-0 w-full px-6 md:px-12 lg:px-16 flex flex-col items-start gap-4 z-10 w-full max-w-[90%] md:max-w-[50%]">
-
-          {/* Logo or Title */}
           {currentHero?.nameImg2 ? (
             <img src={currentHero.nameImg2} alt={currentHero.name2} className="max-w-[200px] md:max-w-[400px] lg:max-w-[500px] object-contain drop-shadow-2xl mb-2" />
           ) : (
@@ -216,7 +199,6 @@ function Home(props) {
             </h1>
           )}
 
-          {/* Ranking / Category Badge */}
           <div className="flex items-center gap-3 drop-shadow-md">
             <span className="flex items-center justify-center font-bold text-[#E50914] text-2xl md:text-4xl">
               N
@@ -238,7 +220,7 @@ function Home(props) {
           <div className="mt-4 flex gap-3 sm:gap-4 w-full sm:w-auto">
             <button
               type="button"
-              onClick={() => openWatch(currentHero?.id)}
+              onClick={() => openWatch(currentHero?.id)} // Changed this from direct navigate so it opens modal
               className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-6 sm:px-8 py-2 md:py-2.5 bg-[#6d6d6e]/70 text-white font-bold text-sm md:text-xl rounded hover:bg-[#6d6d6e] active:scale-95 transition backdrop-blur-sm"
               title="More Info"
             >
@@ -248,7 +230,6 @@ function Home(props) {
           </div>
         </div>
 
-        {/* Progress dots */}
         <div className="absolute bottom-6 md:bottom-10 left-0 w-full flex justify-center gap-2 z-10">
           {mediaData.slice(0, 5).map((_, i) => (
             <button
@@ -266,7 +247,6 @@ function Home(props) {
       <div className="px-6 md:px-12 lg:px-16 relative z-20 space-y-12 pb-12 mt-6 md:-mt-0">
         <Suspense fallback={<Skeleton type="section" count={10} />}>
 
-          {/* Continue Watching Section */}
           {continueWatching.length > 0 && (
             <RailRow
               title="Continue Watching"
@@ -283,7 +263,6 @@ function Home(props) {
                   onClick={() => resumeContinueWatching(item)}
                   title={item.title}
                 >
-                  {/* ADDED: Remove Button (X) */}
                   <button
                     onClick={(e) => handleRemoveContinueWatching(e, item.streamId)}
                     className="absolute top-2 right-2 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white/70 hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 border border-transparent hover:border-white/50 backdrop-blur-sm"
@@ -292,24 +271,19 @@ function Home(props) {
                     <i className="fa-solid fa-xmark"></i>
                   </button>
 
-                  {/* Thumbnail Image */}
                   <img
                     src={item.image || "https://via.placeholder.com/640x360.png?text=Resume"}
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                   />
-
-                  {/* Bottom Vignette for Text Legibility */}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent opacity-90" />
 
-                  {/* Central Play Button Overlay */}
                   <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <div className="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-white flex items-center justify-center bg-black/50 transform scale-75 group-hover:scale-100 transition-transform duration-300 shadow-xl">
                       <i className="fa-solid fa-play text-white text-xl md:text-2xl ml-1"></i>
                     </div>
                   </div>
 
-                  {/* Title & Metadata */}
                   <div className="absolute bottom-3 left-4 right-4 flex flex-col justify-end pointer-events-none">
                     <h4 className="text-white font-bold text-sm md:text-base line-clamp-1 drop-shadow-md">
                       {item.title}
@@ -321,14 +295,34 @@ function Home(props) {
                     )}
                   </div>
 
-                  {/* Authentic Red Progress Bar */}
                   <div className="absolute bottom-0 left-0 right-0 h-1 md:h-1.5 bg-gray-500/50">
-                    <div className="h-full bg-[#E50914] rounded-r-full" style={{ width: '65%' }}></div>
+                    <div className="h-full bg-[#E50914] rounded-r-full" style={{ width: '100%' }}></div>
                   </div>
                 </div>
               )}
             />
           )}
+
+          <RailRow
+            title="Studios"
+            railKey="Studio"
+            items={studios}
+            scrollState={scrollState}
+            setTrackRef={setTrackRef}
+            onRailScroll={onRailScroll}
+            handleRailScroll={handleRailScroll}
+            renderItem={(item) => (
+              <Card2
+                color={item.color}
+                bg={item.img}
+                himg={item.himg}
+                img={item.img}
+                studio={item.studio}
+                stu={() => props.stu(item.studio, item.bg)}
+              />
+            )}
+          />
+
 
           {/* Dynamic Rails */}
           {rails.map((rail, index) => {
@@ -350,7 +344,6 @@ function Home(props) {
                 renderItem={(item, idx) =>
                   isTop10 ? (
                     <div className="relative flex items-center justify-end pl-10 sm:pl-12 md:pl-20 py-2 sm:py-4 group">
-                      {/* Massive Netflix-style stroked number */}
                       <div
                         className="absolute left-0 bottom-[2%] md:bottom-[5%] text-[100px] sm:text-[140px] md:text-[200px] lg:text-[230px] font-black leading-none text-[#141414] select-none z-0 tracking-tighter drop-shadow-2xl transition-transform duration-300 group-hover:scale-105 origin-bottom-left"
                         style={{
@@ -361,7 +354,6 @@ function Home(props) {
                         {idx + 1}
                       </div>
 
-                      {/* Floating Card overlapping the number */}
                       <div className="relative z-10 w-full ml-4 md:ml-8 transform transition-transform duration-300 group-hover:-translate-y-2">
                         <Card
                           sow={openWatch}
@@ -388,54 +380,35 @@ function Home(props) {
             );
           })}
 
-          {/* Studios rail */}
-          <RailRow
-            title="Studios"
-            railKey="Studio"
-            items={studios}
-            scrollState={scrollState}
-            setTrackRef={setTrackRef}
-            onRailScroll={onRailScroll}
-            handleRailScroll={handleRailScroll}
-            renderItem={(item) => (
-              <Card2
-                color={item.color}
-                bg={item.img}
-                himg={item.himg}
-                img={item.img}
-                studio={item.studio}
-                stu={() => props.stu(item.studio, item.bg)}
-              />
-            )}
-          />
+
 
           <Footer />
         </Suspense>
       </div>
 
       {/* Watch modal */}
-      {watchOpen && (
+      {watchOpen && watchItem && (
         <Watch
           data={data}
           sow={openWatch}
           onClose={clearWatchFromUrl}
-          sid={watchItem?.id}
-          El={Array.isArray(props.e) && props.e.includes(watchItem?.id) ? 'ADDED' : '+'}
-          img={watchItem?.img}
-          type={watchItem?.type}
-          id={watchItem?.tmdbId}
-          s={watchItem?.episodes}
-          mname={watchItem?.name2}
-          name={watchItem?.nameImg2 || watchItem?.name2}
-          name2={watchItem?.name}
-          yr={watchItem?.releaseYear}
-          ua={watchItem?.ua}
-          season={watchItem?.season}
-          lan={watchItem?.language?.length || 0}
-          desc={watchItem?.desc}
-          cat={watchItem?.category}
-          language={watchItem?.language}
-          rating={watchItem?.rating}
+          sid={watchItem.id}
+          El={Array.isArray(props.e) && props.e.includes(watchItem.id) ? 'ADDED' : '+'}
+          img={watchItem.img}
+          type={watchItem.type}
+          id={watchItem.tmdbId}
+          s={watchItem.episodes}
+          mname={watchItem.name2}
+          name={watchItem.nameImg2 || watchItem.name2}
+          name2={watchItem.name}
+          yr={watchItem.releaseYear}
+          ua={watchItem.ua}
+          season={watchItem.season}
+          lan={watchItem.language?.length || 0}
+          desc={watchItem.desc}
+          cat={watchItem.category}
+          language={watchItem.language}
+          rating={watchItem.rating}
           add={props.add}
           e={props.e}
           play={props.play}

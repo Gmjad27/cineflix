@@ -7,6 +7,8 @@ import { fetchTMDBCatalog, fetchTMDBHomeSections } from "./content/tmdb.js";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Skeleton from "./components/Skeleton/Skeleton";
 import MovieViewAll from "./pages/ViewAll/MovieViewAll.jsx";
+import ScrollToTop from "./components/ScrollToTop";
+import Streaming from "./pages/Stream/streaming.jsx"; // Import the streaming component
 
 // ✅ Lazy-loaded page components
 const Home = lazy(() => import("./pages/Home/Home"));
@@ -18,6 +20,7 @@ const Search = lazy(() => import("./pages/Search/Search"));
 const Login = lazy(() => import("./pages/Auth/Login"));
 const Signup = lazy(() => import("./pages/Auth/Signup"));
 const Studio = lazy(() => import("./pages/Studio/Studio"));
+// const MovieDetails = lazy(() => import("./pages/MovieDetails/MovieDetails"));
 
 const safeParse = (value, fallback) => {
   if (value === null || value === undefined || value === "undefined" || value === "null" || value === "") {
@@ -86,9 +89,9 @@ function App() {
   }, []);
 
   const [El, setEl] = useState(() => safeParse(localStorage.getItem('El'), []));
-  
-  useEffect(() => { 
-    localStorage.setItem('El', JSON.stringify(El)); 
+
+  useEffect(() => {
+    localStorage.setItem('El', JSON.stringify(El));
   }, [El]);
 
   // Helper to show toasts
@@ -115,7 +118,7 @@ function App() {
 
   const [Img, setImg] = useState(() => safeParse(localStorage.getItem('IMG'), []));
   const [studio, setStudio] = useState(() => safeParse(localStorage.getItem('STUDIO'), []));
-  
+
   useEffect(() => {
     localStorage.setItem('IMG', JSON.stringify(Img));
     localStorage.setItem('STUDIO', JSON.stringify(studio));
@@ -124,22 +127,23 @@ function App() {
   const sow = (stud, img) => { setStudio(stud); setImg(img); };
 
   const [TID, setTID] = useState(() => safeParse(localStorage.getItem('TID'), []));
-  
-  useEffect(() => { 
-    localStorage.setItem('TID', JSON.stringify(TID)); 
+
+  useEffect(() => {
+    localStorage.setItem('TID', JSON.stringify(TID));
   }, [TID]);
-  
+
   const play = (tid) => setTID(tid);
 
   const sharedProps = { data: catalog, loading: catalogLoading, add, e: El, play };
 
   return (
-    <div className="min-h-screen bg-[#141414] text-white font-sans selection:bg-[#E50914] selection:text-white relative">
+    <div className="h-[100vh] sm:pt-16 bg-[#141414] text-white font-sans selection:bg-[#E50914] selection:text-white relative">
       <Router>
+        <ScrollToTop />
         <ErrorBoundary>
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              
+
               {/* Auth Routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
@@ -173,7 +177,7 @@ function App() {
                 </ProtectedRoute>
               } />
 
-              <Route path="/studio" element={
+              <Route path="/studio/:id" element={
                 <ProtectedRoute>
                   <Nav />
                   <Studio {...sharedProps} studio={studio} img={Img} />
@@ -193,6 +197,18 @@ function App() {
                   <Stream tid={TID} />
                 </ProtectedRoute>
               } />
+              <Route path="/streaming/:tmdbId/:season/:episode" element={
+                <ProtectedRoute>
+                  <Nav />
+                  <Streaming />
+                </ProtectedRoute>
+              } />
+              <Route path="/streaming/:tmdbId" element={
+                <ProtectedRoute>
+                  <Nav />
+                  <Streaming />
+                </ProtectedRoute>
+              } />
 
               <Route path="/viewall" element={
                 <ProtectedRoute>
@@ -210,12 +226,10 @@ function App() {
       </Router>
 
       {/* ✅ Premium Netflix-style Toast Notification */}
-      <div 
-        className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded shadow-2xl transition-all duration-300 pointer-events-none flex items-center gap-3 ${
-          toast.show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-        } ${
-          toast.isError ? 'bg-[#E50914] text-white' : 'bg-white text-black font-semibold'
-        }`}
+      <div
+        className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded shadow-2xl transition-all duration-300 pointer-events-none flex items-center gap-3 ${toast.show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          } ${toast.isError ? 'bg-[#E50914] text-white' : 'bg-white text-black font-semibold'
+          }`}
       >
         <i className={`fa-solid ${toast.isError ? 'fa-xmark' : 'fa-check'}`}></i>
         {toast.message}

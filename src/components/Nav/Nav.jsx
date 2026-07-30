@@ -140,11 +140,6 @@ const Nav = () => {
           })}
         </div>
       </nav>
-
-      {/* Spacer to offset fixed header */}
-      {/* <div className="h-16 hidden md:block" /> */}
-      <div className="h-14 md:hidden" />
-      {/* <div className="h-16 md:hidden" /> */}
     </>
   );
 };

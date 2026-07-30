@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../Card/Card';
-import RailRow from '../RailRow/RailRow';
+
 import { useRailScroll } from '../../hooks/useRailScroll';
 import { fetchTMDBDetails, fetchTMDBSeasonDetails } from '../../content/tmdb.js';
+import { getWatchedEpisodes, markEpisodeWatched, unmarkEpisodeWatched } from '../../utils/continueWatching';
 
 const getSeasonNumber = (seasonKey) => {
   const parsed = Number(String(seasonKey).replace('s', ''));
@@ -50,7 +51,27 @@ const Watch = (props) => {
   const effectiveSeasonKeys = props.type === 'tv' && seasonKeys.length === 0 ? ['s1'] : seasonKeys;
   const [ep, setEp] = useState(seasonKeys[0] || 's1');
 
-  const { scrollState, setTrackRef, onRailScroll, handleRailScroll } = useRailScroll(['related']);
+  const [watchedEpisodes, setWatchedEpisodes] = useState(() => getWatchedEpisodes(props.id));
+
+  // ==========================================
+  // ADDED: Track if a MOVIE has been watched
+  // ==========================================
+  const [hasWatchedMovie, setHasWatchedMovie] = useState(false);
+
+  useEffect(() => {
+    setWatchedEpisodes(getWatchedEpisodes(props.id));
+
+    // Check localStorage to see if this movie is in the Continue Watching list
+    if (props.type === 'movie') {
+      try {
+        const history = JSON.parse(localStorage.getItem('continueWatching')) || [];
+        const isWatched = history.some(item => String(item.tmdbId) === String(props.id));
+        setHasWatchedMovie(isWatched);
+      } catch (err) {
+        console.error("Error reading continueWatching from localStorage", err);
+      }
+    }
+  }, [props.id, props.type]);
 
   const isDetailsLoading = props.type && props.id && !details;
 
@@ -79,7 +100,7 @@ const Watch = (props) => {
     if (langs?.length && !activeLang) {
       setActiveLang(langs[0]);
     }
-  }, [details, props.language]);
+  }, [details, props.language, activeLang]);
 
   // Reset Season Selection
   useEffect(() => {
@@ -107,9 +128,9 @@ const Watch = (props) => {
 
   const closeWatch = useCallback(() => {
     setEp(effectiveSeasonKeys[0] || 's1');
-    const watch = document.getElementById('watch');
-    if (watch) watch.style.display = 'none';
-    if (typeof props.onClose === 'function') props.onClose();
+    if (typeof props.onClose === 'function') {
+      props.onClose();
+    }
   }, [effectiveSeasonKeys, props.onClose]);
 
   useEffect(() => {
@@ -147,23 +168,72 @@ const Watch = (props) => {
       airDate: '',
     }));
   }, [episodeCount, props.img, seasonDetails, selectedSeason, shownDesc]);
-  
+
+  const watchedInSeason = useMemo(
+    () => watchedEpisodes.filter((key) => key.startsWith(`${selectedSeason}-`)).length,
+    [watchedEpisodes, selectedSeason]
+  );
+
+  const isWatched = useCallback(
+    (episodeNumber) => watchedEpisodes.includes(`${selectedSeason}-${episodeNumber}`),
+    [watchedEpisodes, selectedSeason]
+  );
+
+  const toggleEpisodeWatched = useCallback((episodeNumber) => {
+    const key = `${selectedSeason}-${episodeNumber}`;
+    setWatchedEpisodes((prev) => {
+      if (prev.includes(key)) {
+        unmarkEpisodeWatched(props.id, selectedSeason, episodeNumber);
+        return prev.filter((k) => k !== key);
+      }
+      markEpisodeWatched(props.id, selectedSeason, episodeNumber);
+      return [...prev, key];
+    });
+  }, [props.id, selectedSeason]);
+
+  const lastWatchedEp = useMemo(() => {
+    if (props.type !== 'tv' || !watchedEpisodes || watchedEpisodes.length === 0) return null;
+    let maxS = 1;
+    let maxE = 1;
+    watchedEpisodes.forEach(epKey => {
+      const [s, e] = epKey.split('-').map(Number);
+      if (s > maxS) {
+        maxS = s;
+        maxE = e;
+      } else if (s === maxS && e > maxE) {
+        maxE = e;
+      }
+    });
+    return { season: maxS, episode: maxE };
+  }, [watchedEpisodes, props.type]);
+
   const backgroundImage = details?.mbg;
-  
+
   const handlePlayNow = useCallback(() => {
-    const streamId = props.type === 'movie' ? `${props.type}/${props.id}` : `${props.type}/${props.id}/1/1`;
+    let targetSeason = 1;
+    let targetEpisode = 1;
+
+    if (props.type === 'tv' && lastWatchedEp) {
+      targetSeason = lastWatchedEp.season;
+      targetEpisode = lastWatchedEp.episode;
+    }
+
+    const streamId = props.type === 'movie'
+      ? `${props.id}`
+      : `${props.id}/${targetSeason}/${targetEpisode}`;
+
     props.play(streamId);
-    const queryData = {
-      title: props.mname,
-      type: props.type,
-      tmdbId: props.id,
-      currentSeason: selectedSeason,
-      defaultImage: backgroundImage || props.img,
-      episodes: JSON.stringify(episodeCards)
-    };
-    const queryString = new URLSearchParams(queryData).toString();
-    navigate(`/stream?name=${props.mname}&tmdb=${streamId}&${queryString}`);
-  }, [props.type, props.id, props.play, props.mname, selectedSeason, backgroundImage, episodeCards, navigate]);
+    navigate(`/streaming/${streamId}`, {
+      state: {
+        title: props.mname,
+        type: props.type,
+        tmdbId: props.id,
+        image: backgroundImage || props.img,
+        season: props.type === 'tv' ? targetSeason : undefined,
+        episode: props.type === 'tv' ? targetEpisode : undefined,
+      },
+    });
+  }, [props.type, props.id, props.play, props.mname, backgroundImage, props.img, navigate, lastWatchedEp]);
 
   const seasonLabel = props.type === 'tv'
     ? details?.seasonLabel || `${effectiveSeasonKeys.length} Season${effectiveSeasonKeys.length > 1 ? 's' : ''}`
@@ -239,7 +309,7 @@ const Watch = (props) => {
         play={(tid) => props.play(tid)}
         onClick={() => {
           if (typeof props.sow === 'function') props.sow(item.id);
-          const container = document.getElementById('watch-modal');
+          const container = document.getElementById('watch');
           container?.scrollTo({ top: 0, behavior: 'smooth' });
         }}
       />
@@ -247,14 +317,33 @@ const Watch = (props) => {
     [props]
   );
 
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    containerRef.current?.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, [props.id]);
+
+  // ==========================================
+  // ADDED: Determine Button Text dynamically
+  // ==========================================
+  let playButtonText = 'Play';
+  if (props.type === 'tv' && lastWatchedEp) {
+    playButtonText = `Continue Watching S${lastWatchedEp.season} E${lastWatchedEp.episode}`;
+  } else if (props.type === 'movie' && hasWatchedMovie) {
+    playButtonText = 'Continue Watching';
+  }
+
   return (
     <div
       className="fixed inset-0 z-[100] flex justify-center items-start pt-0 sm:pt-8 overflow-y-auto bg-black/70 backdrop-blur-[2px]"
       id="watch"
+      ref={containerRef}
       onClick={closeWatch}
       style={{ animation: 'overlayFade 0.3s ease-out forwards' }}
     >
-      {/* ─── ADDED: Custom Animations ─── */}
       <style>
         {`
           @keyframes overlayFade {
@@ -269,13 +358,12 @@ const Watch = (props) => {
       </style>
 
       <div
-        id="watch-modal"
-        /* Removed animate-[fadeIn_0.2s_ease-out] from className, added style prop below */
-        className="relative w-full max-w-[950px] min-h-screen sm:min-h-0 bg-[#181818] text-white sm:rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.8)] overflow-hidden mb-0 sm:mb-8"
+        id="watch"
+        ref={containerRef}
+        className="relative w-full max-w-[950px] min-h-screen sm:min-h-0 bg-[#181818] text-white sm:rounded shadow-[0_0_20px_rgba(0,0,0,0.8)] overflow-hidden mb-0 sm:mb-8"
         onClick={(e) => e.stopPropagation()}
         style={{ animation: 'modalPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
       >
-        {/* Close Button */}
         <button
           className="absolute top-3 right-3 sm:top-4 sm:right-4 font-sans text-3xl z-50 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-[#181818] hover:bg-[#2a2a2a] text-white transition-colors duration-200"
           onClick={closeWatch}
@@ -303,13 +391,22 @@ const Watch = (props) => {
               title={`${props.mname} trailer`}
               frameBorder="0"
               allow="autoplay; encrypted-media"
-              className="pointer-events-none absolute inset-0 w-[105%] h-[300%] -top-[100%] transition-opacity duration-1000"
+              className="pointer-events-none absolute inset-0 w-[130%] h-[200%] -top-[51%] -left-[15%] transition-opacity duration-1000"
               onLoad={() => setTrailerLoaded(true)}
             />
           )}
 
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_50%,rgba(0,0,0,0.4)_100%)] pointer-events-none"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-[#181818] via-[#181818]/50 to-transparent bottom-0 h-[101%] pointer-events-none"></div>
+
+          {/* ========================================== */}
+          {/* ADDED: Movie red progress underline on Hero  */}
+          {/* ========================================== */}
+          {props.type === 'movie' && hasWatchedMovie && (
+            <div className="absolute bottom-0 left-0 w-full h-1 bg-[#404040] z-50">
+              <div className="h-full bg-red-600 shadow-[0_0_10px_red]" style={{ width: '100%' }}></div>
+            </div>
+          )}
 
           {/* Hero Content Overlays */}
           <div className="absolute bottom-[5%] left-0 w-full px-4 sm:px-8 md:px-12 flex flex-col gap-3 sm:gap-4">
@@ -325,7 +422,7 @@ const Watch = (props) => {
                 onClick={handlePlayNow}
               >
                 <i className="fa-solid fa-play"></i>
-                Play
+                {playButtonText}
               </button>
 
               <button
@@ -356,10 +453,7 @@ const Watch = (props) => {
 
         {/* ─── Content Body ─── */}
         <div className="px-4 sm:px-8 md:px-12 py-2 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-x-12 gap-y-5 sm:gap-y-6">
-
-          {/* Left Column: Metadata & Description */}
           <div className="space-y-3 sm:space-y-4">
-
             <div className="flex items-center gap-2 sm:gap-3 text-[13px] sm:text-[15px] font-medium flex-wrap">
               <span className="text-[#46d369] font-bold">{ratingMatch}</span>
               <span className="text-gray-300">{year}</span>
@@ -370,7 +464,7 @@ const Watch = (props) => {
               {nextEp && (
                 <p className="text-[11px] sm:text-xs font-bold tracking-widest text-[#e8b84b] uppercase flex items-center gap-2 w-full sm:w-auto">
                   <i className="fa-solid fa-bolt text-[10px]"></i>
-                  New episode coming on : <span className="text-slate-200 tracking-normal normal-case font-medium">{formatAirDate(nextEp) || nextEp}</span>
+                  New episode on : <span className="text-slate-200 tracking-normal normal-case font-medium">{formatAirDate(nextEp) || nextEp}</span>
                 </p>
               )}
             </div>
@@ -387,18 +481,7 @@ const Watch = (props) => {
             </p>
           </div>
 
-          {/* Right Column: Cast & Genres */}
           <div className="space-y-3 text-[13px] sm:text-[14px] leading-snug">
-            {cast.length > 0 && (
-              <div>
-                <span className="text-[#777777]">Cast: </span>
-                <span className="text-gray-200 hover:underline cursor-pointer">
-                  {cast.slice(0, 3).map(a => a.name).join(', ')}
-                </span>
-                {cast.length > 3 && <span className="text-gray-200 italic hover:underline cursor-pointer">, more</span>}
-              </div>
-            )}
-
             {shownCategories?.length > 0 && (
               <div>
                 <span className="text-[#777777]">Genres: </span>
@@ -418,6 +501,65 @@ const Watch = (props) => {
             )}
           </div>
         </div>
+
+        {cast && cast.length > 0 && (
+          <div className="px-6 sm:px-10 md:px-14 mt-10">
+            <h3 className="text-xl sm:text-2xl font-semibold text-white/95 mb-6 tracking-wide">
+              Cast
+            </h3>
+
+            {/* Scroll Container */}
+            <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-6 scroll-smooth snap-x snap-mandatory
+      /* Custom Webkit Scrollbar */
+      [&::-webkit-scrollbar]:h-2
+      [&::-webkit-scrollbar-track]:rounded-full
+      [&::-webkit-scrollbar-track]:bg-white/5
+      [&::-webkit-scrollbar-thumb]:rounded-full
+      [&::-webkit-scrollbar-thumb]:bg-white/20
+      hover:[&::-webkit-scrollbar-thumb]:bg-white/40
+      transition-all duration-300"
+            >
+              {cast.slice(0, 15).map((actor, idx) => {
+                const imageUrl = actor.image ||
+                  (actor.profile_path
+                    ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+                    : 'https://via.placeholder.com/150/1a1a1a/ffffff?text=User');
+
+                return (
+                  <div
+                    key={actor.id || idx}
+                    className="group flex flex-col items-center flex-shrink-0 w-[90px] sm:w-[110px] snap-start cursor-pointer"
+                  >
+                    {/* Image Wrapper with Gradient Ring Hover Effect */}
+                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-[2px] bg-gradient-to-tr from-transparent via-gray-700/50 to-gray-600/50 group-hover:from-blue-500 group-hover:via-purple-500 group-hover:to-pink-500 transition-all duration-500 ease-out group-hover:-translate-y-1 group-hover:shadow-lg group-hover:shadow-purple-500/25">
+
+                      <div className="w-full h-full rounded-full overflow-hidden bg-gray-900">
+                        <img
+                          src={imageUrl}
+                          alt={actor.name}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          loading="lazy"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Typography */}
+                    <div className="mt-3 text-center w-full px-1">
+                      <span className="block text-sm text-gray-300 font-medium line-clamp-1 group-hover:text-white transition-colors duration-300">
+                        {actor.name}
+                      </span>
+                      {actor.character && (
+                        <span className="block text-[11px] sm:text-xs text-gray-500 mt-0.5 line-clamp-1 group-hover:text-gray-400 transition-colors duration-300">
+                          {actor.character}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ─── Episodes Section ─── */}
         {props.type === 'tv' && effectiveSeasonKeys.length > 0 && (
@@ -441,6 +583,7 @@ const Watch = (props) => {
             <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-300 mb-4 font-medium">
               <span>Season {selectedSeason}: {episodeCards.length} episode{episodeCards.length !== 1 ? 's' : ''}</span>
               <span className="border border-gray-400 px-1 py-[1px] text-[10px] font-semibold rounded-[3px] text-white leading-none flex items-center h-4">{shownAgeRating}</span>
+
             </div>
 
             <div className="flex flex-col">
@@ -448,40 +591,52 @@ const Watch = (props) => {
                 const episodeNumber = episode.number || index + 1;
                 const airDateLabel = formatAirDate(episode.airDate);
                 const isNew = isRecentlyAired(episode.airDate);
+                const watched = isWatched(episodeNumber);
 
                 return episode.runtime !== undefined && (
                   <div
                     key={episode.id || index}
-                    className="group flex flex-col sm:flex-row items-start sm:items-center p-3 sm:p-4 border-b border-[#404040] hover:bg-[#2a2a2a] cursor-pointer transition rounded-md sm:rounded-none"
+                    className={`group flex flex-col sm:flex-row items-start sm:items-center p-3 sm:p-4 border-b cursor-pointer transition rounded-md sm:rounded-none ${watched ? 'border-[#404040]/60 hover:bg-[#2a2a2a]/60' : 'border-[#404040] hover:bg-[#2a2a2a]'
+                      }`}
                     onClick={() => {
+                      markEpisodeWatched(props.id, selectedSeason, episodeNumber);
+                      setWatchedEpisodes((prev) =>
+                        prev.includes(`${selectedSeason}-${episodeNumber}`)
+                          ? prev
+                          : [...prev, `${selectedSeason}-${episodeNumber}`]
+                      );
+
                       const streamId = `${props.type}/${props.id}/${selectedSeason}/${episodeNumber}`;
                       props.play(streamId);
-                      const queryData = {
-                        title: props.mname,
-                        type: props.type,
-                        tmdbId: props.id,
-                        currentSeason: selectedSeason,
-                        defaultImage: props.img,
-                        episodes: JSON.stringify(episodeCards),
-                      };
-                      const queryString = new URLSearchParams(queryData).toString();
-                      navigate(`/stream?name=${props.mname}&tmdb=${streamId}&${queryString}`);
+                      navigate(`/streaming/${props.id}/${selectedSeason}/${episodeNumber}`, {
+                        state: {
+                          title: props.mname,
+                          episodeName: episode.name,
+                          type: props.type,
+                          tmdbId: props.id,
+                          image: episode.image || props.img,
+                          season: selectedSeason,
+                          episode: episodeNumber,
+                        },
+                      });
                     }}
                   >
                     <div className="flex items-center w-full mb-3 sm:mb-0">
-                      {/* Episode Number */}
-                      <span className="text-lg sm:text-2xl text-gray-400 font-normal w-6 sm:w-10 text-center flex-shrink-0 group-hover:text-white transition-colors">
-                        {episodeNumber}
-                      </span>
 
-                      {/* Thumbnail */}
                       <div className="relative w-24 sm:w-[120px] aspect-video rounded overflow-hidden flex-shrink-0 bg-gray-800 mr-3 sm:mr-4">
                         <img
                           src={episode.image || props.img}
                           alt={episode.name}
-                          className="w-full h-full object-cover"
+                          className={`w-full h-full object-cover transition-opacity ${watched ? 'opacity-70' : ''}`}
                         />
-                        {isNew && (
+
+                        {watched && (
+                          <div className="absolute bottom-0 left-0 w-full h-1 bg-[#404040]">
+                            <div className="h-full bg-red-600" style={{ width: '100%' }}></div>
+                          </div>
+                        )}
+
+                        {isNew && !watched && (
                           <span className="absolute top-1 left-1 bg-[#e8b84b] text-black text-[9px] font-bold px-1.5 py-[1px] rounded-[2px] tracking-wide">
                             NEW
                           </span>
@@ -490,20 +645,21 @@ const Watch = (props) => {
                           <i className="fa-regular fa-circle-play text-white text-2xl sm:text-3xl"></i>
                         </div>
                       </div>
-
-                      {/* Episode Details */}
                       <div className="flex flex-col justify-center flex-1 min-w-0 pr-2">
                         <div className="flex items-start sm:items-center justify-between mb-1 gap-2">
-                          <h4 className="text-[14px] sm:text-base font-bold text-white truncate">
+                          <h4 className={`text-[14px] sm:text-base font-bold truncate ${watched ? 'text-gray-300' : 'text-white'}`}>
                             {episode.name || `Episode ${episodeNumber}`}
                           </h4>
-                          <span className="text-xs sm:text-sm text-gray-400 flex-shrink-0 whitespace-nowrap">
-                            {[episode.runtime > 0 ? `${episode.runtime}m` : null, airDateLabel]
-                              .filter(Boolean)
-                              .join(' · ')}
-                          </span>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="text-xs sm:text-sm text-gray-400 whitespace-nowrap">
+                              {[episode.runtime > 0 ? `${episode.runtime}m` : null, airDateLabel]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </span>
+
+                          </div>
                         </div>
-                        <p className="text-[12px] sm:text-[14px] text-gray-400 line-clamp-2 leading-snug">
+                        <p className={`text-[12px] sm:text-[14px] line-clamp-2 leading-snug ${watched ? 'text-gray-500' : 'text-gray-400'}`}>
                           {episode.overview || 'Synopsis not available.'}
                         </p>
                       </div>
@@ -516,19 +672,14 @@ const Watch = (props) => {
         )}
 
         {/* ─── More Like This ─── */}
-        <div className="px-4 sm:px-8 md:px-12 mt-10 sm:mt-12 mb-10 sm:mb-12">
+        <div className="sm:px-8 md:px-12 mt-10 sm:mt-12 mb-10 sm:mb-12">
           {related.length > 0 && (
-            <RailRow
-              title="More Like This"
-              railKey="related"
-              items={related}
-              scrollState={scrollState}
-              setTrackRef={setTrackRef}
-              onRailScroll={onRailScroll}
-              handleRailScroll={handleRailScroll}
-              eager
-              renderItem={renderRelatedCard}
-            />
+            <>
+              <h3 className="text-2xl font-bold text-white">More Like This</h3>
+              <div className="flex flex-wrap justify-around">
+                {related.map((item) => renderRelatedCard(item))}
+              </div>
+            </>
           )}
         </div>
       </div>

@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom'; // CHANGED: Imported useSearchParams
 import Card from '../../components/Card/Card';
 import Watch from '../../components/Watch/Watch';
 import { searchTMDBTitles } from '../../content/tmdb';
@@ -23,20 +23,35 @@ const scoreItem = (item, value) => {
 };
 
 const Search = (props) => {
-  const [query, setQuery] = useState('');
+  const navigate = useNavigate();
+  
+  // ==========================================
+  // ADDED: URL State Management
+  // ==========================================
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Read initial query from URL so it survives the "Back" button
+  const urlQuery = searchParams.get('q') || '';
+  const [query, setQuery] = useState(urlQuery);
+  
   const [remoteResults, setRemoteResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [watchOpen, setWatchOpen] = useState(false);
-  const [watchItem, setWatchItem] = useState(null);
 
-  const navigate = useNavigate();
-  const location = useLocation();
   const data = Array.isArray(props.data) ? props.data : [];
   const normalizedQuery = query.trim().toLowerCase();
 
-  useEffect(() => {
-    if (!watchItem && data.length > 0) setWatchItem(data[0]);
-  }, [data, watchItem]);
+  // Sync search input with the URL using replace: true (so we don't spam the back-button history)
+  const handleSearchChange = (newQuery) => {
+    setQuery(newQuery);
+    setSearchParams(
+      (prev) => {
+        if (newQuery) prev.set('q', newQuery);
+        else prev.delete('q');
+        return prev;
+      },
+      { replace: true } 
+    );
+  };
 
   // ==========================================
   // API Fetch with Debounce & AbortController
@@ -105,32 +120,37 @@ const Search = (props) => {
   const { scrollState, setTrackRef, onRailScroll, handleRailScroll } = useRailScroll(railKeys);
 
   // ==========================================
-  // Watch modal logic
+  // Watch modal logic tied purely to URL
   // ==========================================
+  const watchId = searchParams.get('watch');
+
+  // Derive watchItem directly from the URL and combined lookup. 
+  // No useState needed, and it perfectly survives back/refresh.
+  const watchItem = useMemo(() => {
+    if (!watchId) return null;
+    return combinedForLookup.find((item) => String(item.id) === String(watchId));
+  }, [watchId, combinedForLookup]);
+
+  const watchOpen = !!watchItem;
+
   const openWatch = useCallback((id) => {
-    const selected = combinedForLookup.find((item) => item.id === id);
+    const selected = combinedForLookup.find((item) => String(item.id) === String(id));
     if (!selected) return;
-    setWatchItem(selected);
-    setWatchOpen(true);
-    navigate(`${location.pathname}?watch=${selected.id}&name=${encodeURIComponent(selected.name2)}`);
-  }, [combinedForLookup, navigate, location.pathname]);
+    
+    setSearchParams((prev) => {
+      prev.set('watch', selected.id);
+      if (selected.name2) prev.set('name', selected.name2);
+      return prev;
+    });
+  }, [combinedForLookup, setSearchParams]);
 
   const clearWatchFromUrl = useCallback(() => {
-    setWatchOpen(false);
-    navigate(location.pathname);
-  }, [navigate, location.pathname]);
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const watchId = Number(params.get('watch'));
-    if (!watchId) return;
-
-    const selected = combinedForLookup.find((item) => item.id === watchId);
-    if (!selected) return;
-
-    setWatchItem(selected);
-    setWatchOpen(true);
-  }, [combinedForLookup, location.search]);
+    setSearchParams((prev) => {
+      prev.delete('watch');
+      prev.delete('name');
+      return prev;
+    });
+  }, [setSearchParams]);
 
   const renderCard = useCallback(
     (item) => (
@@ -181,13 +201,13 @@ const Search = (props) => {
             className="w-full pl-12 sm:pl-16 pr-12 py-3 sm:py-4 bg-[#242424] border border-[#333] hover:border-gray-500 rounded text-white text-lg sm:text-xl md:text-2xl font-medium placeholder-gray-500 focus:outline-none focus:border-white focus:bg-[#2a2a2a] transition-all shadow-inner"
             placeholder="Search for movies, series, genres..."
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             autoFocus
           />
           {/* Clear Button */}
           {query && (
             <button
-              onClick={() => setQuery('')}
+              onClick={() => handleSearchChange('')}
               className="absolute right-4 sm:right-6 text-gray-400 hover:text-white transition text-xl p-2"
               aria-label="Clear search"
             >
@@ -297,28 +317,28 @@ const Search = (props) => {
       <Footer />
 
       {/* Watch Modal */}
-      {watchOpen && (
+      {watchOpen && watchItem && (
         <Watch
           data={combinedForLookup}
           sow={openWatch}
           onClose={clearWatchFromUrl}
-          sid={watchItem?.id}
-          El={Array.isArray(props.e) && props.e.includes(watchItem?.id) ? 'ADDED' : '+'}
-          img={watchItem?.img}
-          type={watchItem?.type}
-          id={watchItem?.tmdbId}
-          s={watchItem?.episodes}
-          mname={watchItem?.name2}
-          name={watchItem?.nameImg}
-          name2={watchItem?.name}
-          yr={watchItem?.releaseYear}
-          ua={watchItem?.ua}
-          season={watchItem?.season}
-          lan={watchItem?.language?.length || 0}
-          desc={watchItem?.desc}
-          cat={watchItem?.category}
-          rating={watchItem?.rating}
-          language={watchItem?.language}
+          sid={watchItem.id}
+          El={Array.isArray(props.e) && props.e.includes(watchItem.id) ? 'ADDED' : '+'}
+          img={watchItem.img}
+          type={watchItem.type}
+          id={watchItem.tmdbId}
+          s={watchItem.episodes}
+          mname={watchItem.name2}
+          name={watchItem.nameImg}
+          name2={watchItem.name}
+          yr={watchItem.releaseYear}
+          ua={watchItem.ua}
+          season={watchItem.season}
+          lan={watchItem.language?.length || 0}
+          desc={watchItem.desc}
+          cat={watchItem.category}
+          rating={watchItem.rating}
+          language={watchItem.language}
           add={props.add}
           e={props.e}
           play={props.play}

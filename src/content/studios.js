@@ -2,19 +2,20 @@ export const STUDIO_COLLECTIONS = [
   {
     key: "PRIME VIDEO",
     label: "PRIME VIDEO",
-    img: "https://upload.wikimedia.org/wikipedia/commons/1/11/Amazon_Prime_Video_logo.svg",
-    bg: "https://www.cnet.com/a/img/resize/b3d77540535b980192421ac4d1aa5687dc1d1eaa/hub/2022/10/03/10a0d96d-1b0b-4f8f-ba3b-b893d21edb65/prime-video.jpg?auto=webp&fit=crop&height=675&width=1200",
+    img: "https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.png",
+    bg: "https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.png",
     color: "#00A8E1",
-    companyIds: [21, 20580],
-    networkIds: [1024]
+    companyIds: [21, 41, 60, 20580, 210099],
+    networkIds: [1024, 6219, 922]
   },
+
   {
     key: "APPLE TV PLUS",
     label: "APPLE TV PLUS",
     img: "https://upload.wikimedia.org/wikipedia/commons/2/28/Apple_TV_Plus_Logo.svg",
     bg: "https://cdn.mos.cms.futurecdn.net/8d8GYMeugMGTHYYNzKPdP-2560-80.jpg",
     color: "#A2A2A2",
-    companyIds: [127928],
+    companyIds: [127928, 198031],
     networkIds: [2552]
   },
   {
@@ -23,26 +24,27 @@ export const STUDIO_COLLECTIONS = [
     img: "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
     bg: "https://wallpapercave.com/wp/wp14818830.webp",
     color: "#E50914",
-    companyIds: [178464],
+    companyIds: [178464, 171251, 193619, 145174],
     networkIds: [213]
   },
+
   {
-    key: "HBO",
-    label: "HBO",
-    img: "https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg",
-    bg: "https://wallpapers.com/images/hd/hbo-max-bubbles-f30tuj7m9kdocwaa.jpg",
+    key: "HBO MAX",
+    label: "HBO MAX",
+    img: "https://1000logos.net/wp-content/uploads/2022/02/HBO-Max-Logo.png",
+    bg: "https://1000logos.net/wp-content/uploads/2022/02/HBO-Max-Logo.png",
     color: "#8A2BE2",
-    companyIds: [3268, 125306, 7429],
-    networkIds: [3186, 49]
+    companyIds: [3268, 7429, 125306, 158691, 14914, 174, 17, 1957, 2785],
+    networkIds: [49, 3186, 8304]
   },
   {
     key: "PEACOCK",
     label: "PEACOCK",
-    img: "https://upload.wikimedia.org/wikipedia/commons/d/d3/NBCUniversal_Peacock_Logo.svg",
-    bg: "https://static0.howtogeekimages.com/wordpress/wp-content/uploads/2023/02/Peacock-logo.jpg?w=1600&h=900&fit=crop",
+    img: "https://logos-world.net/wp-content/uploads/2023/03/Peacock-Logo.png",
+    bg: "https://logos-world.net/wp-content/uploads/2023/03/Peacock-Logo.png",
     color: "#F5A623",
-    companyIds: [33],
-    networkIds: [3353]
+    companyIds: [33, 26727, 34047, 12053],
+    networkIds: [3353, 6]
   },
   {
     key: "PARAMOUNT",
@@ -50,8 +52,8 @@ export const STUDIO_COLLECTIONS = [
     img: "https://upload.wikimedia.org/wikipedia/commons/4/4e/Paramount%2B_logo.svg",
     bg: "https://static0.cbrimages.com/wordpress/wp-content/uploads/2022/09/Paramount-logo.jpg?w=1200&h=675&fit=crop",
     color: "#0064FF",
-    companyIds: [4],
-    networkIds: [4330]
+    companyIds: [4, 6329, 1081, 270146],
+    networkIds: [4330, 6631, 2199]
   },
   {
     key: "DISNEY",
@@ -60,15 +62,15 @@ export const STUDIO_COLLECTIONS = [
     bg: "https://slidechef.net/wp-content/uploads/2024/03/disney-cartoons-background.jpg",
     color: "#113CCF",
     companyIds: [2],
-    networkIds: [2739]
+    networkIds: [2739, 4429, 622]
   },
   {
     key: "MARVEL",
     label: "MARVEL",
-    img: "https://images.seeklogo.com/logo-png/8/2/marvel-comics-logo-png_seeklogo-88891.png",
-    bg: "https://wallpapers.com/images/hd/marvel-avengers-desktop-bsa65ym0ihghczm4.jpg",
+    img: "https://www.pngall.com/wp-content/uploads/13/Marvel-Logo-PNG.png",
+    bg: "https://www.pngall.com/wp-content/uploads/13/Marvel-Logo-PNG.png",
     color: "#ED1D24",
-    companyIds: [420],
+    companyIds: [420, 7505, 11106, 13252],
     networkIds: []
   },
   {
@@ -77,7 +79,7 @@ export const STUDIO_COLLECTIONS = [
     img: "https://i.redd.it/cfvhmn3tv4af1.png",
     bg: "https://images.thedirect.com/media/article_full/dcsetback.jpg",
     color: "#0074E8",
-    companyIds: [429, 9993],
+    companyIds: [184898, 9993, 429, 125306, 230018],
     networkIds: []
   },
   // ── New additions ──
@@ -87,72 +89,9 @@ export const STUDIO_COLLECTIONS = [
     img: "https://commons.wikimedia.org/wiki/Special:FilePath/Hulu%20logo%20(2018).svg",
     bg: "https://wallpapers.com/images/hd/hulu-streaming-service-background-9r1x0q0z1s7v9y2g.jpg",
     color: "#1CE783",
-    companyIds: [],
-    networkIds: [453]
-  },
-  {
-    key: "WARNER BROS",
-    label: "WARNER BROS",
-    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Warner%20Bros%20logo.svg",
-    bg: "https://wallpapers.com/images/hd/warner-bros-studio-lot-background-default.jpg",
-    color: "#003057",
-    companyIds: [174],
-    networkIds: []
-  },
-  {
-    key: "UNIVERSAL",
-    label: "UNIVERSAL",
-    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Universal%20Pictures%20logo.svg",
-    bg: "https://wallpapers.com/images/hd/universal-pictures-globe-background-default.jpg",
-    color: "#000000",
-    companyIds: [33],
-    networkIds: []
-  },
-  {
-    key: "SONY PICTURES",
-    label: "SONY PICTURES",
-    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Sony%20Pictures%20Television%20Logo.svg",
-    bg: "https://wallpapers.com/images/hd/sony-pictures-studio-background-default.jpg",
-    color: "#FFFFFF",
-    companyIds: [34],
-    networkIds: []
-  },
-  {
-    key: "LIONSGATE",
-    label: "LIONSGATE",
-    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Lionsgate.svg",
-    bg: "https://wallpapers.com/images/hd/lionsgate-films-background-default.jpg",
-    color: "#000000",
-    companyIds: [1632],
-    networkIds: []
-  },
-  {
-    key: "A24",
-    label: "A24",
-    img: "https://commons.wikimedia.org/wiki/Special:FilePath/A24%20Logo.svg",
-    bg: "https://wallpapers.com/images/hd/a24-films-minimal-background-default.jpg",
-    color: "#000000",
-    companyIds: [41077],
-    networkIds: []
-  },
-  {
-    key: "PIXAR",
-    label: "PIXAR",
-    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Pixar%20logo.svg",
-    bg: "https://wallpapers.com/images/hd/pixar-animation-studios-background-default.jpg",
-    color: "#0F9DD7",
-    companyIds: [3],
-    networkIds: []
-  },
-  {
-    key: "LUCASFILM",
-    label: "LUCASFILM / STAR WARS",
-    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Lucasfilm%20logo.svg",
-    bg: "https://wallpapers.com/images/hd/star-wars-galaxy-background-default.jpg",
-    color: "#FFE81F",
-    companyIds: [1],
-    networkIds: []
-  },
+    companyIds: [25893, 11461], // Fetches Hulu Original Movies 
+    networkIds: [453]           // Fetches Hulu TV Shows
+  }
 
 ];
 

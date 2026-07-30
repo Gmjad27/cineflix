@@ -216,9 +216,9 @@ const Profile = (props) => {
             </div>
 
             {/* Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-10">
+            <div className="flex flex-wrap w-full justify-evenly gap-2">
               {displayedItems.map((item) => (
-                <div key={item.id} className="w-full flex justify-center">
+                <div key={item.id} className="">
                    <Card
                     sow={openWatch}
                     id={item.id}
@@ -230,7 +230,7 @@ const Profile = (props) => {
                     e={props.e}
                     play={props.play}
                     // Removing strict width limits from Card so it fills the grid column
-                    width="100%"
+                    // width="100%"
                   />
                 </div>
               ))}
