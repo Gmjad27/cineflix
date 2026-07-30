@@ -1,9 +1,12 @@
 import React, { useEffect, useMemo, useState, useCallback, lazy, Suspense } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom'; // CHANGED: Imported useSearchParams
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Watch from '../../components/Watch/Watch';
 import RailRow from '../../components/RailRow/RailRow.jsx';
 import { useRailScroll } from '../../hooks/useRailScroll';
 import PrivacyPolicyPopup, { PRIVACY_POLICY_STORAGE_KEY } from '../../components/PrivacyPolicyPopup/PrivacyPolicyPopup.jsx';
+
+// IMPORT ADDED: Ensure the path to your TMDB utility file is correct
+import { fetchTMDBDetails } from '../../content/tmdb.js';
 
 const Card = lazy(() => import('../../components/Card/Card'));
 const Card2 = lazy(() => import('../../components/Card/Card2'));
@@ -17,7 +20,6 @@ const HERO_ROTATE_MS = 8000;
 
 function Home(props) {
   const navigate = useNavigate();
-  // CHANGED: Using search params to manage the modal's state directly in the URL
   const [searchParams, setSearchParams] = useSearchParams();
 
   const data = Array.isArray(props.data) ? props.data : [];
@@ -65,46 +67,91 @@ function Home(props) {
 
 
   // ==========================================
-  // ADDED: Rock-Solid URL State Management
+  // UPDATED: Async Fallback URL State Management
   // ==========================================
   const watchId = searchParams.get('watch');
 
-  // Derive watchItem directly from the URL. No useState needed!
-  // By forcing both sides to String(), we eliminate the strict equality bug.
-  const watchItem = useMemo(() => {
+  const [fetchedWatchItem, setFetchedWatchItem] = useState(null);
+  const [isWatchLoading, setIsWatchLoading] = useState(false);
+
+  // 1. Try to find the item locally first (instant load)
+  const localWatchItem = useMemo(() => {
     if (!watchId) return null;
     return [...mediaData, ...data].find((item) => String(item.id) === String(watchId));
   }, [watchId, mediaData, data]);
 
-  // Automatically open the modal if watchItem exists
+  // 2. If it's not found locally, fetch it from TMDB
+  useEffect(() => {
+    if (!watchId || localWatchItem) {
+      setFetchedWatchItem(null); // Clear fetch cache if missing or handled locally
+      return;
+    }
+
+    const fetchWatchItem = async () => {
+      setIsWatchLoading(true);
+      try {
+        const [mediaType, tmdbId] = watchId.split('_');
+        if (!mediaType || !tmdbId) throw new Error("Invalid watch ID format");
+
+        const details = await fetchTMDBDetails(mediaType, tmdbId);
+        if (!details) throw new Error('Media not found');
+
+        // Map the rich details from fetchTMDBDetails into the shape expected by Watch
+        const mappedItem = {
+          id: watchId,
+          tmdbId: Number(tmdbId),
+          type: mediaType,
+          img: details.mbg,
+          name: details.mbg,
+          name2: details.title,
+          nameImg2: details.nameImg2,
+          releaseYear: details.year || new Date().getFullYear(),
+          ua: details.ageRating,
+          season: details.seasonLabel,
+          desc: details.desc,
+          category: details.categories,
+          language: details.languages,
+          episodes: details.episodes,
+          rating: 0,
+        };
+
+        setFetchedWatchItem(mappedItem);
+      } catch (error) {
+        console.error("Failed to fetch direct watch item:", error);
+        setFetchedWatchItem(null);
+      } finally {
+        setIsWatchLoading(false);
+      }
+    };
+
+    fetchWatchItem();
+  }, [watchId, localWatchItem]);
+
+  // 3. Resolve the final watchItem (prioritize local, fallback to fetched)
+  const watchItem = localWatchItem || fetchedWatchItem;
   const watchOpen = !!watchItem;
 
-  const openWatch = useCallback((id) => {
-    const selected = [...mediaData, ...data].find((item) => String(item.id) === String(id));
-    if (!selected) return;
-
-    // Updates the URL seamlessly without a full page reload
-    searchParams.set('watch', selected.id);
-    if (selected.name2) searchParams.set('name', selected.name2);
+  // 4. Simplified openWatch & clearWatchFromUrl
+  const openWatch = useCallback((id, name2) => {
+    if (!id) return;
+    searchParams.set('watch', id);
+    if (name2) searchParams.set('name', name2);
     setSearchParams(searchParams);
-  }, [mediaData, data, searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams]);
 
   const clearWatchFromUrl = useCallback(() => {
     searchParams.delete('watch');
     searchParams.delete('name');
     setSearchParams(searchParams);
+    setFetchedWatchItem(null);
   }, [searchParams, setSearchParams]);
   // ==========================================
-
-
 
 
   const resumeContinueWatching = useCallback((item) => {
     if (!item?.streamId) return;
     props.play(item.streamId);
-    // console.log('Navigating to streaming page for:', item);
     const streamId = item.type === 'tv' ? `${item.tmdbId}/${item.season}/${item.episode}` : item.streamId;
-    
     navigate(`/streaming/${streamId}`);
   }, [navigate, props]);
 
@@ -220,10 +267,11 @@ function Home(props) {
           <div className="mt-4 flex gap-3 sm:gap-4 w-full sm:w-auto">
             <button
               type="button"
-              onClick={() => openWatch(currentHero?.id)} // Changed this from direct navigate so it opens modal
+              onClick={() => openWatch(currentHero?.id)}
               className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-6 sm:px-8 py-2 md:py-2.5 bg-[#6d6d6e]/70 text-white font-bold text-sm md:text-xl rounded hover:bg-[#6d6d6e] active:scale-95 transition backdrop-blur-sm"
               title="More Info"
             >
+              {/* {console.log("Opening watch for:", currentHero?.id)} */}
               <i className="fa-solid fa-circle-info"></i>
               More Info
             </button>
@@ -260,9 +308,15 @@ function Home(props) {
               renderItem={(item) => (
                 <div
                   className="relative flex-shrink-0 w-56 sm:w-64 md:w-80 lg:w-96 aspect-video rounded-md overflow-hidden cursor-pointer group shadow-lg hover:shadow-2xl transition-all duration-300 bg-[#181818]"
-                  onClick={() => resumeContinueWatching(item)}
+                  // onClick={() => resumeContinueWatching(item)}
+                  onClick={() => {
+                    openWatch(`${item.type}_${item.tmdbId}`);
+                  }
+                  }
+
                   title={item.title}
                 >
+                  {/* {console.log("Rendering Continue Watching item:", `${item.type}_${item.tmdbId}`)} */}
                   <button
                     onClick={(e) => handleRemoveContinueWatching(e, item.streamId)}
                     className="absolute top-2 right-2 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white/70 hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 border border-transparent hover:border-white/50 backdrop-blur-sm"
@@ -323,12 +377,11 @@ function Home(props) {
             )}
           />
 
-
           {/* Dynamic Rails */}
           {rails.map((rail, index) => {
             const railKey = `${rail.title}-${index}`;
             const isTop10 = rail.title === 'Top 10 Today';
-            const visibleItems = rail.items.filter((item) => Number(item.rating.toFixed(0)) !== 0);
+            const visibleItems = rail.items.filter((item) => Number(item.rating?.toFixed(0) || 0) !== 0);
 
             return (
               <RailRow
@@ -379,8 +432,6 @@ function Home(props) {
               />
             );
           })}
-
-
 
           <Footer />
         </Suspense>

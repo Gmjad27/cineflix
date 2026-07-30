@@ -65,7 +65,7 @@ const Streaming = () => {
                     width="100%"
                     height="100%"
                     allowFullScreen
-                    allow="accelerometer; autoplay; encrypted-media; gyroscope;"
+                    allow="accelerometer; autoplay; fullscreen; picture-in-picture encrypted-media; gyroscope;"
                     title="Movie/TV Player"
                 ></iframe>
             ) : (

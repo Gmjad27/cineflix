@@ -365,11 +365,11 @@ const Watch = (props) => {
         style={{ animation: 'modalPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
       >
         <button
-          className="absolute top-3 right-3 sm:top-4 sm:right-4 font-sans text-3xl z-50 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-[#181818] hover:bg-[#2a2a2a] text-white transition-colors duration-200"
+          className="fixed top-2 right-2 z-20 w-12 h-12 text-[32px] font-thin rounded-full bg-black/60 hover:bg-black text-white/70 hover:text-white flex items-center justify-center group-hover:opacity-100 transition-all duration-300 border border-transparent hover:border-white/50 backdrop-blur-sm"
           onClick={closeWatch}
           aria-label="Close"
         >
-          X
+          <i className="fa-solid fa-xmark"></i>
         </button>
 
         {/* ─── Hero Section ─── */}
@@ -614,7 +614,7 @@ const Watch = (props) => {
                           episodeName: episode.name,
                           type: props.type,
                           tmdbId: props.id,
-                          image: episode.image || props.img,
+                          image: backgroundImage || props.img,
                           season: selectedSeason,
                           episode: episodeNumber,
                         },

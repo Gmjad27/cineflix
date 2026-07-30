@@ -98,36 +98,61 @@ const pickTVAgeRating = (contentRatings) => {
 const pickTMDBTrailer = (videos) => {
   if (!videos || !Array.isArray(videos.results)) return "";
 
-  // 1. Get all YouTube trailers
+  // Get only YouTube trailers
   const youtubeTrailers = videos.results.filter(
     (v) => v.site === "YouTube" && v.type === "Trailer"
   );
 
   if (youtubeTrailers.length === 0) return "";
 
-  // 2. Filter out known age-restricted phrases
+  // Remove Red Band / Restricted trailers if possible
   const safeTrailers = youtubeTrailers.filter((v) => {
-    const nameStr = v.name.toLowerCase();
-    return !nameStr.includes("red band") && !nameStr.includes("restricted");
+    const name = v.name.toLowerCase();
+    return (
+      !name.includes("red band") &&
+      !name.includes("restricted")
+    );
   });
 
-  // If literally EVERY trailer is a Red Band, return the first one anyway 
-  // so your "Watch on YouTube" fallback button still has a URL to use.
-  if (safeTrailers.length === 0) return youtubeTrailers[0].key;
+  const trailers = safeTrailers.length
+    ? safeTrailers
+    : youtubeTrailers;
 
-  // 3. Prioritize explicitly safe "Green Band" trailers if they exist
-  const greenBand = safeTrailers.find((v) =>
-    v.name.toLowerCase().includes("green band")
-  );
-  if (greenBand) return greenBand.key;
+  // Helper to find best trailer in a language
+  const findBestTrailer = (lang) => {
+    const list = trailers.filter((v) => v.iso_639_1 === lang);
 
-  // 4. Fallback to your original logic: find "Official" among the safe trailers
-  const official = safeTrailers.find((v) =>
-    v.name.toLowerCase().includes("official")
-  );
+    if (!list.length) return null;
 
-  // 5. Return Official, or fallback to the first safe trailer
-  return (official || safeTrailers[0]).key;
+    return (
+      list.find((v) =>
+        v.name.toLowerCase().includes("green band")
+      ) ||
+      list.find((v) =>
+        v.name.toLowerCase().includes("official")
+      ) ||
+      list[0]
+    );
+  };
+
+  // 1. Hindi
+  const hindi = findBestTrailer("hi");
+  if (hindi) return hindi.key;
+
+  // 2. English
+  const english = findBestTrailer("en");
+  if (english) return english.key;
+
+  // 3. Original/any language
+  return (
+    trailers.find((v) =>
+      v.name.toLowerCase().includes("green band")
+    ) ||
+    trailers.find((v) =>
+      v.name.toLowerCase().includes("official")
+    ) ||
+    trailers[0]
+  ).key;
 };
 
 // ─── Normalization ───────────────────────────────────────────────────────
