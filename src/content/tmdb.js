@@ -546,15 +546,15 @@ export const fetchTMDBDetails = async (mediaType, id) => {
   if (!tmdbId) return null;
 
   const appendParts = mediaType === "movie"
-    ? "release_dates,images,videos,credits"
-    : "content_ratings,images,videos,credits";
+    ? "release_dates,images,videos,credits,keywords"
+    : "content_ratings,images,videos,credits,keywords";
 
   // ONE call instead of three
   const data = await requestTMDBObject(`/${mediaType}/${tmdbId}`, {
     append_to_response: appendParts,
   });
   if (!data || typeof data !== "object") return null;
-  console.log("TMDB Details:", data);
+  // console.log("TMDB Details:", data);
   const trailer = pickTMDBTrailer(data.videos);
   const cast = Array.isArray(data.credits?.cast) ? data.credits.cast.slice(0, 15) : [];
   const logo = data.images?.logos?.find((l) => l.iso_639_1 === "en") || data.images?.logos?.[0];
@@ -576,6 +576,7 @@ export const fetchTMDBDetails = async (mediaType, id) => {
   if (mediaType === "movie") {
     return {
       ...base,
+      mood: (data.keywords?.keywords || []).map((k) => k.name),
       year: Number((data.release_date || "").slice(0, 4)) || 0,
       runtime: Number(data.runtime) || 0,
       seasonLabel: data.runtime ? `${data.runtime}m` : "Movie",
@@ -603,6 +604,9 @@ export const fetchTMDBDetails = async (mediaType, id) => {
 
   return {
     ...base,
+    mood: (data.keywords?.results || []).map(
+      (k) => k.name
+    ),
     runtime: 0,
     nextEp: data.next_episode_to_air?.air_date || undefined,
     seasonLabel: validSeasonCount > 1

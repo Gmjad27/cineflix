@@ -57,6 +57,7 @@ const Watch = (props) => {
   // ADDED: Track if a MOVIE has been watched
   // ==========================================
   const [hasWatchedMovie, setHasWatchedMovie] = useState(false);
+  // console.log("more like this", moreLikeThis(props.type, props.id));
 
   useEffect(() => {
     setWatchedEpisodes(getWatchedEpisodes(props.id));
@@ -239,10 +240,13 @@ const Watch = (props) => {
     ? details?.seasonLabel || `${effectiveSeasonKeys.length} Season${effectiveSeasonKeys.length > 1 ? 's' : ''}`
     : details?.seasonLabel || props.season;
 
+  console.log();
+
   const year = details?.year || props.yr;
   const nextEp = details?.nextEp || "";
   const logo = details?.nameImg2;
   const trailer = details?.trailerUrl;
+  // const addItem = props.add || (() => { });
   const trailerEmbedUrl = useMemo(() => {
     if (!trailer) return '';
     const origin = typeof window !== 'undefined'
@@ -252,11 +256,12 @@ const Watch = (props) => {
   }, [trailer]);
 
   const shownCategories = details?.categories?.length ? details.categories : props.cat;
+  // console.log("shownCategories:", details?.categories);
   const shownLanguages = details?.languages?.length ? details.languages : props.language;
   const shownAgeRating = details?.ageRating || props.ua || 'TV-PG';
   const cast = details?.cast || [];
   const mood = details?.mood || [];
-  const heroPoster = details?.mbg || props.img;
+  const heroPoster = props.img;
 
   const ratingMatch = props.rating ? `${(parseFloat(props.rating / 10) * 100).toFixed(0)}% Match` : '98% Match';
 
@@ -279,7 +284,7 @@ const Watch = (props) => {
   }, [isTrailerMuted, sendTrailerCommand, trailerEmbedUrl, trailerLoaded]);
 
   const related = useMemo(() => {
-    const mainCategory = props.cat?.[0];
+    const mainCategory = props.cat?.[0] || details?.categories?.[0] || null;
     if (!mainCategory) return [];
     return data
       .filter((item) =>
@@ -410,11 +415,19 @@ const Watch = (props) => {
 
           {/* Hero Content Overlays */}
           <div className="absolute bottom-[5%] left-0 w-full px-4 sm:px-8 md:px-12 flex flex-col gap-3 sm:gap-4">
-            {logo ? (
-              <img src={logo} alt={props.mname} className="w-1/3 sm:w-1/2 sm:max-w-[320px] object-contain drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]" />
-            ) : (
-              <h1 className="text-2xl xs:text-3xl sm:text-5xl md:text-6xl font-bold drop-shadow-lg leading-tight">{props.mname}</h1>
-            )}
+            <div className="relative flex items-center justify-start h-[60px] sm:h-[130px] w-[40%]">
+              {logo ? (
+                <img
+                  src={logo}
+                  alt={props.mname}
+                  className="max-h-full max-w-full object-contain drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]"
+                />
+              ) : (
+                <h1 className="text-2xl xs:text-3xl sm:text-5xl md:text-6xl w-[100%] font-bold drop-shadow-lg leading-tight">
+                  {props.mname}
+                </h1>
+              )}
+            </div>
 
             <div className="flex items-center gap-1.5 sm:gap-3 w-full flex-wrap">
               <button
@@ -427,14 +440,12 @@ const Watch = (props) => {
 
               <button
                 className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full border-[2px] border-white/50 bg-[#2a2a2a]/40 hover:border-white hover:bg-white/10 transition backdrop-blur-sm"
-                onClick={() => props.add(props.sid)}
+                onClick={() => props.add(props.sid, props.id, props.name2, props.mname, props.type, props.rating)}
               >
                 {props.El === 'ADDED' ? <i className="fa-solid fa-check"></i> : <i className="fa-solid fa-plus"></i>}
               </button>
 
-              <button className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full border-[2px] border-white/50 bg-[#2a2a2a]/40 hover:border-white hover:bg-white/10 transition backdrop-blur-sm">
-                <i className="fa-regular fa-thumbs-up"></i>
-              </button>
+
 
               <div className="flex-1"></div>
 
@@ -502,61 +513,26 @@ const Watch = (props) => {
           </div>
         </div>
 
-        {cast && cast.length > 0 && (
-          <div className="px-6 sm:px-10 md:px-14 mt-10">
-            <h3 className="text-xl sm:text-2xl font-semibold text-white/95 mb-6 tracking-wide">
-              Cast
-            </h3>
-
-            {/* Scroll Container */}
-            <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-6 scroll-smooth snap-x snap-mandatory
-      /* Custom Webkit Scrollbar */
-      [&::-webkit-scrollbar]:h-2
-      [&::-webkit-scrollbar-track]:rounded-full
-      [&::-webkit-scrollbar-track]:bg-white/5
-      [&::-webkit-scrollbar-thumb]:rounded-full
-      [&::-webkit-scrollbar-thumb]:bg-white/20
-      hover:[&::-webkit-scrollbar-thumb]:bg-white/40
-      transition-all duration-300"
+        {cast.length > 0 && (
+          <div className="px-5 sm:ml-4 sm:px-8 mt-4">
+            <h3 className="text-lg font-bold text-white mb-3">Cast</h3>
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent custom-scrollbar"
+            // style={{ WebkitOverflowScrolling: 'touch' }}
             >
-              {cast.slice(0, 15).map((actor, idx) => {
-                const imageUrl = actor.image ||
-                  (actor.profile_path
-                    ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
-                    : 'https://via.placeholder.com/150/1a1a1a/ffffff?text=User');
-
-                return (
-                  <div
-                    key={actor.id || idx}
-                    className="group flex flex-col items-center flex-shrink-0 w-[90px] sm:w-[110px] snap-start cursor-pointer"
-                  >
-                    {/* Image Wrapper with Gradient Ring Hover Effect */}
-                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-[2px] bg-gradient-to-tr from-transparent via-gray-700/50 to-gray-600/50 group-hover:from-blue-500 group-hover:via-purple-500 group-hover:to-pink-500 transition-all duration-500 ease-out group-hover:-translate-y-1 group-hover:shadow-lg group-hover:shadow-purple-500/25">
-
-                      <div className="w-full h-full rounded-full overflow-hidden bg-gray-900">
-                        <img
-                          src={imageUrl}
-                          alt={actor.name}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          loading="lazy"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Typography */}
-                    <div className="mt-3 text-center w-full px-1">
-                      <span className="block text-sm text-gray-300 font-medium line-clamp-1 group-hover:text-white transition-colors duration-300">
-                        {actor.name}
-                      </span>
-                      {actor.character && (
-                        <span className="block text-[11px] sm:text-xs text-gray-500 mt-0.5 line-clamp-1 group-hover:text-gray-400 transition-colors duration-300">
-                          {actor.character}
-                        </span>
-                      )}
-                    </div>
+              {cast.slice(0, 15).map((actor, i) => (
+                <div key={actor.id || i} className="flex flex-col items-center flex-shrink-0 w-20 sm:w-24 text-center">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden bg-gray-800 mb-1">
+                    <img
+                      src={actor.image || (actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : 'https://via.placeholder.com/150/1a1a1a/ffffff?text=User')}
+                      alt={actor.name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
                   </div>
-                );
-              })}
+                  <span className="text-xs text-gray-300 line-clamp-1">{actor.name}</span>
+                  {actor.character && <span className="text-xs text-gray-500 line-clamp-1">{actor.character}</span>}
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -637,7 +613,7 @@ const Watch = (props) => {
                         )}
 
                         {isNew && !watched && (
-                          <span className="absolute top-1 left-1 bg-[#e8b84b] text-black text-[9px] font-bold px-1.5 py-[1px] rounded-[2px] tracking-wide">
+                          <span className="absolute top-1 left-1 bg-[#ecb942] text-black text-[9px] font-bold px-1.5 py-[1px] rounded-[2px] tracking-wide">
                             NEW
                           </span>
                         )}
@@ -676,7 +652,7 @@ const Watch = (props) => {
           {related.length > 0 && (
             <>
               <h3 className="text-2xl font-bold text-white">More Like This</h3>
-              <div className="flex flex-wrap justify-around">
+              <div className="flex flex-wrap justify-around gap-1">
                 {related.map((item) => renderRelatedCard(item))}
               </div>
             </>

@@ -1,16 +1,29 @@
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Card from '../../components/Card/Card';
 import Footer from '../../components/Footer/Footer';
 import Watch from '../../components/Watch/Watch';
 import Skeleton from '../../components/Skeleton/Skeleton';
 
+// IMPORT ADDED: Ensure the path to your TMDB utility file is correct
+import { fetchTMDBDetails } from '../../content/tmdb.js';
+
+// Helper to read stored details (full item objects)
+const getStoredDetails = () => {
+  try {
+    return JSON.parse(localStorage.getItem('MyListDetails') || '{}');
+  } catch {
+    return {};
+  }
+};
+
 const Profile = (props) => {
   const navigate = useNavigate();
-  const location = useLocation();
+
+  // CHANGED: Using search params to manage the modal's state directly in the URL
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const data = Array.isArray(props.data) ? props.data : [];
-  const [watchItem, setWatchItem] = useState(data[0] || null);
-  const [watchOpen, setWatchOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
 
   // User data from localStorage
@@ -24,14 +37,30 @@ const Profile = (props) => {
 
   const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    if (!watchItem && data.length > 0) setWatchItem(data[0]);
-  }, [data, watchItem]);
-
-  // Watchlist logic
+  // --- Watchlist logic (updated for key‑based list with localStorage fallback) ---
   const watchListItems = useMemo(() => {
     if (!Array.isArray(props.E)) return [];
-    return data.filter((item) => props.E.includes(item.id));
+
+    const storedDetails = getStoredDetails(); // { [key]: fullItemObject }
+    const listKeys = new Set(props.E); // e.g., "movie:12345"
+
+    // 1. Find matching items from the full catalog
+    const fromCatalog = data.filter((item) => {
+      const key = `${item.type}:${item.tmdbId}`;
+      return listKeys.has(key);
+    });
+
+    // 2. Find keys that are not in the catalog and create items from stored details
+    const catalogKeys = new Set(fromCatalog.map((item) => `${item.type}:${item.tmdbId}`));
+    const missingKeys = [...listKeys].filter((key) => !catalogKeys.has(key) && storedDetails[key]);
+
+    const fromStorage = missingKeys.map((key) => ({
+      ...storedDetails[key], // whole object saved during add()
+      // ensure id is a number if needed (it was stored as item.id)
+      id: storedDetails[key].id ?? key,
+    }));
+
+    return [...fromCatalog, ...fromStorage];
   }, [data, props.E]);
 
   const movieItems = watchListItems.filter((item) => item.type === 'movie');
@@ -58,29 +87,88 @@ const Profile = (props) => {
     }
   };
 
-  // Watch modal logic
-  const openWatch = useCallback((id) => {
-    const selected = data.find((item) => item.id === id);
-    if (!selected) return;
-    setWatchItem(selected);
-    setWatchOpen(true);
-    navigate(`${location.pathname}?watch=${selected.id}&name=${encodeURIComponent(selected.name2)}`);
-  }, [data, navigate, location.pathname]);
+
+  // ==========================================
+  // ADDED: Async Fallback URL State Management
+  // ==========================================
+  const watchId = searchParams.get('watch');
+
+  const [fetchedWatchItem, setFetchedWatchItem] = useState(null);
+  const [isWatchLoading, setIsWatchLoading] = useState(false); // Unused currently, but good for potential loading spinners
+
+  // 1. Try to find the item locally first (search both catalog data and watchlist storage)
+  const localWatchItem = useMemo(() => {
+    if (!watchId) return null;
+    return [...data, ...watchListItems].find((item) => String(item.id) === String(watchId));
+  }, [watchId, data, watchListItems]);
+
+  // 2. If it's not found locally, fetch it from TMDB
+  useEffect(() => {
+    if (!watchId || localWatchItem) {
+      setFetchedWatchItem(null); // Clear fetch cache if missing or handled locally
+      return;
+    }
+
+    const fetchWatchItem = async () => {
+      setIsWatchLoading(true);
+      try {
+        const [mediaType, tmdbId] = watchId.split('_');
+        if (!mediaType || !tmdbId) throw new Error("Invalid watch ID format");
+
+        const details = await fetchTMDBDetails(mediaType, tmdbId);
+        if (!details) throw new Error('Media not found');
+
+        // Map the rich details from fetchTMDBDetails into the shape expected by Watch
+        const mappedItem = {
+          id: watchId,
+          tmdbId: Number(tmdbId),
+          type: mediaType,
+          img: details.mbg,
+          name: details.mbg,
+          name2: details.title,
+          nameImg: details.nameImg2,
+          releaseYear: details.year || new Date().getFullYear(),
+          ua: details.ageRating,
+          season: details.seasonLabel,
+          desc: details.desc,
+          category: details.categories,
+          language: details.languages,
+          episodes: details.episodes,
+          rating: 0,
+        };
+
+        setFetchedWatchItem(mappedItem);
+      } catch (error) {
+        console.error("Failed to fetch direct watch item:", error);
+        setFetchedWatchItem(null);
+      } finally {
+        setIsWatchLoading(false);
+      }
+    };
+
+    fetchWatchItem();
+  }, [watchId, localWatchItem]);
+
+  // 3. Resolve the final watchItem (prioritize local, fallback to fetched)
+  const watchItem = localWatchItem || fetchedWatchItem;
+  const watchOpen = !!watchItem;
+
+  // 4. Simplified openWatch & clearWatchFromUrl
+  const openWatch = useCallback((id, name2) => {
+    if (!id) return;
+    searchParams.set('watch', id);
+    if (name2) searchParams.set('name', name2);
+    setSearchParams(searchParams);
+  }, [searchParams, setSearchParams]);
 
   const clearWatchFromUrl = useCallback(() => {
-    setWatchOpen(false);
-    navigate(location.pathname);
-  }, [navigate, location.pathname]);
+    searchParams.delete('watch');
+    searchParams.delete('name');
+    setSearchParams(searchParams);
+    setFetchedWatchItem(null);
+  }, [searchParams, setSearchParams]);
+  // ==========================================
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const watchId = Number(params.get('watch'));
-    if (!watchId) return;
-    const selected = data.find((item) => item.id === watchId);
-    if (!selected) return;
-    setWatchItem(selected);
-    setWatchOpen(true);
-  }, [data, location.search]);
 
   const logout = () => {
     localStorage.clear();
@@ -98,11 +186,9 @@ const Profile = (props) => {
 
   return (
     <div className="min-h-screen bg-[#141414] text-white font-sans selection:bg-[#E50914] selection:text-white">
-      
       {/* Hero Profile Section */}
       <section className="relative w-full bg-gradient-to-b from-[#202020] to-[#141414] pt-12 pb-8 px-6 md:px-12 lg:px-16 border-b border-[#2a2a2a]">
         <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-10">
-          
           {/* Netflix-style Avatar (Rounded Square) */}
           <div className="relative group flex-shrink-0">
             <div
@@ -118,9 +204,8 @@ const Profile = (props) => {
               {!userData.profilePic && (
                 <i className="fa-solid fa-user text-gray-500 text-5xl group-hover:scale-110 transition-transform" />
               )}
-              {/* Hover overlay for upload */}
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
-                 <i className="fa-solid fa-camera text-white text-2xl drop-shadow-md" />
+                <i className="fa-solid fa-camera text-white text-2xl drop-shadow-md" />
               </div>
             </div>
             <input
@@ -137,7 +222,6 @@ const Profile = (props) => {
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4 drop-shadow-lg">
               {String(userData?.name || 'Guest')}
             </h1>
-            
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 text-gray-300 mb-6 md:mb-0">
               <div className="flex flex-col items-center md:items-start">
                 <span className="text-2xl font-bold text-white">{watchListItems.length}</span>
@@ -159,7 +243,7 @@ const Profile = (props) => {
           {/* Action Buttons */}
           <div className="flex gap-4 md:pb-2">
             <button
-              onClick={() => navigate('/account')} // Mock route for account settings
+              onClick={() => navigate('/account')}
               className="px-6 py-2 bg-transparent border border-gray-500 text-white rounded hover:border-white hover:bg-white/10 transition font-medium"
             >
               Account
@@ -176,7 +260,6 @@ const Profile = (props) => {
 
       {/* Content Area */}
       <div className="max-w-[1400px] mx-auto px-6 md:px-12 lg:px-16 py-8 min-h-[40vh]">
-        
         {watchListItems.length === 0 ? (
           /* Empty State */
           <div className="flex flex-col items-center justify-center py-20 text-center animate-[fadeIn_0.5s_ease-out]">
@@ -202,9 +285,8 @@ const Profile = (props) => {
               {['all', 'movies', 'series'].map((tab) => (
                 <button
                   key={tab}
-                  className={`pb-3 text-sm sm:text-base font-semibold uppercase tracking-wider transition-colors relative ${
-                    activeTab === tab ? 'text-white' : 'text-gray-500 hover:text-gray-300'
-                  }`}
+                  className={`pb-3 text-sm sm:text-base font-semibold uppercase tracking-wider transition-colors relative ${activeTab === tab ? 'text-white' : 'text-gray-500 hover:text-gray-300'
+                    }`}
                   onClick={() => setActiveTab(tab)}
                 >
                   {tab === 'all' ? 'My List' : tab}
@@ -217,25 +299,22 @@ const Profile = (props) => {
 
             {/* Grid */}
             <div className="flex flex-wrap w-full justify-evenly gap-2">
-              {displayedItems.map((item) => (
-                <div key={item.id} className="">
-                   <Card
-                    sow={openWatch}
-                    id={item.id}
-                    img={item.name}
-                    name={item.name2}
-                    type={item.type}
-                    rating={item.rating}
-                    add={props.add}
-                    e={props.e}
-                    play={props.play}
-                    // Removing strict width limits from Card so it fills the grid column
-                    // width="100%"
-                  />
-                </div>
-              ))}
+              {displayedItems.map((item) => {
+                return (
+                  <div key={item.id}>
+                    <Card
+                      sow={() => openWatch(`${item.type}_${item.id}`)}
+                      id={item.id}
+                      img={item.name}
+                      name={item.name2}
+                      type={item.type}
+                      rating={item.rating}
+                    />
+                  </div>
+                );
+              })}
             </div>
-            
+
             {displayedItems.length === 0 && (
               <div className="text-center py-12 text-gray-500">
                 No {activeTab} found in your list.
@@ -248,20 +327,20 @@ const Profile = (props) => {
       <Footer />
 
       {/* Watch Modal */}
-      {watchOpen && (
+      {watchOpen && watchItem && (
         <Watch
           data={data}
           sow={openWatch}
           onClose={clearWatchFromUrl}
           sid={watchItem?.id}
-          El={Array.isArray(props.e) && props.e.includes(watchItem?.id) ? 'ADDED' : '+'}
+          El={props.E.includes(`${watchItem?.type}:${watchItem?.tmdbId}`) ? 'ADDED' : '+'}
           img={watchItem?.img}
           type={watchItem?.type}
           id={watchItem?.tmdbId}
           s={watchItem?.episodes}
           mname={watchItem?.name2}
-          name={watchItem?.nameImg}
-          name2={watchItem?.name2}
+          name={watchItem?.nameImg || watchItem?.name2}
+          name2={watchItem?.name}
           yr={watchItem?.releaseYear}
           ua={watchItem?.ua}
           season={watchItem?.season}
@@ -271,7 +350,7 @@ const Profile = (props) => {
           rating={watchItem?.rating}
           language={watchItem?.language}
           add={props.add}
-          e={props.e}
+          e={props.E}
           play={props.play}
         />
       )}

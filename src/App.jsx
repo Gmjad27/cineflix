@@ -104,13 +104,34 @@ function App() {
   };
 
   // ✅ React-way to handle "My List" additions/removals (No manual DOM manipulation)
-  const add = (e) => {
+  // Helper: safely read a stored object, fallback to {}
+  const getStoredDetails = () => {
+    const raw = localStorage.getItem('MyListDetails');
+    if (!raw) return {};
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  };
+
+  const add = (e, id, name, mname, type, rating) => {
+    console.log(`Adding/Removing item: ${e}, Name: ${name}, MName: ${mname}, Type: ${type}, Rating: ${rating}`);
+
     setEl(prevEl => {
       if (prevEl.includes(e)) {
+        // Remove from list AND delete details
         showToast('Removed from My List', true);
+        const details = getStoredDetails();
+        delete details[e];
+        localStorage.setItem('MyListDetails', JSON.stringify(details));
         return prevEl.filter(item => item !== e);
       } else {
+        // Add to list AND store details
         showToast('Added to My List', false);
+        const details = getStoredDetails();
+        details[e] = { id, name, mname, type, rating };
+        localStorage.setItem('MyListDetails', JSON.stringify(details));
         return [...prevEl, e];
       }
     });

@@ -438,6 +438,7 @@ function Home(props) {
       </div>
 
       {/* Watch modal */}
+      {/* {console.log("Rendering Watch modal for:", watchItem)} */}
       {watchOpen && watchItem && (
         <Watch
           data={data}
