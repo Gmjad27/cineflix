@@ -608,6 +608,7 @@ export const fetchTMDBDetails = async (mediaType, id) => {
       (k) => k.name
     ),
     runtime: 0,
+    year: Number((data.first_air_date || "").slice(0, 4)) || 0,
     nextEp: data.next_episode_to_air?.air_date || undefined,
     seasonLabel: validSeasonCount > 1
       ? `${validSeasonCount} Seasons`

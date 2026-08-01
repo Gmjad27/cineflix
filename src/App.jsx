@@ -5,10 +5,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import "./App.css"; // Keep if you have global resets, otherwise Tailwind handles styling
 import { fetchTMDBCatalog, fetchTMDBHomeSections } from "./content/tmdb.js";
 import ErrorBoundary from "./components/ErrorBoundary";
-import Skeleton from "./components/Skeleton/Skeleton";
 import MovieViewAll from "./pages/ViewAll/MovieViewAll.jsx";
 import ScrollToTop from "./components/ScrollToTop";
-import Streaming from "./pages/Stream/streaming.jsx"; // Import the streaming component
+import Streaming from "./pages/Stream/streaming.jsx";
 
 // ✅ Lazy-loaded page components
 const Home = lazy(() => import("./pages/Home/Home"));
@@ -20,7 +19,6 @@ const Search = lazy(() => import("./pages/Search/Search"));
 const Login = lazy(() => import("./pages/Auth/Login"));
 const Signup = lazy(() => import("./pages/Auth/Signup"));
 const Studio = lazy(() => import("./pages/Studio/Studio"));
-// const MovieDetails = lazy(() => import("./pages/MovieDetails/MovieDetails"));
 
 const safeParse = (value, fallback) => {
   if (value === null || value === undefined || value === "undefined" || value === "null" || value === "") {
@@ -46,12 +44,32 @@ function PageLoader() {
 }
 
 function App() {
+  // 🎬 1. Check sessionStorage on initial load. 
+  // If 'hasSeenIntro' exists, start showIntro as false. Otherwise, true.
+  const [showIntro, setShowIntro] = useState(() => {
+    return !sessionStorage.getItem('hasSeenIntro');
+  });
+
   const [catalog, setCatalog] = useState([]);
   const [homeSections, setHomeSections] = useState({ heroBanner: [], rails: [] });
   const [catalogLoading, setCatalogLoading] = useState(true);
 
   // Toast Notification State
   const [toast, setToast] = useState({ show: false, message: '', isError: false });
+
+  // 🎬 2. Intro Video Timer
+  useEffect(() => {
+    if (showIntro) {
+      // Mark it as seen so refreshes won't trigger it again in this tab session
+      sessionStorage.setItem('hasSeenIntro', 'true');
+
+      const timer = setTimeout(() => {
+        setShowIntro(false);
+      }, 4000); // 4000ms = 4 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [showIntro]);
 
   useEffect(() => {
     let active = true;
@@ -103,8 +121,6 @@ function App() {
     }, 3000);
   };
 
-  // ✅ React-way to handle "My List" additions/removals (No manual DOM manipulation)
-  // Helper: safely read a stored object, fallback to {}
   const getStoredDetails = () => {
     const raw = localStorage.getItem('MyListDetails');
     if (!raw) return {};
@@ -120,14 +136,12 @@ function App() {
 
     setEl(prevEl => {
       if (prevEl.includes(e)) {
-        // Remove from list AND delete details
         showToast('Removed from My List', true);
         const details = getStoredDetails();
         delete details[e];
         localStorage.setItem('MyListDetails', JSON.stringify(details));
         return prevEl.filter(item => item !== e);
       } else {
-        // Add to list AND store details
         showToast('Added to My List', false);
         const details = getStoredDetails();
         details[e] = { id, name, mname, type, rating };
@@ -159,6 +173,20 @@ function App() {
 
   return (
     <div className="h-[100vh] sm:pt-16 bg-[#141414] text-white font-sans selection:bg-[#E50914] selection:text-white relative">
+
+      {/* 🎬 3. Intro Video Splash Screen Overlay */}
+      {showIntro && (
+        <div className="fixed inset-0 z-[10000] bg-black flex items-center justify-center overflow-hidden transition-opacity duration-500">
+          <video
+            src="/intro.mp4" /* 👈 Ensure intro.mp4 is in your public folder */
+            autoPlay
+            playsInline
+            onEnded={() => setShowIntro(false)} // Closes if video is shorter than 4s
+            className="w-full h-full object-cover sm:object-contain pointer-events-none"
+          />
+        </div>
+      )}
+
       <Router>
         <ScrollToTop />
         <ErrorBoundary>

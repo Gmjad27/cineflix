@@ -624,7 +624,7 @@ const Watch = (props) => {
                       <div className="flex flex-col justify-center flex-1 min-w-0 pr-2">
                         <div className="flex items-start sm:items-center justify-between mb-1 gap-2">
                           <h4 className={`text-[14px] sm:text-base font-bold truncate ${watched ? 'text-gray-300' : 'text-white'}`}>
-                            {episode.name || `Episode ${episodeNumber}`}
+                            {`${episodeNumber}.${episode.name}` || `Episode ${episodeNumber}`}
                           </h4>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <span className="text-xs sm:text-sm text-gray-400 whitespace-nowrap">
