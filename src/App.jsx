@@ -2,7 +2,7 @@ import React, { useEffect, useState, lazy, Suspense } from "react";
 import Nav from "./components/Nav/Nav";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import "./App.css"; // Keep if you have global resets, otherwise Tailwind handles styling
+import "./App.css";
 import { fetchTMDBCatalog, fetchTMDBHomeSections } from "./content/tmdb.js";
 import ErrorBoundary from "./components/ErrorBoundary";
 import MovieViewAll from "./pages/ViewAll/MovieViewAll.jsx";
@@ -44,8 +44,6 @@ function PageLoader() {
 }
 
 function App() {
-  // 🎬 1. Check sessionStorage on initial load. 
-  // If 'hasSeenIntro' exists, start showIntro as false. Otherwise, true.
   const [showIntro, setShowIntro] = useState(() => {
     return !sessionStorage.getItem('hasSeenIntro');
   });
@@ -53,21 +51,21 @@ function App() {
   const [catalog, setCatalog] = useState([]);
   const [homeSections, setHomeSections] = useState({ heroBanner: [], rails: [] });
   const [catalogLoading, setCatalogLoading] = useState(true);
-
-  // Toast Notification State
   const [toast, setToast] = useState({ show: false, message: '', isError: false });
 
-  // 🎬 2. Intro Video Timer
+  // 🎬 2. Intro Video Logic
   useEffect(() => {
     if (showIntro) {
-      // Mark it as seen so refreshes won't trigger it again in this tab session
       sessionStorage.setItem('hasSeenIntro', 'true');
 
-      const timer = setTimeout(() => {
+      // ⚠️ Changed from 4s to a 10s fallback. 
+      // This ensures we wait for the video's onEnded event naturally, 
+      // but if the browser completely blocks the video, it still clears after 10s.
+      const fallbackTimer = setTimeout(() => {
         setShowIntro(false);
-      }, 4000); // 4000ms = 4 seconds
+      }, 10000);
 
-      return () => clearTimeout(timer);
+      return () => clearTimeout(fallbackTimer);
     }
   }, [showIntro]);
 
@@ -112,10 +110,8 @@ function App() {
     localStorage.setItem('El', JSON.stringify(El));
   }, [El]);
 
-  // Helper to show toasts
   const showToast = (message, isError = false) => {
     setToast({ show: true, message, isError });
-    // Auto-hide after 3 seconds
     setTimeout(() => {
       setToast({ show: false, message: '', isError: false });
     }, 3000);
@@ -132,8 +128,6 @@ function App() {
   };
 
   const add = (e, id, name, mname, type, rating) => {
-    console.log(`Adding/Removing item: ${e}, Name: ${name}, MName: ${mname}, Type: ${type}, Rating: ${rating}`);
-
     setEl(prevEl => {
       if (prevEl.includes(e)) {
         showToast('Removed from My List', true);
@@ -174,111 +168,99 @@ function App() {
   return (
     <div className="h-[100vh] sm:pt-16 bg-[#141414] text-white font-sans selection:bg-[#E50914] selection:text-white relative">
 
-      {/* 🎬 3. Intro Video Splash Screen Overlay */}
-      {showIntro && (
-        <div className="fixed inset-0 z-[10000] bg-black flex items-center justify-center overflow-hidden transition-opacity duration-500">
+      {/* ✅ If showIntro is true, ONLY show the video.
+          If false, render the App & Router (showing the Home Page) */}
+      {showIntro ? (
+        <div className="fixed inset-0 z-[10000] bg-black flex items-center justify-center overflow-hidden">
           <video
-            src="/intro.mp4" /* 👈 Ensure intro.mp4 is in your public folder */
+            src="/intro.mp4"
             autoPlay
+            muted       /* 👈 Critical: Without muted, browsers often block autoplay, meaning onEnded never fires */
             playsInline
-            onEnded={() => setShowIntro(false)} // Closes if video is shorter than 4s
+            onEnded={() => setShowIntro(false)} /* 👈 Triggers rendering of the Router/Home Page immediately when video stops */
             className="w-full h-full object-cover sm:object-contain pointer-events-none"
           />
         </div>
+      ) : (
+        <Router>
+          <ScrollToTop />
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <Nav />
+                    <Home {...sharedProps} homeSections={homeSections} stu={sow} />
+                  </ProtectedRoute>
+                } />
+                <Route path="/movies" element={
+                  <ProtectedRoute>
+                    <Nav />
+                    <Movie {...sharedProps} />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tv" element={
+                  <ProtectedRoute>
+                    <Nav />
+                    <Tv {...sharedProps} />
+                  </ProtectedRoute>
+                } />
+                <Route path="/search" element={
+                  <ProtectedRoute>
+                    <Nav />
+                    <Search {...sharedProps} />
+                  </ProtectedRoute>
+                } />
+                <Route path="/studio/:id" element={
+                  <ProtectedRoute>
+                    <Nav />
+                    <Studio {...sharedProps} studio={studio} img={Img} />
+                  </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <Nav />
+                    <Profile {...sharedProps} E={El} tu={sow} />
+                  </ProtectedRoute>
+                } />
+                <Route path="/stream" element={
+                  <ProtectedRoute>
+                    <Nav />
+                    <Stream tid={TID} />
+                  </ProtectedRoute>
+                } />
+                <Route path="/streaming/:tmdbId/:season/:episode" element={
+                  <ProtectedRoute>
+                    <Nav />
+                    <Streaming />
+                  </ProtectedRoute>
+                } />
+                <Route path="/streaming/:tmdbId" element={
+                  <ProtectedRoute>
+                    <Nav />
+                    <Streaming />
+                  </ProtectedRoute>
+                } />
+                <Route path="/viewall" element={
+                  <ProtectedRoute>
+                    <Nav />
+                    <MovieViewAll {...sharedProps} sow={sow} />
+                  </ProtectedRoute>
+                } />
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
+        </Router>
       )}
 
-      <Router>
-        <ScrollToTop />
-        <ErrorBoundary>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-
-              {/* Auth Routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-
-              {/* Protected Routes */}
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <Nav />
-                  <Home {...sharedProps} homeSections={homeSections} stu={sow} />
-                </ProtectedRoute>
-              } />
-
-              <Route path="/movies" element={
-                <ProtectedRoute>
-                  <Nav />
-                  <Movie {...sharedProps} />
-                </ProtectedRoute>
-              } />
-
-              <Route path="/tv" element={
-                <ProtectedRoute>
-                  <Nav />
-                  <Tv {...sharedProps} />
-                </ProtectedRoute>
-              } />
-
-              <Route path="/search" element={
-                <ProtectedRoute>
-                  <Nav />
-                  <Search {...sharedProps} />
-                </ProtectedRoute>
-              } />
-
-              <Route path="/studio/:id" element={
-                <ProtectedRoute>
-                  <Nav />
-                  <Studio {...sharedProps} studio={studio} img={Img} />
-                </ProtectedRoute>
-              } />
-
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Nav />
-                  <Profile {...sharedProps} E={El} tu={sow} />
-                </ProtectedRoute>
-              } />
-
-              <Route path="/stream" element={
-                <ProtectedRoute>
-                  <Nav />
-                  <Stream tid={TID} />
-                </ProtectedRoute>
-              } />
-              <Route path="/streaming/:tmdbId/:season/:episode" element={
-                <ProtectedRoute>
-                  <Nav />
-                  <Streaming />
-                </ProtectedRoute>
-              } />
-              <Route path="/streaming/:tmdbId" element={
-                <ProtectedRoute>
-                  <Nav />
-                  <Streaming />
-                </ProtectedRoute>
-              } />
-
-              <Route path="/viewall" element={
-                <ProtectedRoute>
-                  <Nav />
-                  <MovieViewAll {...sharedProps} sow={sow} />
-                </ProtectedRoute>
-              } />
-
-              {/* Fallback Route */}
-              <Route path="*" element={<Navigate to="/" />} />
-
-            </Routes>
-          </Suspense>
-        </ErrorBoundary>
-      </Router>
-
-      {/* ✅ Premium Netflix-style Toast Notification */}
+      {/* Toast Notification */}
       <div
         className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded shadow-2xl transition-all duration-300 pointer-events-none flex items-center gap-3 ${toast.show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-          } ${toast.isError ? 'bg-[#E50914] text-white' : 'bg-white text-black font-semibold'
-          }`}
+          } ${toast.isError ? 'bg-[#E50914] text-white' : 'bg-white text-black font-semibold'}`}
       >
         <i className={`fa-solid ${toast.isError ? 'fa-xmark' : 'fa-check'}`}></i>
         {toast.message}

@@ -423,7 +423,7 @@ const Watch = (props) => {
                   className="max-h-full max-w-full object-contain drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]"
                 />
               ) : (
-                <h1 className="text-2xl xs:text-3xl sm:text-5xl md:text-6xl w-[100%] font-bold drop-shadow-lg leading-tight">
+                <h1 className="text-2xl xs:text-3xl sm:text-3xl md:text-4xl w-[100%] font-bold drop-shadow-lg leading-tight">
                   {props.mname}
                 </h1>
               )}
