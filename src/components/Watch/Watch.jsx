@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import Card from '../Card/Card';
 
 import { useRailScroll } from '../../hooks/useRailScroll';
-import { fetchTMDBDetails, fetchTMDBSeasonDetails } from '../../content/tmdb.js';
+// ─── IMPORT fetchMoreLikeThis ───
+import { fetchTMDBDetails, fetchTMDBSeasonDetails, fetchMoreLikeThis } from '../../content/tmdb.js';
 import { getWatchedEpisodes, markEpisodeWatched, unmarkEpisodeWatched } from '../../utils/continueWatching';
 
 const getSeasonNumber = (seasonKey) => {
@@ -46,23 +47,19 @@ const Watch = (props) => {
   const [isTrailerMuted, setIsTrailerMuted] = useState(true);
   const trailerFrameRef = useRef(null);
 
+  // ─── ADDED: State for TMDB Recommendations ───
+  const [tmdbRelated, setTmdbRelated] = useState([]);
+
   const effectiveEpisodes = details?.episodes || props.s || {};
   const seasonKeys = Object.keys(effectiveEpisodes);
   const effectiveSeasonKeys = props.type === 'tv' && seasonKeys.length === 0 ? ['s1'] : seasonKeys;
   const [ep, setEp] = useState(seasonKeys[0] || 's1');
 
   const [watchedEpisodes, setWatchedEpisodes] = useState(() => getWatchedEpisodes(props.id));
-
-  // ==========================================
-  // ADDED: Track if a MOVIE has been watched
-  // ==========================================
   const [hasWatchedMovie, setHasWatchedMovie] = useState(false);
-  // console.log("more like this", moreLikeThis(props.type, props.id));
 
   useEffect(() => {
     setWatchedEpisodes(getWatchedEpisodes(props.id));
-
-    // Check localStorage to see if this movie is in the Continue Watching list
     if (props.type === 'movie') {
       try {
         const history = JSON.parse(localStorage.getItem('continueWatching')) || [];
@@ -92,6 +89,27 @@ const Watch = (props) => {
       }
     };
     loadDetails();
+    return () => { active = false; };
+  }, [props.id, props.type]);
+
+  // ─── ADDED: Load TMDB Recommendations (More Like This) ───
+  useEffect(() => {
+    let active = true;
+    const loadRelated = async () => {
+      if (!props.type || !props.id) {
+        if (active) setTmdbRelated([]);
+        return;
+      }
+      try {
+        // Fetch actual recommendations from TMDB API
+        const results = await fetchMoreLikeThis(props.type, props.id);
+        if (active) setTmdbRelated(results);
+      } catch (err) {
+        console.error("Error fetching TMDB related content:", err);
+        if (active) setTmdbRelated([]);
+      }
+    };
+    loadRelated();
     return () => { active = false; };
   }, [props.id, props.type]);
 
@@ -240,13 +258,10 @@ const Watch = (props) => {
     ? details?.seasonLabel || `${effectiveSeasonKeys.length} Season${effectiveSeasonKeys.length > 1 ? 's' : ''}`
     : details?.seasonLabel || props.season;
 
-  console.log();
-
   const year = details?.year || props.yr;
   const nextEp = details?.nextEp || "";
   const logo = details?.nameImg2;
   const trailer = details?.trailerUrl;
-  // const addItem = props.add || (() => { });
   const trailerEmbedUrl = useMemo(() => {
     if (!trailer) return '';
     const origin = typeof window !== 'undefined'
@@ -256,7 +271,6 @@ const Watch = (props) => {
   }, [trailer]);
 
   const shownCategories = details?.categories?.length ? details.categories : props.cat;
-  // console.log("shownCategories:", details?.categories);
   const shownLanguages = details?.languages?.length ? details.languages : props.language;
   const shownAgeRating = details?.ageRating || props.ua || 'TV-PG';
   const cast = details?.cast || [];
@@ -283,7 +297,16 @@ const Watch = (props) => {
     sendTrailerCommand(isTrailerMuted ? 'mute' : 'unMute');
   }, [isTrailerMuted, sendTrailerCommand, trailerEmbedUrl, trailerLoaded]);
 
+  // ─── UPDATED: More Like This Logic ───
   const related = useMemo(() => {
+    // 1. Prioritize TMDB API recommendations if available
+    if (tmdbRelated.length > 0) {
+      return tmdbRelated
+        .filter(item => String(item.tmdbId) !== String(props.id))
+        .slice(0, 18);
+    }
+
+    // 2. Fallback to local catalog filtering if TMDB returns empty (happens for obscure titles)
     const mainCategory = props.cat?.[0] || details?.categories?.[0] || null;
     if (!mainCategory) return [];
     return data
@@ -293,7 +316,7 @@ const Watch = (props) => {
         item.category.includes(mainCategory)
       )
       .slice(0, 18);
-  }, [data, props.cat, props.mname]);
+  }, [tmdbRelated, data, props.cat, props.mname, details?.categories, props.id]);
 
   const renderRelatedCard = useCallback(
     (item) => (
@@ -331,9 +354,6 @@ const Watch = (props) => {
     });
   }, [props.id]);
 
-  // ==========================================
-  // ADDED: Determine Button Text dynamically
-  // ==========================================
   let playButtonText = 'Play';
   if (props.type === 'tv' && lastWatchedEp) {
     playButtonText = `Continue Watching S${lastWatchedEp.season} E${lastWatchedEp.episode}`;
@@ -363,8 +383,7 @@ const Watch = (props) => {
       </style>
 
       <div
-        id="watch"
-        ref={containerRef}
+        id="watch-modal"
         className="relative w-full max-w-[950px] min-h-screen sm:min-h-0 bg-[#181818] text-white sm:rounded shadow-[0_0_20px_rgba(0,0,0,0.8)] overflow-hidden mb-0 sm:mb-8"
         onClick={(e) => e.stopPropagation()}
         style={{ animation: 'modalPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
@@ -395,7 +414,7 @@ const Watch = (props) => {
               src={trailerEmbedUrl}
               title={`${props.mname} trailer`}
               frameBorder="0"
-              allow="autoplay; encrypted-media"
+              allow="autoplay; encrypted-media;"
               className="pointer-events-none absolute inset-0 w-[130%] h-[200%] -top-[51%] -left-[15%] transition-opacity duration-1000"
               onLoad={() => setTrailerLoaded(true)}
             />
@@ -404,9 +423,6 @@ const Watch = (props) => {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_50%,rgba(0,0,0,0.4)_100%)] pointer-events-none"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-[#181818] via-[#181818]/50 to-transparent bottom-0 h-[101%] pointer-events-none"></div>
 
-          {/* ========================================== */}
-          {/* ADDED: Movie red progress underline on Hero  */}
-          {/* ========================================== */}
           {props.type === 'movie' && hasWatchedMovie && (
             <div className="absolute bottom-0 left-0 w-full h-1 bg-[#404040] z-50">
               <div className="h-full bg-red-600 shadow-[0_0_10px_red]" style={{ width: '100%' }}></div>
@@ -415,7 +431,7 @@ const Watch = (props) => {
 
           {/* Hero Content Overlays */}
           <div className="absolute bottom-[5%] left-0 w-full px-4 sm:px-8 md:px-12 flex flex-col gap-3 sm:gap-4">
-            <div className="relative flex items-center justify-start h-[60px] sm:h-[130px] w-[40%]">
+            <div className="relative flex items-end justify-start h-[60px] sm:h-[130px] w-[100%] sm:*:max-w-[40%]">
               {logo ? (
                 <img
                   src={logo}
@@ -444,8 +460,6 @@ const Watch = (props) => {
               >
                 {props.El === 'ADDED' ? <i className="fa-solid fa-check"></i> : <i className="fa-solid fa-plus"></i>}
               </button>
-
-
 
               <div className="flex-1"></div>
 
@@ -484,7 +498,7 @@ const Watch = (props) => {
               <span className="border border-gray-400 px-1.5 py-[1px] text-xs font-semibold rounded-[3px] text-white bg-transparent leading-none flex items-center h-5">
                 {shownAgeRating}
               </span>
-              <span className="text-gray-300">{mood?.slice(0, 2).join(', ') || props.language}</span>
+              <span className="text-gray-300">{details?.languages?.join(', ') || props.language?.join(', ')}</span>
             </div>
 
             <p className="text-[13px] sm:text-[15px] text-gray-200 leading-relaxed font-normal">
@@ -516,9 +530,7 @@ const Watch = (props) => {
         {cast.length > 0 && (
           <div className="px-5 sm:ml-4 sm:px-8 mt-4">
             <h3 className="text-lg font-bold text-white mb-3">Cast</h3>
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent custom-scrollbar"
-            // style={{ WebkitOverflowScrolling: 'touch' }}
-            >
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent custom-scrollbar">
               {cast.slice(0, 15).map((actor, i) => (
                 <div key={actor.id || i} className="flex flex-col items-center flex-shrink-0 w-20 sm:w-24 text-center">
                   <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden bg-gray-800 mb-1">
@@ -559,7 +571,6 @@ const Watch = (props) => {
             <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-300 mb-4 font-medium">
               <span>Season {selectedSeason}: {episodeCards.length} episode{episodeCards.length !== 1 ? 's' : ''}</span>
               <span className="border border-gray-400 px-1 py-[1px] text-[10px] font-semibold rounded-[3px] text-white leading-none flex items-center h-4">{shownAgeRating}</span>
-
             </div>
 
             <div className="flex flex-col">
@@ -572,8 +583,7 @@ const Watch = (props) => {
                 return episode.runtime !== undefined && (
                   <div
                     key={episode.id || index}
-                    className={`group flex flex-col sm:flex-row items-start sm:items-center p-3 sm:p-4 border-b cursor-pointer transition rounded-md sm:rounded-none ${watched ? 'border-[#404040]/60 hover:bg-[#2a2a2a]/60' : 'border-[#404040] hover:bg-[#2a2a2a]'
-                      }`}
+                    className={`group flex flex-col sm:flex-row items-start sm:items-center p-3 sm:p-4 border-b cursor-pointer transition rounded-md sm:rounded-none ${watched ? 'border-[#404040]/60 hover:bg-[#2a2a2a]/60' : 'border-[#404040] hover:bg-[#2a2a2a]'}`}
                     onClick={() => {
                       markEpisodeWatched(props.id, selectedSeason, episodeNumber);
                       setWatchedEpisodes((prev) =>
@@ -598,7 +608,6 @@ const Watch = (props) => {
                     }}
                   >
                     <div className="flex items-center w-full mb-3 sm:mb-0">
-
                       <div className="relative w-24 sm:w-[120px] aspect-video rounded overflow-hidden flex-shrink-0 bg-gray-800 mr-3 sm:mr-4">
                         <img
                           src={episode.image || props.img}
@@ -632,7 +641,6 @@ const Watch = (props) => {
                                 .filter(Boolean)
                                 .join(' · ')}
                             </span>
-
                           </div>
                         </div>
                         <p className={`text-[12px] sm:text-[14px] line-clamp-2 leading-snug ${watched ? 'text-gray-500' : 'text-gray-400'}`}>
@@ -648,12 +656,15 @@ const Watch = (props) => {
         )}
 
         {/* ─── More Like This ─── */}
-        <div className="sm:px-8 md:px-12 mt-10 sm:mt-12 mb-10 sm:mb-12">
+        <div className="sm:p-10 p-4">
           {related.length > 0 && (
             <>
               <h3 className="text-2xl font-bold text-white">More Like This</h3>
-              <div className="flex flex-wrap justify-around gap-1">
-                {related.map((item) => renderRelatedCard(item))}
+              <hr className="my-3 border-gray-600" />
+              <div className="flex flex-wrap justify-center">
+                <div className="flex flex-wrap justify-center gap-3">
+                  {related.map((item) => renderRelatedCard(item))}
+                </div>
               </div>
             </>
           )}

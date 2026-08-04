@@ -61,8 +61,8 @@ export const STUDIO_COLLECTIONS = [
     img: "https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg",
     bg: "https://slidechef.net/wp-content/uploads/2024/03/disney-cartoons-background.jpg",
     color: "#113CCF",
-    companyIds: [2],
-    networkIds: [2739, 4429, 622]
+    companyIds: [2, 8036],
+    networkIds: [2739, 4429, 622, 8036]
   },
   {
     key: "MARVEL",

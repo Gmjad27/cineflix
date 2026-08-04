@@ -16,7 +16,6 @@ const genreMap = {
   36: "History",
   53: "Thriller",
   80: "Crime",
-  99: "Documentary",
   878: "Sci-Fi",
   9648: "Mystery",
   10402: "Music",
@@ -36,6 +35,55 @@ const langMap = {
   ja: "Japanese", kn: "Kannada", ko: "Korean", ml: "Malayalam",
   mr: "Marathi", pa: "Punjabi", ru: "Russian", ta: "Tamil",
   te: "Telugu", tr: "Turkish", zh: "Chinese",
+};
+
+// ─── Adult Platform Blacklist (Softcore Filter) ──────────────────────────
+// Catches platforms like Ullu, Alt Balaji, Primeshots that aren't flagged
+// as "adult" (hardcore) by TMDB but contain restricted/softcore content.
+const ADULT_PLATFORMS_BLACKLIST = [
+  // ─── Existing Indian Platforms & Series ─────────────────────
+  "ullu", "alt balaji", "primeshots", "prime shots", "kooku", "rabbit",
+  "voovi", "besharams", "hunters", "neon x", "xprime", "hotshots",
+  "nuefliks", "feneo", "charmsukh", "palang tod", "namkeen", "rits",
+  "fliz", "gupchup", "netprime", "cinemadosti", "feneomovies", "unrated",
+
+  // ─── Global / Western Adult Platforms & Tubes ───────────────
+  "pornhub", "xvideos", "xnxx", "redtube", "youporn", "tube8",
+  "eporner", "spankbang", "xhamster", "chaturbate", "cam4", "bongacams",
+
+  // ─── Subscription / Creator Platforms ───────────────────────
+  "onlyfans", "fansly", "centerfold", "manyvids", "justforfans",
+
+  // ─── Major Global Adult Studios & Networks ──────────────────
+  "brazzers", "bangbros", "realitykings", "mofos", "naughty america",
+  "evil angel", "vivid", "wicked", "digital playground", "playboy",
+  "hustler", "penthouse", "twistys", "girlsway", "babes", "blacked",
+  "tushy", "vixen", "deeper", "jules jordan", "kink",
+
+  // ─── Asian Adult Networks & Genres (JAV / Hentai) ───────────
+  "dmm", "fanza", "soft on demand", "sod", "tokyo hot", "caribbeancom",
+  "1pondo", "muramura", "fakku", "nutaku", "hentai", "eroge", "jav",
+
+  // ─── Generic Adult Keywords / Catch-alls ────────────────────
+  "xxx", "18+", "nsfw", "r18", "adult", "porn", "erotic", "softcore"
+];
+
+const isAdultPlatform = (item) => {
+  if (!item) return false;
+  const titleStr = `${item.title || ""} ${item.original_title || ""} ${item.name || ""} ${item.original_name || ""}`.toLowerCase();
+
+  // Check TV Networks (if present in detailed responses)
+  if (Array.isArray(item.networks)) {
+    if (item.networks.some(n => ADULT_PLATFORMS_BLACKLIST.some(p => (n.name || "").toLowerCase().includes(p)))) return true;
+  }
+  // Check Production Companies
+  if (Array.isArray(item.production_companies)) {
+    if (item.production_companies.some(c => ADULT_PLATFORMS_BLACKLIST.some(p => (c.name || "").toLowerCase().includes(p)))) return true;
+  }
+  // Check Titles/Original Names (Catches 95% of list-endpoint results)
+  if (ADULT_PLATFORMS_BLACKLIST.some(p => titleStr.includes(p))) return true;
+
+  return false;
 };
 
 // ─── Utilities ───────────────────────────────────────────────────────────
@@ -228,7 +276,8 @@ const dedupeMedia = (items) => {
 export const requestTMDB = async (path, params = {}, options = {}) => {
   const query = new URLSearchParams({
     api_key: TMDB_API_KEY,
-    language: "en-US",
+    // language: "hi-IN",
+    "vote_count.gte": 50,
     include_adult: "false",
     ...params,
   }).toString();
@@ -258,8 +307,11 @@ export const requestTMDB = async (path, params = {}, options = {}) => {
 
   // ─── Local content filter ────────────────────────────────────────────
   const isValidMedia = (item) => {
-    // Block adult content
+    // 1. Block hardcore adult content via TMDB flag
     if (item.adult === true) return false;
+
+    // 2. Block softcore adult platforms (Ullu, Alt Balaji, Primeshots, etc.)
+    if (isAdultPlatform(item)) return false;
 
     // If caller explicitly wants upcoming content, skip date checks
     if (options.allowUpcoming) return true;
@@ -288,7 +340,8 @@ export const requestTMDB = async (path, params = {}, options = {}) => {
 const requestTMDBObject = async (path, params = {}) => {
   const query = new URLSearchParams({
     api_key: TMDB_API_KEY,
-    language: "en-US",
+    // language: "hi-IN",
+    // "vote_count.gte": 100,
     include_adult: "false",
     ...params,
   }).toString();
@@ -355,157 +408,149 @@ export const fetchTMDBTrending = async ({ window = "week", limit = 12 } = {}) =>
   ]).slice(0, limit);
 };
 
+// ─── Target Languages & Genres for Deep Discovery ───────────────────────
+const TARGET_LANGS = [
+  { code: "hi", name: "Hindi" },
+  { code: "en", name: "English" }
+];
+
+// 12 Major Genres to guarantee full Netflix-style rows
+const GENRE_IDS = [
+  28,   // Action
+  35,   // Comedy
+  18,   // Drama
+  878,  // Sci-Fi
+  27,   // Horror
+  10749, // Romance
+  53,   // Thriller
+  16,   // Animation
+  10751, // Family
+  14,   // Fantasy
+  9648  // Mystery
+];
+
+// ─── HOME PAGE (Movies + TV Mixed) ───────────────────────────────────────
 export const fetchTMDBHomeSections = async () => {
-  // FIX #6: Batched to avoid 429 rate-limit errors
-  const requests = [
-    () => requestTMDB("/trending/all/week"),
-    () => requestTMDB("/trending/all/day"),
-    () => requestTMDB("/trending/movie/week"),
-    () => requestTMDB("/trending/tv/week"),
-    () => requestTMDB("/movie/now_playing"),
-    () => requestTMDB("/tv/on_the_air"),
-    () => requestTMDB("/movie/popular"),
-    () => requestTMDB("/tv/popular"),
-    () => requestTMDB("/movie/top_rated"),
-    () => requestTMDB("/tv/top_rated"),
-    () => requestTMDB("/discover/movie", { with_genres: "28" }),
-    () => requestTMDB("/discover/movie", { with_genres: "35" }),
-    () => requestTMDB("/discover/movie", { with_genres: "27" }),
-    () => requestTMDB("/discover/movie", { with_genres: "878" }),
-    () => requestTMDB("/collection/1241"),
-    () => requestTMDB("/collection/435259"),
-    () => requestTMDB("/collection/119"),
-    () => requestTMDB("/collection/121938"),
-    () => requestTMDB("/search/tv", { query: "The Lord of the Rings: The Rings of Power" }),
-    () => requestTMDB("/discover/movie", { with_genres: "99" }),
-    () => requestTMDB("/discover/movie", { with_genres: "80" }),
-    () => requestTMDB("/discover/movie", { with_genres: "10749" }),
-    () => requestTMDB("/discover/movie", { with_genres: "16,10751" }),
-    () => requestTMDB("/discover/tv", { with_original_language: "ko", with_genres: "18" }),
-    () => requestTMDB("/discover/movie", { with_original_language: "hi", region: "IN", sort_by: "popularity.desc" }),
-  ];
+  const requests = [];
+  const types = []; // Track which response is movie vs tv
 
-  const [
-    heroRaw, trendingTodayRaw, trendingWeekMoviesRaw, trendingWeekTvRaw,
-    nowPlayingRaw, onTheAirRaw, popularMoviesRaw, popularTvRaw,
-    topRatedMoviesRaw, topRatedTvRaw, actionRaw, comedyRaw,
-    horrorRaw, scifiRaw, wizardingRaw, wizardingRaw2,
-    lotrRaw, lotrRaw2, lotrRaw3, docsRaw,
-    crimeRaw, romanceRaw, animFamilyRaw, koreanRaw, bollywoodRaw,
-  ] = await batchFetch(requests.map((fn) => fn()));
+  requests.push(() => requestTMDB("/trending/all/day", { watch_region: "IN" }));
+  types.push("mixed");
 
-  const heroBanner = dedupeMedia(normalizeMixedMediaList(heroRaw)).slice(0, 12);
-  const top10Today = dedupeMedia(normalizeMixedMediaList(trendingTodayRaw)).slice(0, 10);
+  // Fetch Language Discovery
+  TARGET_LANGS.forEach(({ code }) => {
+    requests.push(() => requestTMDB("/discover/movie", { with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
+    types.push("movie");
+    requests.push(() => requestTMDB("/discover/tv", { with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
+    types.push("tv");
+  });
 
-  const trendingNow = dedupeMedia([
-    ...normalizeList(trendingWeekMoviesRaw, "movie"),
-    ...normalizeList(trendingWeekTvRaw, "tv"),
-  ]).slice(0, 20);
+  // Fetch Global Category Discovery (Ensures rails have enough items)
+  GENRE_IDS.forEach((id) => {
+    requests.push(() => requestTMDB("/discover/movie", { with_genres: String(id), sort_by: "popularity.desc", watch_region: "IN" }));
+    types.push("movie");
+    requests.push(() => requestTMDB("/discover/tv", { with_genres: String(id), sort_by: "popularity.desc", watch_region: "IN" }));
+    types.push("tv");
+  });
 
-  const newReleases = dedupeMedia([
-    ...normalizeList(nowPlayingRaw, "movie"),
-    ...normalizeList(onTheAirRaw, "tv"),
-  ]).slice(0, 20);
+  const rawResults = await batchFetch(requests.map(fn => fn()));
 
-  const wizardingWorld = dedupeMedia([
-    ...normalizeList(wizardingRaw, "movie"),
-    ...normalizeList(wizardingRaw2, "movie"),
-  ]).slice(0, 20);
+  const trendingRaw = rawResults.shift();
+  types.shift();
 
-  const middleEarth = dedupeMedia([
-    ...normalizeList(lotrRaw, "movie"),
-    ...normalizeList(lotrRaw2, "movie"),
-    ...normalizeList(lotrRaw3, "tv"),
-  ]).slice(0, 20);
+  let allMedia = [];
+  rawResults.forEach((res, idx) => {
+    allMedia.push(...normalizeList(res, types[idx]));
+  });
+
+  const globalCatalog = dedupeMedia(allMedia);
+  const genreRails = buildCreativeRails(globalCatalog, { minItemsPerRail: 5 });
 
   return {
-    heroBanner,
+    heroBanner: dedupeMedia(normalizeMixedMediaList(trendingRaw)).slice(0, 5),
     rails: [
-      { title: "Top 10 Today", items: top10Today, ranked: true },
-      { title: "Kids & Family", items: dedupeMedia(normalizeList(animFamilyRaw, "movie")).slice(0, 20) },
-      { title: "Trending Now", items: trendingNow },
-      { title: "New Releases", items: newReleases },
-      { title: "Wizarding World Collection", items: wizardingWorld },
-      { title: "Middle-earth Saga", items: middleEarth },
-      { title: "Bollywood Hits", items: dedupeMedia(normalizeList(bollywoodRaw, "movie")).slice(0, 20) },
-      { title: "Binge-Worthy K-Dramas", items: dedupeMedia(normalizeList(koreanRaw, "tv")).slice(0, 20) },
-      { title: "Popular Movies", items: dedupeMedia(normalizeList(popularMoviesRaw, "movie")).slice(0, 20) },
-      { title: "Popular TV Shows", items: dedupeMedia(normalizeList(popularTvRaw, "tv")).slice(0, 20) },
-      { title: "Top Rated", items: dedupeMedia([...normalizeList(topRatedMoviesRaw, "movie"), ...normalizeList(topRatedTvRaw, "tv")]).slice(0, 20) },
-      { title: "Crime & Thrillers", items: dedupeMedia(normalizeList(crimeRaw, "movie")).slice(0, 20) },
-      { title: "Action & Adventure", items: dedupeMedia(normalizeList(actionRaw, "movie")).slice(0, 20) },
-      { title: "Comedy Movies", items: dedupeMedia(normalizeList(comedyRaw, "movie")).slice(0, 20) },
-      { title: "Horror Movies", items: dedupeMedia(normalizeList(horrorRaw, "movie")).slice(0, 20) },
-      { title: "Sci-Fi & Fantasy", items: dedupeMedia(normalizeList(scifiRaw, "movie")).slice(0, 20) },
-      { title: "Heartfelt Romance", items: dedupeMedia(normalizeList(romanceRaw, "movie")).slice(0, 20) },
+      { title: "Top 10 Today", items: dedupeMedia(normalizeMixedMediaList(trendingRaw)).slice(0, 10), ranked: true },
+      ...genreRails
     ],
   };
 };
 
+// ─── MOVIE PAGE (Movies Only) ────────────────────────────────────────────
 export const fetchTMDBMovieSections = async () => {
-  const [
-    heroRaw, trendingRaw, nowPlayingRaw, popularRaw, topRatedRaw,
-    actionRaw, comedyRaw, horrorRaw, romanceRaw, thrillerRaw, docsRaw,
-  ] = await batchFetch([
-    requestTMDB("/trending/all/week"),
-    requestTMDB("/trending/movie/week"),
-    requestTMDB("/movie/now_playing"),
-    requestTMDB("/movie/popular"),
-    requestTMDB("/movie/top_rated"),
-    requestTMDB("/discover/movie", { with_genres: "28" }),
-    requestTMDB("/discover/movie", { with_genres: "35" }),
-    requestTMDB("/discover/movie", { with_genres: "27" }),
-    requestTMDB("/discover/movie", { with_genres: "10749" }),
-    requestTMDB("/discover/movie", { with_genres: "53" }),
-    requestTMDB("/discover/movie", { with_genres: "99" }),
-  ]);
+  const requests = [];
+  const types = [];
+
+  requests.push(() => requestTMDB("/trending/movie/day", { watch_region: "IN" }));
+  types.push("movie");
+
+  TARGET_LANGS.forEach(({ code }) => {
+    requests.push(() => requestTMDB("/discover/movie", { with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
+    types.push("movie");
+  });
+
+  // Fetch specific genres for movies
+  GENRE_IDS.forEach((id) => {
+    requests.push(() => requestTMDB("/discover/movie", { with_genres: String(id), sort_by: "popularity.desc", watch_region: "IN" }));
+    types.push("movie");
+  });
+
+  const rawResults = await batchFetch(requests.map(fn => fn()));
+  const trendingRaw = rawResults.shift();
+  types.shift();
+
+  let allMedia = [];
+  rawResults.forEach((res, idx) => {
+    allMedia.push(...normalizeList(res, types[idx]));
+  });
+
+  const globalCatalog = dedupeMedia(allMedia);
+  const genreRails = buildCreativeRails(globalCatalog, { minItemsPerRail: 5 });
 
   return {
-    heroBanner: dedupeMedia(normalizeMixedMediaList(heroRaw).filter((i) => i.type === "movie")).slice(0, 12),
+    heroBanner: dedupeMedia(normalizeList(trendingRaw, "movie")).slice(0, 5),
     rails: [
-      { title: "Trending Movies", items: dedupeMedia(normalizeList(trendingRaw, "movie")).slice(0, 20) },
-      { title: "In Theaters", items: dedupeMedia(normalizeList(nowPlayingRaw, "movie")).slice(0, 20) },
-      { title: "Blockbuster Hits", items: dedupeMedia(normalizeList(popularRaw, "movie")).slice(0, 20) },
-      { title: "Critically Acclaimed", items: dedupeMedia(normalizeList(topRatedRaw, "movie")).slice(0, 20) },
-      { title: "Edge of Your Seat Thrillers", items: dedupeMedia(normalizeList(thrillerRaw, "movie")).slice(0, 20) },
-      { title: "Action Packed", items: dedupeMedia(normalizeList(actionRaw, "movie")).slice(0, 20) },
-      { title: "Laugh Out Loud Comedies", items: dedupeMedia(normalizeList(comedyRaw, "movie")).slice(0, 20) },
-      { title: "Chilling Horror", items: dedupeMedia(normalizeList(horrorRaw, "movie")).slice(0, 20) },
-      { title: "Romantic Favorites", items: dedupeMedia(normalizeList(romanceRaw, "movie")).slice(0, 20) },
-      { title: "Real Life Stories", items: dedupeMedia(normalizeList(docsRaw, "movie")).slice(0, 20) },
+      { title: "Trending Movies", items: dedupeMedia(normalizeList(trendingRaw, "movie")).slice(0, 15) },
+      ...genreRails
     ],
   };
 };
 
+// ─── TV PAGE (TV Shows Only) ─────────────────────────────────────────────
 export const fetchTMDBTVSections = async () => {
-  const [
-    heroRaw, trendingRaw, onTheAirRaw, popularRaw, topRatedRaw,
-    dramaRaw, comedyRaw, animeRaw, realityRaw, mysteryRaw,
-  ] = await batchFetch([
-    requestTMDB("/trending/all/week"),
-    requestTMDB("/trending/tv/week"),
-    requestTMDB("/tv/on_the_air"),
-    requestTMDB("/tv/popular"),
-    requestTMDB("/tv/top_rated"),
-    requestTMDB("/discover/tv", { with_genres: "18" }),
-    requestTMDB("/discover/tv", { with_genres: "35" }),
-    requestTMDB("/discover/tv", { with_original_language: "ja", with_genres: "16" }),
-    requestTMDB("/discover/tv", { with_genres: "10764" }),
-    requestTMDB("/discover/tv", { with_genres: "9648" }),
-  ]);
+  const requests = [];
+  const types = [];
+
+  requests.push(() => requestTMDB("/trending/tv/day", { watch_region: "IN" }));
+  types.push("tv");
+
+  TARGET_LANGS.forEach(({ code }) => {
+    requests.push(() => requestTMDB("/discover/tv", { with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
+    types.push("tv");
+  });
+
+  // Fetch specific genres for TV
+  GENRE_IDS.forEach((id) => {
+    requests.push(() => requestTMDB("/discover/tv", { with_genres: String(id), sort_by: "popularity.desc", watch_region: "IN" }));
+    types.push("tv");
+  });
+
+  const rawResults = await batchFetch(requests.map(fn => fn()));
+  const trendingRaw = rawResults.shift();
+  types.shift();
+
+  let allMedia = [];
+  rawResults.forEach((res, idx) => {
+    allMedia.push(...normalizeList(res, types[idx]));
+  });
+
+  const globalCatalog = dedupeMedia(allMedia);
+  const genreRails = buildCreativeRails(globalCatalog, { minItemsPerRail: 5 });
 
   return {
-    heroBanner: dedupeMedia(normalizeMixedMediaList(heroRaw).filter((i) => i.type === "tv")).slice(0, 12),
+    heroBanner: dedupeMedia(normalizeList(trendingRaw, "tv")).slice(0, 5),
     rails: [
-      { title: "Trending TV Shows", items: dedupeMedia(normalizeList(trendingRaw, "tv")).slice(0, 20) },
-      { title: "New Episodes This Week", items: dedupeMedia(normalizeList(onTheAirRaw, "tv")).slice(0, 20) },
-      { title: "Global Anime Hits", items: dedupeMedia(normalizeList(animeRaw, "tv")).slice(0, 20) },
-      { title: "Everyone's Watching", items: dedupeMedia(normalizeList(popularRaw, "tv")).slice(0, 20) },
-      { title: "Award-Winning Television", items: dedupeMedia(normalizeList(topRatedRaw, "tv")).slice(0, 20) },
-      { title: "Gripping Mysteries", items: dedupeMedia(normalizeList(mysteryRaw, "tv")).slice(0, 20) },
-      { title: "Drama Series", items: dedupeMedia(normalizeList(dramaRaw, "tv")).slice(0, 20) },
-      { title: "Sitcoms & Comedy", items: dedupeMedia(normalizeList(comedyRaw, "tv")).slice(0, 20) },
-      { title: "Reality TV & Talk Shows", items: dedupeMedia(normalizeList(realityRaw, "tv")).slice(0, 20) },
+      { title: "Trending TV Shows", items: dedupeMedia(normalizeList(trendingRaw, "tv")).slice(0, 15) },
+      ...genreRails
     ],
   };
 };
@@ -554,10 +599,10 @@ export const fetchTMDBDetails = async (mediaType, id) => {
     append_to_response: appendParts,
   });
   if (!data || typeof data !== "object") return null;
-  // console.log("TMDB Details:", data);
+  console.log("TMDB Details:", data);
   const trailer = pickTMDBTrailer(data.videos);
   const cast = Array.isArray(data.credits?.cast) ? data.credits.cast.slice(0, 15) : [];
-  const logo = data.images?.logos?.find((l) => l.iso_639_1 === "en") || data.images?.logos?.[0];
+  const logo = data.images?.logos?.find((l) => l.iso_639_1 === "en") || null;
   const backdrop = data.images?.backdrops?.[0]?.file_path || data.backdrop_path;
 
   const base = {
@@ -585,7 +630,6 @@ export const fetchTMDBDetails = async (mediaType, id) => {
     };
   }
 
-  // TV
   // TV
   const seasons = Array.isArray(data.seasons) ? data.seasons : [];
 
@@ -628,7 +672,6 @@ export const fetchTMDBSeasonDetails = async (tvId, seasonNumber) => {
   if (!detail || typeof detail !== "object") return null;
 
   const todayStr = new Date().toISOString().slice(0, 10);
-  // console.log("TMDB Season Details:", detail);
   return {
     name: detail.name || `Season ${normalizedSeason}`,
     overview: detail.overview || "",
@@ -681,7 +724,8 @@ export const fetchTMDBStudioTitles = async (studioKey, { moviePages = 2, tvPages
     requestTMDB("/discover/movie", {
       ...(keyword ? { with_keywords: keyword } : { with_companies: companyParam }),
       sort_by: "popularity.desc",
-      "vote_count.gte": "50", // was 200 — too strict for newer releases
+      watch_region: "IN",
+      // "vote_count.gte": "50",
       page: String(i + 1),
     })
   );
@@ -690,7 +734,8 @@ export const fetchTMDBStudioTitles = async (studioKey, { moviePages = 2, tvPages
     requestTMDB("/discover/tv", {
       ...(keyword ? { with_keywords: keyword } : { with_networks: networkParam }),
       sort_by: "popularity.desc",
-      "vote_count.gte": "50",
+      watch_region: "IN",
+      // "vote_count.gte": "50",
       page: String(i + 1),
     })
   );
@@ -704,22 +749,82 @@ export const fetchTMDBStudioTitles = async (studioKey, { moviePages = 2, tvPages
   const tv = normalizeList(tvData.flat(), "tv");
   const combined = dedupeMedia([...movies, ...tv]);
 
-  // FIX #2: Sort by releaseYear (property that actually exists)
   return combined.sort((a, b) => (b.releaseYear || 0) - (a.releaseYear || 0));
+};
+
+/**
+ * NEW: Multilingual content aggregator.
+ * Fetches movies & TV across Hindi, English, Korean, Tamil, Telugu,
+ * Malayalam, Kannada, merges everything, deduplicates,
+ * and splits into creatively‑titled genre rails.
+ */
+export const fetchMultilingualContent = async ({ moviePages = 1, tvPages = 1 } = {}) => {
+  const languages = [
+    { code: "hi", label: "Hindi" },
+    { code: "en", label: "English" },
+  ];
+
+  const requests = [];
+
+  for (const { code } of languages) {
+    for (let p = 1; p <= moviePages; p++) {
+      requests.push(
+        requestTMDB("/discover/movie", {
+          with_original_language: code,
+          sort_by: "popularity.desc",
+          watch_region: "IN",
+          "vote_count.gte": "50",
+          page: String(p),
+        })
+      );
+    }
+    for (let p = 1; p <= tvPages; p++) {
+      requests.push(
+        requestTMDB("/discover/tv", {
+          with_original_language: code,
+          sort_by: "popularity.desc",
+          watch_region: "IN",
+          "vote_count.gte": "50",
+          page: String(p),
+        })
+      );
+    }
+  }
+
+  const rawResults = await batchFetch(requests, 10);
+
+  // Separate movies and TV
+  const moviesRaw = [];
+  const tvRaw = [];
+  const perLang = moviePages + tvPages;
+  let idx = 0;
+
+  for (let i = 0; i < languages.length; i++) {
+    for (let j = 0; j < moviePages; j++) {
+      moviesRaw.push(rawResults[idx++]);
+    }
+    for (let j = 0; j < tvPages; j++) {
+      tvRaw.push(rawResults[idx++]);
+    }
+  }
+
+  const movies = normalizeList(moviesRaw.flat(), "movie");
+  const tvShows = normalizeList(tvRaw.flat(), "tv");
+  const combined = dedupeMedia([...movies, ...tvShows]);
+
+  return buildCreativeRails(combined);
 };
 
 export const fetchTMDBDataSet = fetchTMDBCatalog;
 
 // ─── Creative rail titles ──────────────────────────────────────────────
-// Maps a genre tag to an evocative row title, HBO Max/Netflix editorial style,
-// instead of a flat "Action Movies" / "Drama" label.
 const CREATIVE_GENRE_TITLES = {
   Action: "Explosive Action",
   Adventure: "Epic Adventures",
   Animation: "For the Whole Family",
   Comedy: "Laughter Is Your Best Medicine",
   Crime: "Crime Doesn't Pay",
-  Documentary: "Jaw-Dropping Documentaries",
+
   Drama: "Stories That Stay With You",
   Family: "For the Whole Family",
   Fantasy: "Worlds Beyond Your Own",
@@ -734,20 +839,17 @@ const CREATIVE_GENRE_TITLES = {
   War: "Battles Worth Remembering",
 };
 
-// Priority order so the page reads with intent rather than alphabetically.
 const RAIL_PRIORITY = [
-  "Documentary", "Family", "Animation", "Kids", "Comedy", "Horror",
+  "Family", "Animation", "Kids", "Comedy", "Horror",
   "Fantasy", "Adventure", "Action", "Sci-Fi", "Thriller", "Crime",
   "Mystery", "Drama", "Romance", "History", "War", "Music",
 ];
 
 /**
  * Groups a flat list of normalized TMDB items into curated, editorially-titled
- * rails by genre — e.g. HBO's "Songs of Men and Beasts" (Horror/monster titles),
- * "For the Whole Family" (Animation/Family), "Jaw-Dropping Documentaries", etc.
- * Always leads with a "Popular Movies & TV Series" rail of the highest-rated items.
+ * rails by genre.
  */
-export const buildCreativeRails = (items, { minItemsPerRail = 4 } = {}) => {
+export const buildCreativeRails = (items, { minItemsPerRail = 5 } = {}) => {
   const list = Array.isArray(items) ? items : [];
   if (list.length === 0) return [];
 
@@ -762,12 +864,9 @@ export const buildCreativeRails = (items, { minItemsPerRail = 4 } = {}) => {
   }
 
   const usedGenres = new Set();
-
-  // FIX: Keep track of item IDs that have already been placed in a genre rail
   const assignedItemIds = new Set();
 
   for (const genre of RAIL_PRIORITY) {
-    // Filter items by genre AND ensure they haven't been assigned to a previous rail
     const genreItems = list.filter((i) =>
       (i.category || []).includes(genre) && !assignedItemIds.has(i.id)
     );
@@ -775,20 +874,16 @@ export const buildCreativeRails = (items, { minItemsPerRail = 4 } = {}) => {
     if (genreItems.length < minItemsPerRail) continue;
 
     const title = CREATIVE_GENRE_TITLES[genre] || genre;
-    // Avoid duplicate rail titles (e.g. Animation + Family mapping to same title)
     if (usedGenres.has(title)) continue;
     usedGenres.add(title);
 
-    // Take up to 20 items for this rail
     const finalItemsForRail = genreItems.slice(0, 25);
-
-    // Mark these items as assigned so they don't appear in the next genre loop
     finalItemsForRail.forEach((item) => assignedItemIds.add(item.id));
 
     rails.push({
       title,
       items: finalItemsForRail,
-      showViewAll: rails.length < 3,
+      showViewAll: rails.length < 5,
     });
   }
 

@@ -200,7 +200,7 @@ const Search = (props) => {
               type="text"
               inputMode="search"
               className="w-full pl-14 pr-12 py-4 bg-[#2a2a2a]/80 border border-[#404040] hover:border-[#606060] rounded-xl text-white text-lg placeholder-gray-500 focus:outline-none focus:border-[#E50914] focus:ring-2 focus:ring-[#E50914]/20 transition-all shadow-2xl backdrop-blur-sm"
-              placeholder="Movies, shows, genres, actors..."
+              placeholder="Search your favourite Movies, shows"
               value={query}
               onChange={(e) => handleSearchChange(e.target.value)}
               autoFocus

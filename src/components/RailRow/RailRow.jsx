@@ -69,14 +69,14 @@ export default function RailRow({
             
             {/* Title with Netflix/Hotstar 'Explore All' hover interaction */}
             {title && (
-                <div className="flex items-end px-2 md:px-0">
+                <div className="flex items-end px-2 md:px-0 z-10">
                     <h2 
                         className="text-lg sm:text-xl md:text-2xl font-bold text-[#e5e5e5] group-hover/rail:text-white transition-colors cursor-pointer group/title flex items-center gap-3"
                         onClick={handleViewAll}
                         title={`Explore all ${title}`}
                     >
                         {title}
-                        <div className="hidden sm:flex items-center text-[#54b9c5] text-[10px] md:text-xs font-bold tracking-wider opacity-0 -translate-x-4 group-hover/title:opacity-100 group-hover/title:translate-x-0 transition-all duration-500 ease-out">
+                        <div className="text-red-800 text-sm text-center font-semibold group-hover/rail:text-red-600 transition-colors flex items-center gap-1">
                             Explore All 
                             <i className="fa-solid fa-chevron-right ml-1.5 text-[10px]"></i>
                         </div>
