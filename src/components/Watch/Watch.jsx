@@ -247,12 +247,12 @@ const Watch = (props) => {
         title: props.mname,
         type: props.type,
         tmdbId: props.id,
-        image: backgroundImage || props.img,
+        image: backgroundImage,
         season: props.type === 'tv' ? targetSeason : undefined,
         episode: props.type === 'tv' ? targetEpisode : undefined,
       },
     });
-  }, [props.type, props.id, props.play, props.mname, backgroundImage, props.img, navigate, lastWatchedEp]);
+  }, [props.type, props.id, props.play, props.mname, backgroundImage, navigate, lastWatchedEp]);
 
   const seasonLabel = props.type === 'tv'
     ? details?.seasonLabel || `${effectiveSeasonKeys.length} Season${effectiveSeasonKeys.length > 1 ? 's' : ''}`

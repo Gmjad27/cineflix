@@ -396,6 +396,7 @@ function Home(props) {
                 eager={index === 0}
                 renderItem={(item, idx) =>
                   isTop10 ? (
+                    
                     <div className="relative flex items-center justify-end pl-10 sm:pl-12 md:pl-20 py-2 sm:py-4 group">
                       <div
                         className="absolute left-0 bottom-[2%] md:bottom-[5%] text-[100px] sm:text-[140px] md:text-[200px] lg:text-[230px] font-black leading-none text-[#141414] select-none z-0 tracking-tighter drop-shadow-2xl transition-transform duration-300 group-hover:scale-105 origin-bottom-left"

@@ -411,7 +411,14 @@ export const fetchTMDBTrending = async ({ window = "week", limit = 12 } = {}) =>
 // ─── Target Languages & Genres for Deep Discovery ───────────────────────
 const TARGET_LANGS = [
   { code: "hi", name: "Hindi" },
-  { code: "en", name: "English" }
+  { code: "en", name: "English" },
+  { code: "ko", name: "Korean" },
+  { code: "ja", name: "Japanese" },
+  { code: "ta", name: "Tamil" },
+  { code: "te", name: "Telugu" },
+  { code: "ml", name: "Malayalam" },
+  { code: "kn", name: "Kannada" },
+  { code: "gu", name: "Gujarati" }
 ];
 
 // 12 Major Genres to guarantee full Netflix-style rows
@@ -434,14 +441,14 @@ export const fetchTMDBHomeSections = async () => {
   const requests = [];
   const types = []; // Track which response is movie vs tv
 
-  requests.push(() => requestTMDB("/trending/all/day", { watch_region: "IN" }));
+  requests.push(() => requestTMDB("/trending/all/week", { watch_region: "IN" }));
   types.push("mixed");
 
   // Fetch Language Discovery
   TARGET_LANGS.forEach(({ code }) => {
-    requests.push(() => requestTMDB("/discover/movie", { with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
+    requests.push(() => requestTMDB("/discover/movie", { with_watch_providers: "119|8|122|220|232|237|350", with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
     types.push("movie");
-    requests.push(() => requestTMDB("/discover/tv", { with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
+    requests.push(() => requestTMDB("/discover/tv", { with_watch_providers: "119|8|122|220|232|237|350", with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
     types.push("tv");
   });
 
@@ -469,7 +476,7 @@ export const fetchTMDBHomeSections = async () => {
   return {
     heroBanner: dedupeMedia(normalizeMixedMediaList(trendingRaw)).slice(0, 5),
     rails: [
-      { title: "Top 10 Today", items: dedupeMedia(normalizeMixedMediaList(trendingRaw)).slice(0, 10), ranked: true },
+      { title: "Top 10 Today", items: dedupeMedia(normalizeMixedMediaList(trendingRaw)).slice(0, 12), ranked: true },
       ...genreRails
     ],
   };
@@ -480,11 +487,11 @@ export const fetchTMDBMovieSections = async () => {
   const requests = [];
   const types = [];
 
-  requests.push(() => requestTMDB("/trending/movie/day", { watch_region: "IN" }));
+  requests.push(() => requestTMDB("/trending/movie/week", { watch_region: "IN" }));
   types.push("movie");
 
   TARGET_LANGS.forEach(({ code }) => {
-    requests.push(() => requestTMDB("/discover/movie", { with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
+    requests.push(() => requestTMDB("/discover/movie", { with_watch_providers: "119|8|122|220|232|237|350", with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
     types.push("movie");
   });
 
@@ -520,11 +527,11 @@ export const fetchTMDBTVSections = async () => {
   const requests = [];
   const types = [];
 
-  requests.push(() => requestTMDB("/trending/tv/day", { watch_region: "IN" }));
+  requests.push(() => requestTMDB("/trending/tv/week", { watch_region: "IN" }));
   types.push("tv");
 
   TARGET_LANGS.forEach(({ code }) => {
-    requests.push(() => requestTMDB("/discover/tv", { with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
+    requests.push(() => requestTMDB("/discover/tv", { with_watch_providers: "119|8|122|220|232|237|350", with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
     types.push("tv");
   });
 
@@ -603,7 +610,7 @@ export const fetchTMDBDetails = async (mediaType, id) => {
   const trailer = pickTMDBTrailer(data.videos);
   const cast = Array.isArray(data.credits?.cast) ? data.credits.cast.slice(0, 15) : [];
   const logo = data.images?.logos?.find((l) => l.iso_639_1 === "en") || null;
-  const backdrop = data.images?.backdrops?.[0]?.file_path || data.backdrop_path;
+  const backdrop = data.images?.backdrops?.[0]?.file_path;
 
   const base = {
     title: data.title || data.name || data.original_title || data.original_name,
