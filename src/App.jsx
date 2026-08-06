@@ -175,7 +175,6 @@ function App() {
           <video
             src="/intro.mp4"
             autoPlay
-            muted       /* 👈 Critical: Without muted, browsers often block autoplay, meaning onEnded never fires */
             playsInline
             onEnded={() => setShowIntro(false)} /* 👈 Triggers rendering of the Router/Home Page immediately when video stops */
             className="w-full h-full object-cover sm:object-contain pointer-events-none"

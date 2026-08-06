@@ -42,13 +42,13 @@ const Streaming = () => {
 
     // Construct the iframe source URL based on local state
     const embedUrl = isTvShow
-        ? `https://screenscape.me/embed?tmdb=${tmdbId}&type=tv&s=${currentSeason}&e=${currentEpisode}&lan=hindi`
-        : `https://screenscape.me/embed?tmdb=${tmdbId}&type=movie&lan=hindi`;
+        ? `https://screenscape.me/embed?tmdb=${tmdbId}&type=tv&s=${currentSeason}&e=${currentEpisode}`
+        : `https://screenscape.me/embed?tmdb=${tmdbId}&type=movie`;
 
 
 
     return (
-        <div className="relative flex items-center justify-center h-[100%] w-[100%] overflow-hidden bg-black">
+        <div className="relative flex items-center justify-center h-[100%] w-[100%] pt-16 pb-16 sm:pt-0 sm:pb-0 overflow-hidden bg-black">
 
             {/* ─── Top Right Controls (Only for TV Shows) ─── */}
             <button
@@ -63,7 +63,7 @@ const Streaming = () => {
                     src={embedUrl}
                     className="w-full border-none"
                     width="100%"
-                    height="85%"
+                    height="100%"
                     allowFullScreen
                     allow="accelerometer; autoplay; fullscreen; picture-in-picture encrypted-media; gyroscope;"
                     title="Movie/TV Player"
