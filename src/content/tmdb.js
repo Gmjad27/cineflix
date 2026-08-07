@@ -476,7 +476,7 @@ export const fetchTMDBHomeSections = async () => {
   return {
     heroBanner: dedupeMedia(normalizeMixedMediaList(trendingRaw)).slice(0, 5),
     rails: [
-      { title: "Top 10 Today", items: dedupeMedia(normalizeMixedMediaList(trendingRaw)).slice(0, 12), ranked: true },
+      { title: "Top 10 Today", items: dedupeMedia(normalizeMixedMediaList(trendingRaw)).slice(0, 10), ranked: true },
       ...genreRails
     ],
   };
@@ -516,7 +516,7 @@ export const fetchTMDBMovieSections = async () => {
   return {
     heroBanner: dedupeMedia(normalizeList(trendingRaw, "movie")).slice(0, 5),
     rails: [
-      { title: "Trending Movies", items: dedupeMedia(normalizeList(trendingRaw, "movie")).slice(0, 15) },
+      { title: "Trending Movies", items: dedupeMedia(normalizeList(trendingRaw, "movie")).slice(0, 20) },
       ...genreRails
     ],
   };
@@ -556,7 +556,7 @@ export const fetchTMDBTVSections = async () => {
   return {
     heroBanner: dedupeMedia(normalizeList(trendingRaw, "tv")).slice(0, 5),
     rails: [
-      { title: "Trending TV Shows", items: dedupeMedia(normalizeList(trendingRaw, "tv")).slice(0, 15) },
+      { title: "Trending TV Shows", items: dedupeMedia(normalizeList(trendingRaw, "tv")).slice(0, 20) },
       ...genreRails
     ],
   };
@@ -606,11 +606,12 @@ export const fetchTMDBDetails = async (mediaType, id) => {
     append_to_response: appendParts,
   });
   if (!data || typeof data !== "object") return null;
-  console.log("TMDB Details:", data);
   const trailer = pickTMDBTrailer(data.videos);
   const cast = Array.isArray(data.credits?.cast) ? data.credits.cast.slice(0, 15) : [];
   const logo = data.images?.logos?.find((l) => l.iso_639_1 === "en") || null;
-  const backdrop = data.images?.backdrops?.[0]?.file_path;
+  const backdrop = data.images?.backdrops?.find(
+    img => img.iso_639_1 === 'en'
+  )?.file_path || data.images?.backdrops?.[0]?.file_path;
 
   const base = {
     title: data.title || data.name || data.original_title || data.original_name,
@@ -780,7 +781,7 @@ export const fetchMultilingualContent = async ({ moviePages = 1, tvPages = 1 } =
           with_original_language: code,
           sort_by: "popularity.desc",
           watch_region: "IN",
-          "vote_count.gte": "50",
+          // "vote_count.gte": "50",
           page: String(p),
         })
       );
@@ -791,7 +792,7 @@ export const fetchMultilingualContent = async ({ moviePages = 1, tvPages = 1 } =
           with_original_language: code,
           sort_by: "popularity.desc",
           watch_region: "IN",
-          "vote_count.gte": "50",
+          // "vote_count.gte": "50",
           page: String(p),
         })
       );
