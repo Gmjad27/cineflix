@@ -5,7 +5,9 @@ import RailRow from '../../components/RailRow/RailRow.jsx';
 import { useRailScroll } from '../../hooks/useRailScroll';
 import PrivacyPolicyPopup, { PRIVACY_POLICY_STORAGE_KEY } from '../../components/PrivacyPolicyPopup/PrivacyPolicyPopup.jsx';
 
-// IMPORT ADDED: Ensure the path to your TMDB utility file is correct
+// New Component Import
+import HeroBanner from '../../components/HeroBanner/HeroBanner.jsx';
+
 import { fetchTMDBDetails } from '../../content/tmdb.js';
 
 const Card = lazy(() => import('../../components/Card/Card'));
@@ -67,23 +69,20 @@ function Home(props) {
 
 
   // ==========================================
-  // UPDATED: Async Fallback URL State Management
+  // Async Fallback URL State Management
   // ==========================================
   const watchId = searchParams.get('watch');
-
   const [fetchedWatchItem, setFetchedWatchItem] = useState(null);
   const [isWatchLoading, setIsWatchLoading] = useState(false);
 
-  // 1. Try to find the item locally first (instant load)
   const localWatchItem = useMemo(() => {
     if (!watchId) return null;
     return [...mediaData, ...data].find((item) => String(item.id) === String(watchId));
   }, [watchId, mediaData, data]);
 
-  // 2. If it's not found locally, fetch it from TMDB
   useEffect(() => {
     if (!watchId || localWatchItem) {
-      setFetchedWatchItem(null); // Clear fetch cache if missing or handled locally
+      setFetchedWatchItem(null);
       return;
     }
 
@@ -96,7 +95,6 @@ function Home(props) {
         const details = await fetchTMDBDetails(mediaType, tmdbId);
         if (!details) throw new Error('Media not found');
 
-        // Map the rich details from fetchTMDBDetails into the shape expected by Watch
         const mappedItem = {
           id: watchId,
           tmdbId: Number(tmdbId),
@@ -127,11 +125,9 @@ function Home(props) {
     fetchWatchItem();
   }, [watchId, localWatchItem]);
 
-  // 3. Resolve the final watchItem (prioritize local, fallback to fetched)
   const watchItem = localWatchItem || fetchedWatchItem;
   const watchOpen = !!watchItem;
 
-  // 4. Simplified openWatch & clearWatchFromUrl
   const openWatch = useCallback((id, name2) => {
     if (!id) return;
     searchParams.set('watch', id);
@@ -146,7 +142,6 @@ function Home(props) {
     setFetchedWatchItem(null);
   }, [searchParams, setSearchParams]);
   // ==========================================
-
 
   const resumeContinueWatching = useCallback((item) => {
     if (!item?.streamId) return;
@@ -221,75 +216,13 @@ function Home(props) {
       <PrivacyPolicyPopup open={privacyPopupOpen} onClose={() => setPrivacyPopupOpen(false)} />
 
       {/* ===== HERO BANNER ===== */}
-      <section className="relative w-full h-[75vh] sm:h-[85vh] md:h-[90vh] lg:h-[100vh] overflow-hidden bg-black">
-        <div className="absolute inset-0">
-          <div
-            className="absolute inset-0 bg-cover bg-center block md:hidden transition-opacity duration-1000 ease-in-out"
-            style={currentHero?.name ? { backgroundImage: `url(${currentHero.name})` } : undefined}
-          />
-          <div
-            className="absolute inset-0 bg-cover bg-center hidden md:block transition-opacity duration-1000 ease-in-out"
-            style={currentHero?.img ? { backgroundImage: `url(${currentHero.img})` } : undefined}
-          />
-        </div>
-
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.6)_100%)]" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#141414]/90 via-[#141414]/40 to-transparent w-[80%]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/30 to-transparent bottom-0 h-[100%]" />
-
-        <div className="absolute bottom-[10%] sm:bottom-[15%] left-0 w-full px-6 md:px-12 lg:px-16 flex flex-col items-start gap-4 z-10 w-full max-w-[90%] md:max-w-[50%]">
-          {currentHero?.nameImg2 ? (
-            <img src={currentHero.nameImg2} alt={currentHero.name2} className="max-w-[200px] md:max-w-[400px] lg:max-w-[500px] object-contain drop-shadow-2xl mb-2" />
-          ) : (
-            <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold leading-tight drop-shadow-2xl line-clamp-2">
-              {currentHero?.name2}
-            </h1>
-          )}
-
-          <div className="flex items-center gap-3 drop-shadow-md">
-            <span className="flex items-center justify-center font-bold text-[#E50914] text-2xl md:text-4xl">
-              N
-            </span>
-            <span className="text-gray-300 font-semibold tracking-wide text-xs sm:text-sm uppercase flex items-center gap-2">
-              <span className="text-white">Film</span>
-            </span>
-          </div>
-
-          <h2 className="text-xl md:text-2xl font-bold drop-shadow-md flex items-center gap-2">
-            <span className="bg-[#E50914] text-white text-[10px] font-black px-1.5 py-0.5 rounded-sm">TOP 10</span>
-            #{heroIndex + 1} in Trending Today
-          </h2>
-
-          <p className="hidden md:block text-base lg:text-lg text-gray-200 drop-shadow-lg line-clamp-3 leading-snug text-shadow-md">
-            {currentHero?.desc}
-          </p>
-
-          <div className="mt-4 flex gap-3 sm:gap-4 w-full sm:w-auto">
-            <button
-              type="button"
-              onClick={() => openWatch(currentHero?.id)}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-6 sm:px-8 py-2 md:py-2.5 bg-[#6d6d6e]/70 text-white font-bold text-sm md:text-xl rounded hover:bg-[#6d6d6e] active:scale-95 transition backdrop-blur-sm"
-              title="More Info"
-            >
-              {/* {console.log("Opening watch for:", currentHero?.id)} */}
-              <i className="fa-solid fa-circle-info"></i>
-              More Info
-            </button>
-          </div>
-        </div>
-
-        <div className="absolute bottom-6 md:bottom-10 left-0 w-full flex justify-center gap-2 z-10">
-          {mediaData.slice(0, 5).map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              className={`h-1 rounded-full transition-all duration-300 ${heroIndex % 5 === i ? 'bg-white w-6' : 'bg-white/40 hover:bg-white/70 w-3'}`}
-              onClick={() => setHeroIndex(i)}
-              aria-label={`Go to slide ${i + 1}`}
-            />
-          ))}
-        </div>
-      </section>
+      <HeroBanner
+        mediaData={mediaData}
+        currentHero={currentHero}
+        heroIndex={heroIndex}
+        setHeroIndex={setHeroIndex}
+        openWatch={openWatch}
+      />
 
       {/* ===== MAIN CONTENT ===== */}
       <div className="px-6 md:px-12 lg:px-16 relative z-20 space-y-12 pb-12 mt-6 md:-mt-0">
@@ -308,15 +241,9 @@ function Home(props) {
               renderItem={(item) => (
                 <div
                   className="relative flex-shrink-0 w-56 sm:w-64 md:w-80 lg:w-96 aspect-video rounded-md overflow-hidden cursor-pointer group shadow-lg hover:shadow-2xl transition-all duration-300 bg-[#181818]"
-                  // onClick={() => resumeContinueWatching(item)}
-                  onClick={() => {
-                    openWatch(`${item.type}_${item.tmdbId}`);
-                  }
-                  }
-
+                  onClick={() => openWatch(`${item.type}_${item.tmdbId}`)}
                   title={item.title}
                 >
-                  {/* {console.log("Rendering Continue Watching item:", `${item.type}_${item.tmdbId}`)} */}
                   <button
                     onClick={(e) => handleRemoveContinueWatching(e, item.streamId)}
                     className="absolute top-2 right-2 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white/70 hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 border border-transparent hover:border-white/50 backdrop-blur-sm"
@@ -396,7 +323,6 @@ function Home(props) {
                 eager={index === 0}
                 renderItem={(item, idx) =>
                   isTop10 ? (
-                    
                     <div className="relative flex items-center justify-end pl-10 sm:pl-12 md:pl-20 py-2 sm:py-4 group">
                       <div
                         className="absolute left-0 bottom-[2%] md:bottom-[5%] text-[100px] sm:text-[140px] md:text-[200px] lg:text-[230px] font-black leading-none text-[#141414] select-none z-0 tracking-tighter drop-shadow-2xl transition-transform duration-300 group-hover:scale-105 origin-bottom-left"
@@ -439,7 +365,6 @@ function Home(props) {
       </div>
 
       {/* Watch modal */}
-      {/* {console.log("Rendering Watch modal for:", watchItem)} */}
       {watchOpen && watchItem && (
         <Watch
           data={data}

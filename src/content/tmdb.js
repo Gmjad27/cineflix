@@ -446,9 +446,9 @@ export const fetchTMDBHomeSections = async () => {
 
   // Fetch Language Discovery
   TARGET_LANGS.forEach(({ code }) => {
-    requests.push(() => requestTMDB("/discover/movie", { with_watch_providers: "119|8|122|220|232|237|350", with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
+    requests.push(() => requestTMDB("/discover/movie", { with_watch_providers: "119|8|232|237|350", with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
     types.push("movie");
-    requests.push(() => requestTMDB("/discover/tv", { with_watch_providers: "119|8|122|220|232|237|350", with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
+    requests.push(() => requestTMDB("/discover/tv", { with_watch_providers: "119|8|232|237|350", with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
     types.push("tv");
   });
 
@@ -491,7 +491,7 @@ export const fetchTMDBMovieSections = async () => {
   types.push("movie");
 
   TARGET_LANGS.forEach(({ code }) => {
-    requests.push(() => requestTMDB("/discover/movie", { with_watch_providers: "119|8|122|220|232|237|350", with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
+    requests.push(() => requestTMDB("/discover/movie", { with_watch_providers: "119|8|232|237|350", with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
     types.push("movie");
   });
 
@@ -531,7 +531,7 @@ export const fetchTMDBTVSections = async () => {
   types.push("tv");
 
   TARGET_LANGS.forEach(({ code }) => {
-    requests.push(() => requestTMDB("/discover/tv", { with_watch_providers: "119|8|122|220|232|237|350", with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
+    requests.push(() => requestTMDB("/discover/tv", { with_watch_providers: "119|8|232|237|350", with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
     types.push("tv");
   });
 

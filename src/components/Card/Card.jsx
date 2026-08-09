@@ -20,7 +20,7 @@ const Card = React.memo(({ id, name, img, type, rating = 0, hideRating, width, h
       onClick={action}
       onKeyDown={(e) => ['Enter', ' '].includes(e.key) && action()}
       style={{ width: width || undefined, height: height || undefined }}
-      className={`group relative flex-shrink-0 w-28 sm:w-32 md:w-40 lg:w-44 xl:w-52 ${!height ? 'aspect-[2/3]' : ''} overflow-hidden bg-gray-900 cursor-pointer transition-all hover:scale-105 hover:z-30 hover:shadow-2xl focus:ring-2 focus:ring-cyan-400`}
+      className={`group relative flex-shrink-0 w-28 sm:w-32 md:w-40 lg:w-44 xl:w-52 ${!height ? 'aspect-[2/3]' : ''} overflow-hidden bg-gray-900 cursor-pointer transition-all hover:scale-105 hover:z-30 hover:shadow-2xl focus:ring-2 rounded focus:ring-cyan-400`}
     >
       {/* Image or Fallback */}
       {img && !imgError ? (

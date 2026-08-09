@@ -298,7 +298,7 @@ const Profile = (props) => {
             </div>
 
             {/* Grid */}
-            <div className="flex flex-wrap w-full justify-evenly gap-2">
+            <div className="flex flex-wrap w-full justify-between gap-3">
               {displayedItems.map((item) => {
                 return (
                   <div key={item.id}>

@@ -62,11 +62,12 @@ const Watch = (props) => {
     setWatchedEpisodes(getWatchedEpisodes(props.id));
     if (props.type === 'movie') {
       try {
-        const history = JSON.parse(localStorage.getItem('continueWatching')) || [];
+        const history = JSON.parse(localStorage.getItem('continue-watching')) || [];
         const isWatched = history.some(item => String(item.tmdbId) === String(props.id));
+        console.log(`Movie ID ${props.id} has been watched:`, history, isWatched);
         setHasWatchedMovie(isWatched);
       } catch (err) {
-        console.error("Error reading continueWatching from localStorage", err);
+        console.error("Error reading continue-watching from localStorage", err);
       }
     }
   }, [props.id, props.type]);
@@ -401,8 +402,9 @@ const Watch = (props) => {
           {heroPoster ? (
             <div
               className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
-              style={{ backgroundImage: `url('${heroPoster}')`, opacity: trailerLoaded ? 0.3 : 1 }}
-            />
+              style={{ backgroundImage: `url('${heroPoster}')`, opacity: trailerLoaded ? 0.3 : 1 }}>
+              <p>Trailer at not Available</p>
+            </div>
           ) : (
             isDetailsLoading && (
               <div className="absolute inset-0 bg-[#242424] animate-pulse" />
@@ -431,12 +433,12 @@ const Watch = (props) => {
 
           {/* Hero Content Overlays */}
           <div className="absolute bottom-[5%] left-0 w-full px-4 sm:px-8 md:px-12 flex flex-col gap-3 sm:gap-4">
-            <div className="relative flex items-end justify-start h-[60px] sm:h-[130px] w-[100%] sm:*:max-w-[40%]">
+            <div className="relative flex items-end justify-start h-[60px] sm:h-[130px] w-[70%]">
               {logo ? (
                 <img
                   src={logo}
                   alt={props.mname}
-                  className="max-h-full max-w-full object-contain drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]"
+                  className="max-h-full max-w-[50%] object-contain drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]"
                 />
               ) : (
                 <h1 className="text-2xl xs:text-3xl sm:text-3xl md:text-4xl w-[100%] font-bold drop-shadow-lg leading-tight">
@@ -661,8 +663,8 @@ const Watch = (props) => {
             <>
               <h3 className="text-2xl font-bold text-white">More Like This</h3>
               <hr className="my-3 border-gray-600" />
-              <div className="flex flex-wrap justify-center">
-                <div className="flex flex-wrap justify-center gap-3">
+              <div className="flex flex-wrap justify-between">
+                <div className="flex flex-wrap justify-between gap-3">
                   {related.map((item) => renderRelatedCard(item))}
                 </div>
               </div>
