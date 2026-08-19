@@ -239,33 +239,39 @@ function Home(props) {
               handleRailScroll={handleRailScroll}
               eager
               renderItem={(item) => (
-                <div
-                  className="relative flex-shrink-0 w-56 sm:w-64 md:w-80 lg:w-96 aspect-video rounded-md overflow-hidden cursor-pointer group shadow-lg hover:shadow-2xl transition-all duration-300 bg-[#181818]"
-                  onClick={() => openWatch(`${item.type}_${item.tmdbId}`)}
-                  title={item.title}
-                >
-                  <button
-                    onClick={(e) => handleRemoveContinueWatching(e, item.streamId)}
-                    className="absolute top-2 right-2 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white/70 hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 border border-transparent hover:border-white/50 backdrop-blur-sm"
-                    title="Remove from row"
+                <>
+                  <div
+                    className="relative flex-shrink-0 w-56 sm:w-64 md:w-80 lg:w-96 aspect-video rounded-md overflow-hidden cursor-pointer group shadow-lg hover:shadow-2xl transition-all duration-300 bg-[#181818]"
+                    onClick={() => openWatch(`${item.type}_${item.tmdbId}`)}
+                    title={item.title}
                   >
-                    <i className="fa-solid fa-xmark"></i>
-                  </button>
+                    <button
+                      onClick={(e) => handleRemoveContinueWatching(e, item.streamId)}
+                      className="absolute top-2 right-2 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white/70 hover:text-white flex items-center justify-center opacity-1 group-hover:opacity-100 transition-all duration-300 border border-transparent hover:border-white/50 backdrop-blur-sm"
+                      title="Remove from row"
+                    >
+                      <i className="fa-solid fa-xmark"></i>
+                    </button>
 
-                  <img
-                    src={item.image || "https://via.placeholder.com/640x360.png?text=Resume"}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent opacity-90" />
+                    <img
+                      src={item.image || "https://via.placeholder.com/640x360.png?text=Resume"}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent opacity-90" />
 
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-white flex items-center justify-center bg-black/50 transform scale-75 group-hover:scale-100 transition-transform duration-300 shadow-xl">
-                      <i className="fa-solid fa-play text-white text-xl md:text-2xl ml-1"></i>
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-white flex items-center justify-center bg-black/50 transform scale-75 group-hover:scale-100 transition-transform duration-300 shadow-xl">
+                        <i className="fa-solid fa-play text-white text-xl md:text-2xl ml-1"></i>
+                      </div>
+                    </div>
+
+                    <div className="absolute bottom-0 left-0 right-0 h-1 md:h-1.5 bg-gray-500/50">
+                      <div className="h-full bg-[#ff000d] rounded-r-full" style={{ width: '100%' }}></div>
                     </div>
                   </div>
-
-                  <div className="absolute bottom-3 left-4 right-4 flex flex-col justify-end pointer-events-none">
+                  <div className="relative bottom-0 left-1 right-4 gap-2
+                   flex flex-row justify-start pointer-events-none">
                     <h4 className="text-white font-bold text-sm md:text-base line-clamp-1 drop-shadow-md">
                       {item.title}
                     </h4>
@@ -275,11 +281,7 @@ function Home(props) {
                       </span>
                     )}
                   </div>
-
-                  <div className="absolute bottom-0 left-0 right-0 h-1 md:h-1.5 bg-gray-500/50">
-                    <div className="h-full bg-[#E50914] rounded-r-full" style={{ width: '100%' }}></div>
-                  </div>
-                </div>
+                </>
               )}
             />
           )}
@@ -307,7 +309,7 @@ function Home(props) {
           {/* Dynamic Rails */}
           {rails.map((rail, index) => {
             const railKey = `${rail.title}-${index}`;
-            const isTop10 = rail.title === 'Top 10 Today';
+            const isTop10 = rail.title.toUpperCase().includes('TOP 10');
             const visibleItems = rail.items.filter((item) => Number(item.rating?.toFixed(0) || 0) !== 0);
 
             return (
@@ -321,41 +323,17 @@ function Home(props) {
                 onRailScroll={onRailScroll}
                 handleRailScroll={handleRailScroll}
                 eager={index === 0}
-                renderItem={(item, idx) =>
-                  isTop10 ? (
-                    <div className="relative flex items-center justify-end pl-10 sm:pl-12 md:pl-20 py-2 sm:py-4 group">
-                      <div
-                        className="absolute left-0 bottom-[2%] md:bottom-[5%] text-[100px] sm:text-[140px] md:text-[200px] lg:text-[230px] font-black leading-none text-[#141414] select-none z-0 tracking-tighter drop-shadow-2xl transition-transform duration-300 group-hover:scale-105 origin-bottom-left"
-                        style={{
-                          WebkitTextStroke: '4px #595959',
-                          textShadow: '0px 10px 20px rgba(0,0,0,0.8)'
-                        }}
-                      >
-                        {idx + 1}
-                      </div>
-
-                      <div className="relative z-10 w-full ml-4 md:ml-8 transform transition-transform duration-300 group-hover:-translate-y-2">
-                        <Card
-                          sow={openWatch}
-                          id={item.id}
-                          img={item.name}
-                          name={item.name2}
-                          type={item.type}
-                          rating={item.rating}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <Card
-                      sow={openWatch}
-                      id={item.id}
-                      img={item.name}
-                      name={item.name2}
-                      type={item.type}
-                      rating={item.rating}
-                    />
-                  )
-                }
+                renderItem={(item, idx) => (
+                  <Card
+                    sow={openWatch}
+                    id={item.id}
+                    img={item.name}
+                    name={item.name2}
+                    type={item.type}
+                    rating={item.rating}
+                    rank={isTop10 ? idx + 1 : undefined}
+                  />
+                )}
               />
             );
           })}

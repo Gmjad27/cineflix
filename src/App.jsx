@@ -1,6 +1,5 @@
 import React, { useEffect, useState, lazy, Suspense } from "react";
 import Nav from "./components/Nav/Nav";
-import ProtectedRoute from "./components/ProtectedRoute";
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import "./App.css";
 import { fetchTMDBCatalog, fetchTMDBHomeSections } from "./content/tmdb.js";
@@ -16,8 +15,6 @@ const Profile = lazy(() => import("./pages/Profile/Profile"));
 const Stream = lazy(() => import("./pages/Stream/Stream"));
 const Tv = lazy(() => import("./pages/TV/Tv"));
 const Search = lazy(() => import("./pages/Search/Search"));
-const Login = lazy(() => import("./pages/Auth/Login"));
-const Signup = lazy(() => import("./pages/Auth/Signup"));
 const Studio = lazy(() => import("./pages/Studio/Studio"));
 
 const safeParse = (value, fallback) => {
@@ -58,9 +55,6 @@ function App() {
     if (showIntro) {
       sessionStorage.setItem('hasSeenIntro', 'true');
 
-      // ⚠️ Changed from 4s to a 10s fallback. 
-      // This ensures we wait for the video's onEnded event naturally, 
-      // but if the browser completely blocks the video, it still clears after 10s.
       const fallbackTimer = setTimeout(() => {
         setShowIntro(false);
       }, 10000);
@@ -168,15 +162,14 @@ function App() {
   return (
     <div className="h-[100vh] sm:pt-16 bg-[#141414] text-white font-sans selection:bg-[#E50914] selection:text-white relative">
 
-      {/* ✅ If showIntro is true, ONLY show the video.
-          If false, render the App & Router (showing the Home Page) */}
+      {/* ✅ Intro Video Logic */}
       {showIntro ? (
         <div className="fixed inset-0 z-[10000] bg-black flex items-center justify-center overflow-hidden">
           <video
             src="/intro.mp4"
             autoPlay
             playsInline
-            onEnded={() => setShowIntro(false)} /* 👈 Triggers rendering of the Router/Home Page immediately when video stops */
+            onEnded={() => setShowIntro(false)}
             className="w-full h-full object-cover sm:object-contain pointer-events-none"
           />
         </div>
@@ -186,68 +179,67 @@ function App() {
           <ErrorBoundary>
             <Suspense fallback={<PageLoader />}>
               <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
+                {/* ✅ Auth routes removed */}
 
                 <Route path="/" element={
-                  <ProtectedRoute>
+                  <>
                     <Nav />
                     <Home {...sharedProps} homeSections={homeSections} stu={sow} />
-                  </ProtectedRoute>
+                  </>
                 } />
                 <Route path="/movies" element={
-                  <ProtectedRoute>
+                  <>
                     <Nav />
                     <Movie {...sharedProps} />
-                  </ProtectedRoute>
+                  </>
                 } />
                 <Route path="/tv" element={
-                  <ProtectedRoute>
+                  <>
                     <Nav />
                     <Tv {...sharedProps} />
-                  </ProtectedRoute>
+                  </>
                 } />
                 <Route path="/search" element={
-                  <ProtectedRoute>
+                  <>
                     <Nav />
                     <Search {...sharedProps} />
-                  </ProtectedRoute>
+                  </>
                 } />
                 <Route path="/studio/:id" element={
-                  <ProtectedRoute>
+                  <>
                     <Nav />
                     <Studio {...sharedProps} studio={studio} img={Img} />
-                  </ProtectedRoute>
+                  </>
                 } />
                 <Route path="/profile" element={
-                  <ProtectedRoute>
+                  <>
                     <Nav />
                     <Profile {...sharedProps} E={El} tu={sow} />
-                  </ProtectedRoute>
+                  </>
                 } />
                 <Route path="/stream" element={
-                  <ProtectedRoute>
+                  <>
                     <Nav />
                     <Stream tid={TID} />
-                  </ProtectedRoute>
+                  </>
                 } />
                 <Route path="/streaming/:tmdbId/:season/:episode" element={
-                  <ProtectedRoute>
-                    <Nav />
+                  <>
+                    {/* <Nav /> */}
                     <Streaming />
-                  </ProtectedRoute>
+                  </>
                 } />
                 <Route path="/streaming/:tmdbId" element={
-                  <ProtectedRoute>
-                    <Nav />
+                  <>
+                    {/* <Nav /> */}
                     <Streaming />
-                  </ProtectedRoute>
+                  </>
                 } />
                 <Route path="/viewall" element={
-                  <ProtectedRoute>
+                  <>
                     <Nav />
                     <MovieViewAll {...sharedProps} sow={sow} />
-                  </ProtectedRoute>
+                  </>
                 } />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>

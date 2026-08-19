@@ -48,7 +48,7 @@ const Streaming = () => {
 
 
     return (
-        <div className="relative flex items-center justify-center h-[100%] w-[100%] pt-16 pb-16 sm:pt-0 sm:pb-0 overflow-hidden bg-black">
+        <div className="absolute inset-0 flex items-center justify-center h-[100%] w-[100%] pt-16 pb-16 sm:pt-0 sm:pb-0 overflow-hidden bg-black">
 
             {/* ─── Top Right Controls (Only for TV Shows) ─── */}
             <button
@@ -63,7 +63,7 @@ const Streaming = () => {
                     src={embedUrl}
                     className="w-full border-none"
                     width="100%"
-                    height="70%"
+                    height="100%"
                     allowFullScreen
                     allow="accelerometer; autoplay; fullscreen; picture-in-picture encrypted-media; gyroscope;"
                     title="Movie/TV Player"
