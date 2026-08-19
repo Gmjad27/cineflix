@@ -63,7 +63,7 @@ const Streaming = () => {
                     src={embedUrl}
                     className="w-full border-none"
                     width="100%"
-                    height="100%"
+                    height="70%"
                     allowFullScreen
                     allow="accelerometer; autoplay; fullscreen; picture-in-picture encrypted-media; gyroscope;"
                     title="Movie/TV Player"
