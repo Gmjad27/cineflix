@@ -4,6 +4,7 @@ import useInView from '../../hooks/useInView';
 
 export default function RailRow({
     title,
+    titleAlt,
     items,
     renderItem,
     eager = false,
@@ -11,7 +12,7 @@ export default function RailRow({
     const navigate = useNavigate();
     const [sectionRef, inView] = useInView('500px 0px');
     const trackRef = useRef(null);
-    
+
     // Local state to manage arrow visibility
     const [isAtStart, setIsAtStart] = useState(true);
     const [isAtEnd, setIsAtEnd] = useState(false);
@@ -22,7 +23,7 @@ export default function RailRow({
     const handleNativeScroll = useCallback(() => {
         if (!trackRef.current) return;
         const { scrollLeft, scrollWidth, clientWidth } = trackRef.current;
-        
+
         setIsAtStart(scrollLeft <= 0);
         // Using -1 to account for browser sub-pixel rounding errors
         setIsAtEnd(Math.ceil(scrollLeft + clientWidth) >= scrollWidth - 1);
@@ -33,9 +34,9 @@ export default function RailRow({
         if (trackRef.current) {
             // Scroll by 75% of the container's visible width to leave a visual anchor
             const scrollAmount = trackRef.current.clientWidth * 0.75;
-            trackRef.current.scrollBy({ 
-                left: scrollAmount * direction, 
-                behavior: 'smooth' 
+            trackRef.current.scrollBy({
+                left: scrollAmount * direction,
+                behavior: 'smooth'
             });
         }
     };
@@ -56,43 +57,48 @@ export default function RailRow({
     // Handle View All navigation
     const handleViewAll = () => {
         if (!items || items.length === 0) return;
-        
+
         // Serialize items and title for the MovieViewAll component
         const itemsParam = encodeURIComponent(JSON.stringify(items));
         const titleParam = encodeURIComponent(title || 'Explore All');
-        
+
         navigate(`/viewall?title=${titleParam}&items=${itemsParam}`);
     };
 
     return (
         <section ref={sectionRef} className="relative flex flex-col space-y-2 md:space-y-3 mb-8 group/rail z-10 hover:z-30">
-            
+
+            <h2
+                className="text-[15px] sm:text-xl md:text-2xl font-bold text-[#e5e5e5] group-hover/rail:text-white transition-colors cursor-pointer group/title flex items-center gap-3 font-sans"
+            >
+                {titleAlt}
+            </h2>
             {/* Title with Netflix/Hotstar 'Explore All' hover interaction */}
             {title && (
-                <div className="flex items-end px-2 md:px-0 z-10">
-                    <h2 
-                        className="text-lg sm:text-xl md:text-2xl font-bold text-[#e5e5e5] group-hover/rail:text-white transition-colors cursor-pointer group/title flex items-center gap-3"
-                        onClick={handleViewAll}
+                <div className="flex items-end justify-between px-2 md:px-0 z-10"
+                    onClick={handleViewAll}
+                >
+                    <h2
+                        className="text-[15px] sm:text-xl md:text-2xl font-bold text-[#e5e5e5] group-hover/rail:text-white transition-colors cursor-pointer group/title flex items-center gap-3 font-sans"
                         title={`Explore all ${title}`}
                     >
                         {title}
-                        <div className="text-red-800 text-sm text-center font-semibold group-hover/rail:text-red-600 transition-colors flex items-center gap-1">
-                            Explore All 
-                            <i className="fa-solid fa-chevron-right ml-1.5 text-[10px]"></i>
-                        </div>
                     </h2>
+                    <div className="text-red-800 text-sm text-center font-semibold group-hover/rail:text-red-600 transition-colors flex items-center gap-1">
+                        Explore All
+                        <i className="fa-solid fa-chevron-right ml-1.5 text-[10px]"></i>
+                    </div>
                 </div>
             )}
-            
+
             {/* Scroll Container Wrapper */}
             <div className="relative">
-                
+
                 {/* Left Arrow - Deep gradient */}
                 <button
                     type="button"
-                    className={`hidden md:flex absolute left-[-48px] lg:left-[-64px] top-0 bottom-0 z-40 w-12 lg:w-16 items-center justify-center bg-gradient-to-r from-[#141414] via-[#141414]/80 to-transparent text-white transition-all duration-300 rounded-l-md ${
-                        isAtStart ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover/rail:opacity-100 hover:bg-[#141414]/40'
-                    }`}
+                    className={`hidden md:flex absolute left-[-48px] lg:left-[-64px] top-0 bottom-0 z-40 w-12 lg:w-16 items-center justify-center bg-gradient-to-r from-[#141414] via-[#141414]/80 to-transparent text-white transition-all duration-300 rounded-l-md ${isAtStart ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover/rail:opacity-100 hover:bg-[#141414]/40'
+                        }`}
                     aria-label={`Scroll ${title} left`}
                     onClick={() => scrollByDirection(-1)}
                 >
@@ -127,9 +133,8 @@ export default function RailRow({
                 {/* Right Arrow - Deep gradient */}
                 <button
                     type="button"
-                    className={`hidden md:flex absolute right-[-48px] lg:right-[-64px] top-0 bottom-0 z-40 w-12 lg:w-16 items-center justify-center bg-gradient-to-l from-[#141414] via-[#141414]/80 to-transparent text-white transition-all duration-300 rounded-r-md ${
-                        isAtEnd ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover/rail:opacity-100 hover:bg-[#141414]/40'
-                    }`}
+                    className={`hidden md:flex absolute right-[-48px] lg:right-[-64px] top-0 bottom-0 z-40 w-12 lg:w-16 items-center justify-center bg-gradient-to-l from-[#141414] via-[#141414]/80 to-transparent text-white transition-all duration-300 rounded-r-md ${isAtEnd ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover/rail:opacity-100 hover:bg-[#141414]/40'
+                        }`}
                     aria-label={`Scroll ${title} right`}
                     onClick={() => scrollByDirection(1)}
                 >

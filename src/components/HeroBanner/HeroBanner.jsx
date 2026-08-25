@@ -1,75 +1,202 @@
-import React from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 
 function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch }) {
-    if (!currentHero) return null;
+    // We'll use mediaData directly; currentHero is kept for backward compatibility
+    const slides = mediaData && mediaData.length ? mediaData : (currentHero ? [currentHero] : []);
+    const totalSlides = slides.length;
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStartX, setDragStartX] = useState(0);
+    const [dragOffset, setDragOffset] = useState(0);
+    const containerRef = useRef(null);
+
+    // Reset dragOffset when heroIndex changes externally (e.g., via pagination dots)
+    useEffect(() => {
+        setDragOffset(0);
+    }, [heroIndex]);
+
+    // Handle pointer down (mouse or touch)
+    const handlePointerDown = useCallback((e) => {
+        setIsDragging(true);
+        setDragStartX(e.clientX || e.touches[0].clientX);
+        setDragOffset(0);
+        // Disable transition while dragging for instant feedback
+        if (containerRef.current) {
+            containerRef.current.style.transition = 'none';
+        }
+    }, []);
+
+    // Handle pointer move
+    const handlePointerMove = useCallback((e) => {
+        if (!isDragging) return;
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        if (clientX === undefined) return;
+        const deltaX = clientX - dragStartX;
+        // Limit drag to one slide width
+        const maxDelta = containerRef.current ? containerRef.current.offsetWidth : window.innerWidth;
+        setDragOffset(Math.max(-maxDelta, Math.min(maxDelta, deltaX)));
+    }, [isDragging, dragStartX]);
+
+    // Handle pointer up / leave
+    const finishDrag = useCallback(() => {
+        if (!isDragging) return;
+        setIsDragging(false);
+
+        const threshold = containerRef.current ? containerRef.current.offsetWidth * 0.2 : 80;
+        if (dragOffset < -threshold && heroIndex < totalSlides - 1) {
+            // Swipe left → next slide
+            setHeroIndex(heroIndex + 1);
+        } else if (dragOffset > threshold && heroIndex > 0) {
+            // Swipe right → previous slide
+            setHeroIndex(heroIndex - 1);
+        } else {
+            // Snap back
+            setDragOffset(0);
+        }
+
+        // Re-enable transition
+        if (containerRef.current) {
+            containerRef.current.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        }
+    }, [isDragging, dragOffset, heroIndex, totalSlides, setHeroIndex]);
+
+    // Attach global event listeners for move and up/leave
+    useEffect(() => {
+        if (isDragging) {
+            window.addEventListener('mousemove', handlePointerMove);
+            window.addEventListener('mouseup', finishDrag);
+            window.addEventListener('touchmove', handlePointerMove, { passive: false });
+            window.addEventListener('touchend', finishDrag);
+            window.addEventListener('touchcancel', finishDrag);
+        } else {
+            window.removeEventListener('mousemove', handlePointerMove);
+            window.removeEventListener('mouseup', finishDrag);
+            window.removeEventListener('touchmove', handlePointerMove);
+            window.removeEventListener('touchend', finishDrag);
+            window.removeEventListener('touchcancel', finishDrag);
+        }
+        return () => {
+            window.removeEventListener('mousemove', handlePointerMove);
+            window.removeEventListener('mouseup', finishDrag);
+            window.removeEventListener('touchmove', handlePointerMove);
+            window.removeEventListener('touchend', finishDrag);
+            window.removeEventListener('touchcancel', finishDrag);
+        };
+    }, [isDragging, handlePointerMove, finishDrag]);
+
+    // Calculate translateX: base position + drag offset (percentage)
+    const baseTranslate = -heroIndex * 100;
+    const dragTranslate = (dragOffset / (containerRef.current?.offsetWidth || window.innerWidth)) * 100;
+    const translateX = baseTranslate + dragTranslate;
 
     return (
-        <section className="relative w-full h-[75vh] sm:h-[85vh] md:h-[90vh] lg:h-[100vh] overflow-hidden bg-black">
-            <div className="absolute inset-0">
-                <div
-                    className="absolute inset-0 bg-cover bg-center block md:hidden transition-opacity duration-1000 ease-in-out"
-                    style={currentHero?.name ? { backgroundImage: `url(${currentHero.name})` } : undefined}
-                />
-                <div
-                    className="absolute inset-0 bg-cover bg-center hidden md:block transition-opacity duration-1000 ease-in-out"
-                    style={currentHero?.img ? { backgroundImage: `url(${currentHero.img})` } : undefined}
-                />
-            </div>
-
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.6)_100%)]" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#141414]/90 via-[#141414]/40 to-transparent w-[80%]" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/30 to-transparent bottom-0 h-[100%]" />
-
-            <div className="absolute bottom-[10%] sm:bottom-[15%] left-0 w-full px-6 md:px-12 lg:px-16 flex flex-col items-start gap-4 z-10 max-w-[90%] md:max-w-[50%]">
-                {currentHero?.nameImg2 ? (
-                    <img
-                        src={currentHero.nameImg2}
-                        alt={currentHero.name2}
-                        className="max-w-[200px] md:max-w-[400px] lg:max-w-[500px] object-contain drop-shadow-2xl mb-2"
-                    />
-                ) : (
-                    <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold leading-tight drop-shadow-2xl line-clamp-2">
-                        {currentHero?.name2}
-                    </h1>
-                )}
-
-                <div className="flex items-center gap-3 drop-shadow-md">
-                    <span className="flex items-center justify-center font-bold text-[#E50914] text-2xl md:text-4xl">
-                        N
-                    </span>
-                    <span className="text-gray-300 font-semibold tracking-wide text-xs sm:text-sm uppercase flex items-center gap-2">
-                        <span className="text-white">Film</span>
-                    </span>
-                </div>
-
-                <h2 className="text-xl md:text-2xl font-bold drop-shadow-md flex items-center gap-2">
-                    <span className="bg-[#E50914] text-white text-[10px] font-black px-1.5 py-0.5 rounded-sm">TOP 10</span>
-                    #{heroIndex + 1} in Trending Today
-                </h2>
-
-                <p className="hidden md:block text-base lg:text-lg text-gray-200 drop-shadow-lg line-clamp-3 leading-snug text-shadow-md">
-                    {currentHero?.desc}
-                </p>
-
-                <div className="mt-4 flex gap-3 sm:gap-4 w-full sm:w-auto">
-                    <button
-                        type="button"
-                        onClick={() => openWatch(currentHero?.id)}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-6 sm:px-8 py-2 md:py-2.5 bg-[#6d6d6e]/70 text-white font-bold text-sm md:text-xl rounded hover:bg-[#6d6d6e] active:scale-95 transition backdrop-blur-sm"
-                        title="More Info"
+        <section
+            className="relative w-full h-[75vh] sm:h-[85vh] md:h-[90vh] lg:h-[70vh] overflow-hidden bg-[#141414] select-none"
+            onPointerDown={handlePointerDown}
+            onPointerLeave={finishDrag}
+        >
+            {/* Slider container */}
+            <div
+                ref={containerRef}
+                className="flex h-full w-full will-change-transform"
+                style={{
+                    transform: `translateX(${translateX}%)`,
+                    transition: isDragging ? 'none' : 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                }}
+            >
+                {slides.map((slide, idx) => (
+                    <div
+                        key={slide.id || idx}
+                        className="relative min-w-full h-full flex-shrink-0"
+                        aria-hidden={idx !== heroIndex}
                     >
-                        <i className="fa-solid fa-circle-info"></i>
-                        More Info
-                    </button>
-                </div>
+                        {/* Background image with responsive <picture> */}
+                        <picture className="absolute inset-0">
+                            {/* Desktop image (hidden on mobile) */}
+                            <source
+                                media="(min-width: 768px)"
+                                srcSet={slide.img}
+                            />
+                            {/* Mobile image (default) */}
+                            <img
+                                src={slide.name}
+                                alt={slide.name2}
+                                className="absolute inset-0 w-full h-full object-cover object-top"
+                                loading={idx === 0 ? 'eager' : 'lazy'}
+                                draggable="false"
+                            />
+                        </picture>
+
+                        {/* Gradients for readability */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#252424a5] via-[#141414]/60 to-transparent w-full md:w-[70%]" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/20 to-transparent" />
+
+                        {/* Slide content */}
+                        <div className="absolute bottom-[12%] sm:bottom-[15%] left-0 w-full px-6 md:px-12 lg:px-16 flex flex-col items-start gap-4 z-10 max-w-[95%] md:max-w-[60%] lg:max-w-[50%]">
+                            {/* Network badge */}
+                            <div className="flex items-center gap-2 drop-shadow-lg mb-[-10px]">
+                                <span className="flex items-center justify-center font-black text-[#E50914] text-2xl md:text-3xl tracking-tighter">
+                                    N
+                                </span>
+                                <span className="text-gray-300 font-bold tracking-[0.2em] text-[10px] sm:text-xs uppercase">
+                                    Film
+                                </span>
+                            </div>
+
+                            {/* Title / logo */}
+                            {slide.nameImg2 ? (
+                                <img
+                                    src={slide.nameImg2}
+                                    alt={slide.name2}
+                                    className="max-w-[220px] md:max-w-[350px] lg:max-w-[450px] object-contain drop-shadow-2xl origin-left"
+                                    draggable="false"
+                                />
+                            ) : (
+                                <h1 className="text-4xl md:text-6xl lg:text-7xl font-black leading-tight drop-shadow-2xl text-white tracking-tight line-clamp-2">
+                                    {slide.name2}
+                                </h1>
+                            )}
+
+                            {/* Ranking badge */}
+                            <div className="flex items-center gap-3 drop-shadow-md mt-1">
+                                <span className="bg-[#E50914] text-white text-[10px] md:text-xs font-black px-2 py-0.5 rounded-sm tracking-wider">
+                                    TOP 10
+                                </span>
+                                <h2 className="text-lg md:text-xl font-bold text-white shadow-black drop-shadow-md">
+                                    #{idx + 1} in Trending Today
+                                </h2>
+                            </div>
+
+                            {/* Description */}
+                            <p className="hidden md:block text-sm lg:text-lg text-gray-200 drop-shadow-xl line-clamp-3 leading-relaxed font-medium mt-2">
+                                {slide.desc}
+                            </p>
+
+                            {/* Action button */}
+                            <div className="mt-4 flex  gap-3 sm:gap-4 w-full sm:w-auto">
+                                <button
+                                    type="button"
+                                    onClick={() => openWatch(slide.id)}
+                                    className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-6 md:px-8 py-2.5 md:py-3 bg-white/20 text-white font-bold text-sm md:text-lg rounded-md hover:bg-white/30 hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md ring-1 ring-white/30 shadow-lg"
+                                >
+                                    <i className="fa-solid fa-circle-info text-xl"></i>
+                                    More Info
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
 
-            <div className="absolute bottom-6 md:bottom-10 left-0 w-full flex justify-center gap-2 z-10">
-                {mediaData.slice(0, 5).map((_, i) => (
+            {/* Pagination indicators */}
+            <div className="relative bottom-10 md:bottom-36 left-0 w-full flex justify-center gap-2 z-20">
+                {slides.slice(0, 5).map((_, i) => (
                     <button
                         key={i}
                         type="button"
-                        className={`h-1 rounded-full transition-all duration-300 ${heroIndex % 5 === i ? 'bg-white w-6' : 'bg-white/40 hover:bg-white/70 w-3'}`}
+                        className={`h-1.5 rounded-full transition-all duration-500 ease-out ${heroIndex % 5 === i
+                            ? 'bg-white w-8 opacity-100'
+                            : 'bg-white/40 hover:bg-white/70 w-2.5 opacity-50'
+                            }`}
                         onClick={() => setHeroIndex(i)}
                         aria-label={`Go to slide ${i + 1}`}
                     />

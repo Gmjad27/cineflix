@@ -12,7 +12,7 @@ const Movie = (props) => {
   const navigate = useNavigate();
   // CHANGED: Using search params to manage the modal's state directly in the URL
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   const data = Array.isArray(props.data) ? props.data : [];
   const movies = useMemo(() => data.filter((item) => item.type === 'movie'), [data]);
   const [pageSections, setPageSections] = useState({ heroBanner: [], rails: [] });
@@ -48,12 +48,12 @@ const Movie = (props) => {
       Array.isArray(pageSections.rails) && pageSections.rails.length > 0
         ? pageSections.rails
         : [
-            { title: 'Trending Now', items: movies.slice(0, 20) },
-            { title: 'Popular Movies', items: movies.slice(20, 40) },
-            { title: 'Top Rated', items: movies.slice(40, 60) },
-            { title: 'Action Movies', items: movies.filter((item) => item.category.includes('Action')) },
-            { title: 'Comedy Movies', items: movies.filter((item) => item.category.includes('Comedy')) },
-          ],
+          { title: 'Trending Now', items: movies.slice(0, 20) },
+          { title: 'Popular Movies', items: movies.slice(20, 40) },
+          { title: 'Top Rated', items: movies.slice(40, 60) },
+          { title: 'Action Movies', items: movies.filter((item) => item.category.includes('Action')) },
+          { title: 'Comedy Movies', items: movies.filter((item) => item.category.includes('Comedy')) },
+        ],
     [movies, pageSections.rails]
   );
 
@@ -85,7 +85,7 @@ const Movie = (props) => {
   const openWatch = useCallback((id) => {
     const selected = allItems.find((item) => String(item.id) === String(id));
     if (!selected) return;
-    
+
     // Update URL seamlessly
     searchParams.set('watch', selected.id);
     if (selected.name2) searchParams.set('name', selected.name2);
@@ -126,7 +126,7 @@ const Movie = (props) => {
     <div className="relative min-h-screen bg-[#141414] text-white overflow-hidden selection:bg-[#E50914] selection:text-white">
       {/* ── Hero Banner ── */}
       {featured && (
-        <section className="relative w-full h-[75vh] sm:h-[85vh] md:h-[90vh] lg:h-[100vh] overflow-hidden bg-black">
+        <section className="relative w-full h-[75vh] sm:h-[85vh] md:h-[90vh] lg:h-[70vh] mb-5 overflow-hidden bg-black">
           {/* Background Images */}
           <div className="absolute inset-0">
             <div
@@ -145,8 +145,8 @@ const Movie = (props) => {
           <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/30 to-transparent bottom-0 h-[100%]" />
 
           {/* Hero Content */}
-          <div className="absolute bottom-[10%] sm:bottom-[15%] left-0 w-full px-6 md:px-12 lg:px-16 flex flex-col items-start gap-4 z-10 w-full max-w-[90%] md:max-w-[50%]">
-            
+          <div className="absolute bottom-[10%] sm:bottom-[15%] left-0  px-6 md:px-12 lg:px-16 flex flex-col items-start gap-4 z-10 w-full max-w-[90%] md:max-w-[50%]">
+
             {/* Netflix Film Badge */}
             <div className="flex items-center gap-3 drop-shadow-md">
               <span className="flex items-center justify-center font-bold text-[#E50914] text-2xl md:text-4xl">
@@ -156,7 +156,7 @@ const Movie = (props) => {
                 <span className="text-white">Film</span>
               </span>
             </div>
-            
+
             {featured.nameImg2 ? (
               <img src={featured.nameImg2} alt={featured.name2} className="max-w-[200px] md:max-w-[400px] lg:max-w-[500px] object-contain drop-shadow-2xl mb-2" />
             ) : (
@@ -166,13 +166,13 @@ const Movie = (props) => {
             )}
 
             <div className="flex items-center gap-3 text-sm md:text-base font-semibold drop-shadow-md text-gray-300">
-               <span className="text-[#46d369] font-bold">New</span>
+              <span className="text-[#46d369] font-bold">New</span>
             </div>
-            
+
             <p className="hidden md:block text-base lg:text-lg text-gray-200 drop-shadow-lg line-clamp-3 leading-snug text-shadow-md mt-2">
               {featured.desc}
             </p>
-            
+
             <div className="mt-4 flex gap-3 sm:gap-4 w-full sm:w-auto">
               <button
                 onClick={() => openWatch(featured.id)}

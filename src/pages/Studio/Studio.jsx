@@ -12,35 +12,6 @@ import RailRow from '../../components/RailRow/RailRow';
  * One tile in the horizontally-scrolling "Studios" strip.
  * Redesigned with premium scaling, glassmorphism, and smooth transitions.
  */
-const StudioTile = ({ studio, active, onSelect }) => (
-  <button
-    onClick={() => onSelect(studio.key)}
-    className={`group relative flex-shrink-0 w-[100px] h-[60px] md:w-[240px] md:h-[135px] rounded-xl overflow-hidden
-      flex items-center justify-center transition-all duration-300 ease-out transform
-      ${active
-        ? 'scale-105 ring-2 ring-white/90 shadow-[0_0_20px_rgba(255,255,255,0.2)]'
-        : 'ring-1 ring-white/10 hover:ring-white/40 hover:scale-105 hover:shadow-xl'
-      }`}
-    style={{
-      background: 'linear-gradient(to bottom, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.8) 100%)',
-      backgroundColor: '#1a1a1a'
-    }}
-  >
-    {/* Ambient active glow behind the logo */}
-    {active && (
-      <div className="absolute inset-0 bg-white/5 animate-pulse rounded-xl" />
-    )}
-
-    <img
-      src={studio.img}
-      alt={studio.label}
-      className={`p-3 md:p-6 object-contain w-full h-full relative z-10 transition-transform duration-500 ease-out
-        ${active ? 'scale-110 drop-shadow-md' : 'group-hover:scale-110 opacity-70 group-hover:opacity-100'}`}
-      loading="lazy"
-      draggable={false}
-    />
-  </button>
-);
 
 const Studio = (props) => {
   const navigate = useNavigate();
@@ -155,7 +126,7 @@ const Studio = (props) => {
             <img
               src={studioConfig.img}
               alt={studioConfig.label}
-              className="w-[180px] md:w-[320px] object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]"
+              className="w-[220px] md:w-[620px] object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]"
             />
           ) : (
             <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60 drop-shadow-xl">
@@ -168,26 +139,6 @@ const Studio = (props) => {
       {/* ── Main Content Area ── */}
       <div className="relative z-20 px-4 md:px-12 lg:px-16 mx-auto -mt-8 md:-mt-12 pb-20 space-y-12 md:space-y-16 w-full">
 
-        {/* ── Studios Navigation Strip ── */}
-        <section className="relative">
-          <h2 className="text-sm md:text-base font-bold text-white/80 uppercase tracking-wider mb-4 px-2">
-            Explore Studios
-          </h2>
-          <div className="pb-4">
-            <RailRow
-              title=""
-              items={STUDIO_COLLECTIONS}
-              renderItem={(studio) => (
-                <StudioTile
-                  key={studio.key}
-                  studio={studio}
-                  active={studio.key.toUpperCase() === studioName}
-                  onSelect={goToStudio}
-                />
-              )}
-            />
-          </div>
-        </section>
 
         {/* ── Curated Content Rails ── */}
         <div className="space-y-10 md:space-y-14">
@@ -205,7 +156,7 @@ const Studio = (props) => {
             rails.map((rail, idx) => (
               <RailRow
                 key={idx}
-                title={<span className="text-xl md:text-2xl font-bold tracking-wide text-white/95">{rail.title}</span>}
+                title={rail.title}
                 items={rail.items}
                 renderItem={(item) => (
                   <Card

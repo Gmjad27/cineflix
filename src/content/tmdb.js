@@ -565,7 +565,11 @@ export const fetchTMDBTVSections = async () => {
 export const fetchMoreLikeThis = async (type, id, { page = 1 } = {}) => {
   if (!type || !id) return [];
   try {
-    const results = await requestTMDB(`/${type}/${id}/recommendations`, { page: String(page) });
+    // Adding the language parameter (e.g., English-India or Hindi-India)
+    const results = await requestTMDB(`/${type}/${id}/recommendations`, {
+      page: String(page),
+      watch_region: "IN",
+    });
     return normalizeList(results, type);
   } catch {
     return [];
@@ -760,12 +764,6 @@ export const fetchTMDBStudioTitles = async (studioKey, { moviePages = 2, tvPages
   return combined.sort((a, b) => (b.releaseYear || 0) - (a.releaseYear || 0));
 };
 
-/**
- * NEW: Multilingual content aggregator.
- * Fetches movies & TV across Hindi, English, Korean, Tamil, Telugu,
- * Malayalam, Kannada, merges everything, deduplicates,
- * and splits into creatively‑titled genre rails.
- */
 export const fetchMultilingualContent = async ({ moviePages = 1, tvPages = 1 } = {}) => {
   const languages = [
     { code: "hi", label: "Hindi" },

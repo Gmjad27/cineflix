@@ -145,26 +145,18 @@ const Search = (props) => {
   /* ---------- card renderer ---------- */
   const renderHotstarCard = useCallback(
     (item) => (
-      <div className="w-[160px] xs:w-[180px] sm:w-[200px] md:w-[220px] flex-shrink-0">
+      
         <Card
           sow={openWatch}
           id={item.id}
           img={item.name}
           name={item.name2}
-          ry={item.releaseYear}
-          ua={item.ua}
-          lan={item.language?.length || 0}
-          desc={item.desc}
-          s={item.season}
           type={item.type}
           tid={item.tmdbId}
-          add={props.add}
-          e={props.e}
           play={props.play}
           rating={item.rating}
-          width="100%"
         />
-      </div>
+      // </div>
     ),
     [openWatch, props.add, props.e, props.play]
   );
@@ -183,16 +175,12 @@ const Search = (props) => {
     <div className="min-h-screen bg-[#141414] text-white font-sans selection:bg-[#E50914] selection:text-white">
 
       {/* ── Hero Search Section (Hotstar‑style) ── */}
-      <section className="relative pt-24 pb-12 px-6 md:px-12 lg:px-16 bg-gradient-to-b from-[#1f1f1f] to-[#141414] border-b border-[#2a2a2a]">
+      <section className="relative pt-14 pb-12 px-6 md:px-12 lg:px-16 bg-gradient-to-b from-[#1f1f1f] to-[#141414] border-b border-[#2a2a2a]">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">
             {normalizedQuery ? 'Search Results' : 'Discover your next favourite'}
           </h1>
-          <p className="text-gray-400 mb-8 text-lg">
-            {normalizedQuery
-              ? `Showing results for "${query}"`
-              : 'Search across thousands of movies, shows, and more'}
-          </p>
+         
 
           <div className="relative max-w-2xl mx-auto">
             <i className="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
@@ -251,36 +239,38 @@ const Search = (props) => {
 
             {/* Movies Grid */}
             {movieResults.length > 0 && (
-              <div className="px-6 md:px-12 lg:px-16 mb-12">
-                <h3 className="text-xl font-semibold text-gray-300 mb-6 uppercase tracking-wide">
-                  Movies
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
-                  {movieResults.map((item) => (
-                    <div key={item.id} className="flex justify-center">
-                      {renderHotstarCard(item)}
-                    </div>
-                  ))}
-                </div>
+              <div className="mb-12">
+                <RailRow
+                  title="Movies"
+                  railKey="Movies"
+                  items={movieResults}
+                  scrollState={scrollState}
+                  setTrackRef={setTrackRef}
+                  onRailScroll={onRailScroll}
+                  handleRailScroll={handleRailScroll}
+                  eager
+                  renderItem={renderHotstarCard}
+                />
               </div>
             )}
 
             {/* TV Shows Grid */}
             {seriesResults.length > 0 && (
-              <div className="px-6 md:px-12 lg:px-16 mb-12">
-                <h3 className="text-xl font-semibold text-gray-300 mb-6 uppercase tracking-wide">
-                  TV Shows
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
-                  {seriesResults.map((item) => (
-                    <div key={item.id} className="flex justify-center">
-                      {renderHotstarCard(item)}
-                    </div>
-                  ))}
-                </div>
+              <div className="mb-12">
+                <RailRow
+                  title="TV Shows"
+                  railKey="TV Shows"
+                  items={seriesResults}
+                  scrollState={scrollState}
+                  setTrackRef={setTrackRef}
+                  onRailScroll={onRailScroll}
+                  handleRailScroll={handleRailScroll}
+                  eager
+                  renderItem={renderHotstarCard}
+                />
               </div>
             )}
-
+    
             {/* Empty State */}
             {!searchLoading && rankedResults.length === 0 && (
               <div className="flex flex-col items-center justify-center py-24 text-center">

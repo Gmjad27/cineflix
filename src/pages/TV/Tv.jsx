@@ -127,7 +127,7 @@ const Tv = (props) => {
     <div className="relative min-h-screen bg-[#141414] text-white overflow-hidden selection:bg-[#E50914] selection:text-white">
       {/* ── Hero Banner ── */}
       {featured && (
-        <section className="relative w-full h-[75vh] sm:h-[85vh] md:h-[90vh] lg:h-[100vh] overflow-hidden bg-black">
+        <section className="relative w-full h-[75vh] sm:h-[85vh] md:h-[90vh] lg:h-[70vh] mb-5 overflow-hidden bg-black">
           {/* Background Images */}
           <div className="absolute inset-0">
             <div

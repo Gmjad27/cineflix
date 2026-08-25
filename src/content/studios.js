@@ -2,8 +2,8 @@ export const STUDIO_COLLECTIONS = [
   {
     key: "PRIME VIDEO",
     label: "PRIME VIDEO",
-    img: "https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.png",
-    bg: "https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.png",
+    img: "https://1000logos.net/wp-content/uploads/2022/10/Amazon-Prime-Video-Emblem.png",
+    bg: "https://1000logos.net/wp-content/uploads/2022/10/Amazon-Prime-Video-Emblem.png",
     color: "#00A8E1",
     companyIds: [21, 41, 60, 20580, 210099],
     networkIds: [1024, 6219, 922]

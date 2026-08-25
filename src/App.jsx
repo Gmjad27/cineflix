@@ -248,13 +248,31 @@ function App() {
         </Router>
       )}
 
-      {/* Toast Notification */}
+      {/* Premium Toast Notification */}
       <div
-        className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded shadow-2xl transition-all duration-300 pointer-events-none flex items-center gap-3 ${toast.show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-          } ${toast.isError ? 'bg-[#E50914] text-white' : 'bg-white text-black font-semibold'}`}
+        className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-4 px-5 py-3 rounded-full shadow-2xl backdrop-blur-md border transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] pointer-events-none
+    ${toast.show
+            ? 'opacity-100 translate-y-0 scale-100'
+            : 'opacity-0 translate-y-10 scale-90'
+          }
+    ${toast.isError
+            ? 'bg-red-600/90 border-red-500/50 text-white shadow-red-600/20'
+            : 'bg-zinc-900/90 border-zinc-700/50 text-white shadow-black/50'
+          }`}
       >
-        <i className={`fa-solid ${toast.isError ? 'fa-xmark' : 'fa-check'}`}></i>
-        {toast.message}
+        {/* Icon Container with subtle background */}
+        <div
+          className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 transition-transform duration-500 delay-100 ${toast.show ? 'scale-100 rotate-0' : 'scale-0 -rotate-90'
+            } ${toast.isError ? 'bg-white/20 text-white' : 'bg-green-500/20 text-green-400'
+            }`}
+        >
+          <i className={`fa-solid text-sm ${toast.isError ? 'fa-xmark' : 'fa-check'}`}></i>
+        </div>
+
+        {/* Message */}
+        <span className="font-medium tracking-wide text-sm whitespace-nowrap">
+          {toast.message}
+        </span>
       </div>
     </div>
   );

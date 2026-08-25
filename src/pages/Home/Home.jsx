@@ -230,13 +230,14 @@ function Home(props) {
 
           {continueWatching.length > 0 && (
             <RailRow
-              title="Continue Watching"
+              titleAlt="Continue Watching"
               railKey="continue-watching"
               items={continueWatching}
               scrollState={scrollState}
               setTrackRef={setTrackRef}
               onRailScroll={onRailScroll}
               handleRailScroll={handleRailScroll}
+              view='hidden'
               eager
               renderItem={(item) => (
                 <>
@@ -270,7 +271,7 @@ function Home(props) {
                       <div className="h-full bg-[#ff000d] rounded-r-full" style={{ width: '100%' }}></div>
                     </div>
                   </div>
-                  <div className="relative bottom-0 left-1 right-4 gap-2
+                  <div className="relative flex-shrink-0 pr-2 w-56 sm:w-64 md:w-80 lg:w-96 bottom-0 left-1 right-4 gap-2
                    flex flex-row justify-start pointer-events-none">
                     <h4 className="text-white font-bold text-sm md:text-base line-clamp-1 drop-shadow-md">
                       {item.title}
@@ -287,7 +288,7 @@ function Home(props) {
           )}
 
           <RailRow
-            title="Studios"
+            // title="Studios"
             railKey="Studio"
             items={studios}
             scrollState={scrollState}

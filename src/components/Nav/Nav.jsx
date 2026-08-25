@@ -50,7 +50,7 @@ const Nav = () => {
         <div className="max-w-[1920px] mx-auto flex items-center h-16 px-6 lg:px-12">
           {/* Logo */}
           <Link to="/" className="flex-shrink-0 mr-10">
-            <img src="cineflix.svg" alt="Cineflix" className="h-[100px]" />
+            <img src="cineflix.png" alt="Cineflix" className="h-[50px]" />
           </Link>
 
           {/* Primary Navigation Links */}
@@ -93,7 +93,7 @@ const Nav = () => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 border-b border-white/10 backdrop-blur-md flex items-center justify-between h-14 px-4 md:hidden">
         {/* Logo */}
         <Link to="/" className="flex-shrink-0">
-          <img src="cineflix.svg" alt="Cineflix" className="h-[70px]" />
+          <img src="cineflix.png" alt="Cineflix" className="h-[40px]" />
         </Link>
 
         {/* Icons */}
