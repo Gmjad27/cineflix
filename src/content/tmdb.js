@@ -2,7 +2,8 @@ import { getStudioConfig } from "./studios";
 
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
-const TMDB_IMAGE_URL = "https://image.tmdb.org/t/p/original";
+// Updated base URL without the hardcoded 'original' size
+const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/";
 
 // ─── Genre Map ───────────────────────────────────────────────────────────
 const genreMap = {
@@ -38,8 +39,6 @@ const langMap = {
 };
 
 // ─── Adult Platform Blacklist (Softcore Filter) ──────────────────────────
-// Catches platforms like Ullu, Alt Balaji, Primeshots that aren't flagged
-// as "adult" (hardcore) by TMDB but contain restricted/softcore content.
 const ADULT_PLATFORMS_BLACKLIST = [
   // ─── Existing Indian Platforms & Series ─────────────────────
   "ullu", "alt balaji", "primeshots", "prime shots", "kooku", "rabbit",
@@ -87,12 +86,10 @@ const isAdultPlatform = (item) => {
 };
 
 // ─── Utilities ───────────────────────────────────────────────────────────
-const toImageUrl = (path) => (path ? `${TMDB_IMAGE_URL}${path}` : "");
 
-/**
- * FIX #9: Compare date STRINGS ("2026-07-22") instead of Date objects.
- * This avoids UTC-vs-local timezone mismatches for same-day releases.
- */
+// Updated toImageUrl to default to w185, dropping image sizes from ~3MB to ~50KB
+const toImageUrl = (path, size = "w185") => (path ? `${TMDB_IMAGE_BASE}${size}${path}` : "");
+
 const isFutureDate = (dateString) => {
   if (!dateString) return false; // No date = NOT future (keep it)
   const todayStr = new Date().toISOString().slice(0, 10); // "2026-07-22"
@@ -140,9 +137,6 @@ const pickTVAgeRating = (contentRatings) => {
   return normalizeAgeRating(fallback) || "UA 13+";
 };
 
-/**
- * FIX #3: Safe trailer pick — fallback to [0], never crash on [1].
- */
 const pickTMDBTrailer = (videos) => {
   if (!videos || !Array.isArray(videos.results)) return "";
 
@@ -209,10 +203,6 @@ const resolveMediaType = (item, mediaType) => {
   return resolved === "movie" || resolved === "tv" ? resolved : null;
 };
 
-/**
- * FIX #5: Use string-prefixed IDs to prevent collision.
- * "movie_603" vs "tv_603" — no more +10000000 hack.
- */
 const normalizeItem = (item, mediaType) => {
   if (!item || typeof item !== "object") return null;
 
@@ -228,14 +218,15 @@ const normalizeItem = (item, mediaType) => {
   if (!tmdbId) return null;
 
   return {
-    id: `${resolvedType}_${tmdbId}`, // "movie_603" / "tv_1399"
+    id: `${resolvedType}_${tmdbId}`,
     tmdbId,
-    img: toImageUrl(item.backdrop_path || item.poster_path),
+    // Uses the new w500 default size
+    img: toImageUrl(item.backdrop_path, "w1280") || toImageUrl(item.poster_path, "w1280"),
     nameImg: toImageUrl(item.poster_path || item.backdrop_path),
     name: toImageUrl(item.poster_path || item.backdrop_path),
     name2: title || "Untitled",
     releaseYear,
-    releaseDate: releaseDate || null, // Preserve for sorting
+    releaseDate: releaseDate || null,
     ua: "UA 13+",
     season: isMovie ? "Movie" : "1+ Seasons",
     language: [langMap[item.original_language] || "English"],
@@ -255,7 +246,7 @@ const dedupeMedia = (items) => {
   return items.filter((item) => {
     if (!item) return false;
 
-    const idKey = item.id; // Already unique: "movie_603"
+    const idKey = item.id;
     const titleKey = `${item.type}:${String(item.name2 || "").toLowerCase().replace(/[^a-z0-9]+/g, "").trim()}:${item.releaseYear}`;
 
     if (seenById.has(idKey) || seenByTitle.has(titleKey)) return false;
@@ -267,31 +258,21 @@ const dedupeMedia = (items) => {
 };
 
 // ─── Core Request Function ───────────────────────────────────────────────
-
-/**
- * FIX #1: Don't remove items with no release_date.
- * FIX #7: Add AbortSignal.timeout for hung requests.
- * FIX #10: Single retry on network failure.
- */
 export const requestTMDB = async (path, params = {}, options = {}) => {
   const query = new URLSearchParams({
     api_key: TMDB_API_KEY,
-    // language: "hi-IN",
     "vote_count.gte": 50,
     include_adult: "false",
     ...params,
   }).toString();
 
   const url = `${TMDB_BASE_URL}${path}?${query}`;
-
-  // Combine caller's signal with a 10s timeout
   const signal = options.signal || AbortSignal.timeout(10_000);
 
   let response;
   try {
     response = await fetch(url, { signal });
   } catch (err) {
-    // FIX #10: One retry on network/timeout failure
     if (err.name === "TimeoutError" || err.name === "TypeError") {
       response = await fetch(url, { signal: options.signal });
     } else {
@@ -307,20 +288,12 @@ export const requestTMDB = async (path, params = {}, options = {}) => {
 
   // ─── Local content filter ────────────────────────────────────────────
   const isValidMedia = (item) => {
-    // 1. Block hardcore adult content via TMDB flag
     if (item.adult === true) return false;
-
-    // 2. Block softcore adult platforms (Ullu, Alt Balaji, Primeshots, etc.)
     if (isAdultPlatform(item)) return false;
-
-    // If caller explicitly wants upcoming content, skip date checks
     if (options.allowUpcoming) return true;
-
-    // FIX #1: Only filter FUTURE dates. No date = keep it.
     const dateString = item.release_date || item.first_air_date;
     if (isFutureDate(dateString)) return false;
-
-    return true; // Items with no date PASS through
+    return true;
   };
 
   if (Array.isArray(data.results)) return data.results.filter(isValidMedia);
@@ -340,8 +313,6 @@ export const requestTMDB = async (path, params = {}, options = {}) => {
 const requestTMDBObject = async (path, params = {}) => {
   const query = new URLSearchParams({
     api_key: TMDB_API_KEY,
-    // language: "hi-IN",
-    // "vote_count.gte": 100,
     include_adult: "false",
     ...params,
   }).toString();
@@ -363,14 +334,13 @@ const normalizeMixedMediaList = (list) =>
     .map((item) => normalizeItem(item, item.media_type))
     .filter(Boolean);
 
-// ─── Batched Parallel Fetch (FIX #6: rate-limit safe) ────────────────────
+// ─── Batched Parallel Fetch ────────────────────
 const batchFetch = async (requests, batchSize = 10) => {
   const results = [];
   for (let i = 0; i < requests.length; i += batchSize) {
     const batch = requests.slice(i, i + batchSize);
     const batchResults = await Promise.all(batch);
     results.push(...batchResults);
-    // Small stagger between batches to respect rate limits
     if (i + batchSize < requests.length) {
       await new Promise((r) => setTimeout(r, 250));
     }
@@ -379,7 +349,6 @@ const batchFetch = async (requests, batchSize = 10) => {
 };
 
 // ─── Public API ──────────────────────────────────────────────────────────
-
 export const fetchTMDBCatalog = async ({ moviePages = 3, tvPages = 3 } = {}) => {
   const requests = [
     ...Array.from({ length: moviePages }, (_, i) =>
@@ -421,30 +390,18 @@ const TARGET_LANGS = [
   { code: "gu", name: "Gujarati" }
 ];
 
-// 12 Major Genres to guarantee full Netflix-style rows
 const GENRE_IDS = [
-  28,   // Action
-  35,   // Comedy
-  18,   // Drama
-  878,  // Sci-Fi
-  27,   // Horror
-  10749, // Romance
-  53,   // Thriller
-  16,   // Animation
-  10751, // Family
-  14,   // Fantasy
-  9648  // Mystery
+  28, 35, 18, 878, 27, 10749, 53, 16, 10751, 14, 9648
 ];
 
 // ─── HOME PAGE (Movies + TV Mixed) ───────────────────────────────────────
 export const fetchTMDBHomeSections = async () => {
   const requests = [];
-  const types = []; // Track which response is movie vs tv
+  const types = [];
 
   requests.push(() => requestTMDB("/trending/all/week", { watch_region: "IN" }));
   types.push("mixed");
 
-  // Fetch Language Discovery
   TARGET_LANGS.forEach(({ code }) => {
     requests.push(() => requestTMDB("/discover/movie", { with_watch_providers: "119|8|232|237|350", with_original_language: code, sort_by: "popularity.desc", watch_region: "IN" }));
     types.push("movie");
@@ -452,7 +409,6 @@ export const fetchTMDBHomeSections = async () => {
     types.push("tv");
   });
 
-  // Fetch Global Category Discovery (Ensures rails have enough items)
   GENRE_IDS.forEach((id) => {
     requests.push(() => requestTMDB("/discover/movie", { with_genres: String(id), sort_by: "popularity.desc", watch_region: "IN" }));
     types.push("movie");
@@ -495,7 +451,6 @@ export const fetchTMDBMovieSections = async () => {
     types.push("movie");
   });
 
-  // Fetch specific genres for movies
   GENRE_IDS.forEach((id) => {
     requests.push(() => requestTMDB("/discover/movie", { with_genres: String(id), sort_by: "popularity.desc", watch_region: "IN" }));
     types.push("movie");
@@ -535,7 +490,6 @@ export const fetchTMDBTVSections = async () => {
     types.push("tv");
   });
 
-  // Fetch specific genres for TV
   GENRE_IDS.forEach((id) => {
     requests.push(() => requestTMDB("/discover/tv", { with_genres: String(id), sort_by: "popularity.desc", watch_region: "IN" }));
     types.push("tv");
@@ -565,7 +519,6 @@ export const fetchTMDBTVSections = async () => {
 export const fetchMoreLikeThis = async (type, id, { page = 1 } = {}) => {
   if (!type || !id) return [];
   try {
-    // Adding the language parameter (e.g., English-India or Hindi-India)
     const results = await requestTMDB(`/${type}/${id}/recommendations`, {
       page: String(page),
       watch_region: "IN",
@@ -592,10 +545,6 @@ export const searchTMDBTitles = async (query, { page = 1, signal } = {}) => {
     .filter(Boolean);
 };
 
-/**
- * FIX #4: Single API call with combined append_to_response.
- * Previously made 3 calls (2 hitting the same endpoint).
- */
 export const fetchTMDBDetails = async (mediaType, id) => {
   if (mediaType !== "movie" && mediaType !== "tv") return null;
   const tmdbId = Number(id);
@@ -605,7 +554,6 @@ export const fetchTMDBDetails = async (mediaType, id) => {
     ? "release_dates,images,videos,credits,keywords"
     : "content_ratings,images,videos,credits,keywords";
 
-  // ONE call instead of three
   const data = await requestTMDBObject(`/${mediaType}/${tmdbId}`, {
     append_to_response: appendParts,
   });
@@ -619,9 +567,10 @@ export const fetchTMDBDetails = async (mediaType, id) => {
 
   const base = {
     title: data.title || data.name || data.original_title || data.original_name,
-    mbg: toImageUrl(backdrop),
+    // Explicitly ask for 'original' quality for hero backgrounds
+    mbg: toImageUrl(backdrop, "original"),
     cast,
-    nameImg2: toImageUrl(logo?.file_path),
+    nameImg2: toImageUrl(logo?.file_path, "w500"),
     categories: Array.isArray(data.genres) ? data.genres.map((g) => g?.name).filter(Boolean) : [],
     languages: Array.isArray(data.spoken_languages)
       ? data.spoken_languages.map((l) => l?.english_name || l?.name).filter(Boolean)
@@ -644,8 +593,6 @@ export const fetchTMDBDetails = async (mediaType, id) => {
 
   // TV
   const seasons = Array.isArray(data.seasons) ? data.seasons : [];
-
-  // 1. Filter out specials (season 0) AND unreleased future seasons
   const validSeasons = seasons.filter(
     (s) => Number(s?.season_number) > 0 && !isFutureDate(s.air_date)
   );
@@ -655,7 +602,6 @@ export const fetchTMDBDetails = async (mediaType, id) => {
     return acc;
   }, {});
 
-  // 2. Calculate the season label based on actually released seasons
   const validSeasonCount = validSeasons.length || 1;
 
   return {
@@ -672,7 +618,6 @@ export const fetchTMDBDetails = async (mediaType, id) => {
     episodes: Object.keys(episodes).length > 0 ? episodes : { s1: 10 },
     ageRating: pickTVAgeRating(data.content_ratings),
   };
-
 };
 
 export const fetchTMDBSeasonDetails = async (tvId, seasonNumber) => {
@@ -690,7 +635,7 @@ export const fetchTMDBSeasonDetails = async (tvId, seasonNumber) => {
     poster: toImageUrl(detail.poster_path),
     episodes: Array.isArray(detail.episodes)
       ? detail.episodes
-        .filter((ep) => !ep.air_date || ep.air_date <= todayStr) // string compare
+        .filter((ep) => !ep.air_date || ep.air_date <= todayStr)
         .map((ep) => ({
           id: ep?.id || `${normalizedSeason}-${ep?.episode_number || 0}`,
           number: Number(ep?.episode_number) || 0,
@@ -704,17 +649,10 @@ export const fetchTMDBSeasonDetails = async (tvId, seasonNumber) => {
   };
 };
 
-/**
- * FIX #2: Sort by `releaseYear` (exists on normalized items).
- * FIX #8: Lowered vote_count.gte from 200 → 50 for newer titles.
- * NEW: supports studio.collectionIds — for sub-brand tiles (e.g. Harry Potter)
- * that aren't a single production company/network but a set of TMDB collections.
- */
 export const fetchTMDBStudioTitles = async (studioKey, { moviePages = 2, tvPages = 2 } = {}) => {
   const studio = getStudioConfig(studioKey);
   if (!studio) return [];
 
-  // Collection-based studios (franchise sub-brands) bypass discover entirely.
   if (Array.isArray(studio.collectionIds) && studio.collectionIds.length > 0) {
     const collectionResults = await Promise.all(
       studio.collectionIds.map((id) => requestTMDB(`/collection/${id}`).catch(() => []))
@@ -737,7 +675,6 @@ export const fetchTMDBStudioTitles = async (studioKey, { moviePages = 2, tvPages
       ...(keyword ? { with_keywords: keyword } : { with_companies: companyParam }),
       sort_by: "popularity.desc",
       watch_region: "IN",
-      // "vote_count.gte": "50",
       page: String(i + 1),
     })
   );
@@ -747,7 +684,6 @@ export const fetchTMDBStudioTitles = async (studioKey, { moviePages = 2, tvPages
       ...(keyword ? { with_keywords: keyword } : { with_networks: networkParam }),
       sort_by: "popularity.desc",
       watch_region: "IN",
-      // "vote_count.gte": "50",
       page: String(i + 1),
     })
   );
@@ -779,7 +715,6 @@ export const fetchMultilingualContent = async ({ moviePages = 1, tvPages = 1 } =
           with_original_language: code,
           sort_by: "popularity.desc",
           watch_region: "IN",
-          // "vote_count.gte": "50",
           page: String(p),
         })
       );
@@ -790,7 +725,6 @@ export const fetchMultilingualContent = async ({ moviePages = 1, tvPages = 1 } =
           with_original_language: code,
           sort_by: "popularity.desc",
           watch_region: "IN",
-          // "vote_count.gte": "50",
           page: String(p),
         })
       );
@@ -799,10 +733,8 @@ export const fetchMultilingualContent = async ({ moviePages = 1, tvPages = 1 } =
 
   const rawResults = await batchFetch(requests, 10);
 
-  // Separate movies and TV
   const moviesRaw = [];
   const tvRaw = [];
-  const perLang = moviePages + tvPages;
   let idx = 0;
 
   for (let i = 0; i < languages.length; i++) {
@@ -830,7 +762,6 @@ const CREATIVE_GENRE_TITLES = {
   Animation: "For the Whole Family",
   Comedy: "Laughter Is Your Best Medicine",
   Crime: "Crime Doesn't Pay",
-
   Drama: "Stories That Stay With You",
   Family: "For the Whole Family",
   Fantasy: "Worlds Beyond Your Own",
@@ -851,10 +782,6 @@ const RAIL_PRIORITY = [
   "Mystery", "Drama", "Romance", "History", "War", "Music",
 ];
 
-/**
- * Groups a flat list of normalized TMDB items into curated, editorially-titled
- * rails by genre.
- */
 export const buildCreativeRails = (items, { minItemsPerRail = 5 } = {}) => {
   const list = Array.isArray(items) ? items : [];
   if (list.length === 0) return [];

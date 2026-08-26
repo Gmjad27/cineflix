@@ -12,7 +12,6 @@ import Streaming from "./pages/Stream/streaming.jsx";
 const Home = lazy(() => import("./pages/Home/Home"));
 const Movie = lazy(() => import("./pages/Movies/Movie"));
 const Profile = lazy(() => import("./pages/Profile/Profile"));
-const Stream = lazy(() => import("./pages/Stream/Stream"));
 const Tv = lazy(() => import("./pages/TV/Tv"));
 const Search = lazy(() => import("./pages/Search/Search"));
 const Studio = lazy(() => import("./pages/Studio/Studio"));
@@ -217,12 +216,7 @@ function App() {
                     <Profile {...sharedProps} E={El} tu={sow} />
                   </>
                 } />
-                <Route path="/stream" element={
-                  <>
-                    <Nav />
-                    <Stream tid={TID} />
-                  </>
-                } />
+               
                 <Route path="/streaming/:tmdbId/:season/:episode" element={
                   <>
                     {/* <Nav /> */}
