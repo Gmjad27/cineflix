@@ -1,70 +1,81 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 
 function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch }) {
-    // We'll use mediaData directly; currentHero is kept for backward compatibility
     const slides = mediaData && mediaData.length ? mediaData : (currentHero ? [currentHero] : []);
     const totalSlides = slides.length;
     const [isDragging, setIsDragging] = useState(false);
-    const [dragStartX, setDragStartX] = useState(0);
+
+    // Store both X and Y to determine swipe direction
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [dragOffset, setDragOffset] = useState(0);
     const containerRef = useRef(null);
 
-    // Reset dragOffset when heroIndex changes externally (e.g., via pagination dots)
+    // Reset dragOffset when heroIndex changes externally
     useEffect(() => {
         setDragOffset(0);
     }, [heroIndex]);
 
-    // Handle pointer down (mouse or touch)
     const handlePointerDown = useCallback((e) => {
         setIsDragging(true);
-        setDragStartX(e.clientX || e.touches[0].clientX);
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+        setDragStart({ x: clientX, y: clientY });
         setDragOffset(0);
-        // Disable transition while dragging for instant feedback
+
         if (containerRef.current) {
             containerRef.current.style.transition = 'none';
         }
     }, []);
 
-    // Handle pointer move
     const handlePointerMove = useCallback((e) => {
         if (!isDragging) return;
+
         const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-        if (clientX === undefined) return;
-        const deltaX = clientX - dragStartX;
-        // Limit drag to one slide width
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        if (clientX === undefined || clientY === undefined) return;
+
+        const deltaX = clientX - dragStart.x;
+        const deltaY = clientY - dragStart.y;
+
+        // If the user is swiping vertically more than horizontally, they are trying to scroll.
+        // Cancel the drag to let the browser scroll smoothly.
+        if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) {
+            setIsDragging(false);
+            if (containerRef.current) {
+                containerRef.current.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            }
+            return;
+        }
+
         const maxDelta = containerRef.current ? containerRef.current.offsetWidth : window.innerWidth;
         setDragOffset(Math.max(-maxDelta, Math.min(maxDelta, deltaX)));
-    }, [isDragging, dragStartX]);
+    }, [isDragging, dragStart]);
 
-    // Handle pointer up / leave
     const finishDrag = useCallback(() => {
         if (!isDragging) return;
         setIsDragging(false);
 
         const threshold = containerRef.current ? containerRef.current.offsetWidth * 0.2 : 80;
         if (dragOffset < -threshold && heroIndex < totalSlides - 1) {
-            // Swipe left → next slide
             setHeroIndex(heroIndex + 1);
         } else if (dragOffset > threshold && heroIndex > 0) {
-            // Swipe right → previous slide
             setHeroIndex(heroIndex - 1);
         } else {
-            // Snap back
             setDragOffset(0);
         }
 
-        // Re-enable transition
         if (containerRef.current) {
             containerRef.current.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
         }
     }, [isDragging, dragOffset, heroIndex, totalSlides, setHeroIndex]);
 
-    // Attach global event listeners for move and up/leave
     useEffect(() => {
         if (isDragging) {
             window.addEventListener('mousemove', handlePointerMove);
             window.addEventListener('mouseup', finishDrag);
-            window.addEventListener('touchmove', handlePointerMove, { passive: false });
+            // Changed passive to TRUE to prevent blocking the main scroll thread
+            window.addEventListener('touchmove', handlePointerMove, { passive: true });
             window.addEventListener('touchend', finishDrag);
             window.addEventListener('touchcancel', finishDrag);
         } else {
@@ -83,23 +94,22 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
         };
     }, [isDragging, handlePointerMove, finishDrag]);
 
-    // Calculate translateX: base position + drag offset (percentage)
     const baseTranslate = -heroIndex * 100;
     const dragTranslate = (dragOffset / (containerRef.current?.offsetWidth || window.innerWidth)) * 100;
     const translateX = baseTranslate + dragTranslate;
 
     return (
         <section
-            className="relative w-full h-[75vh] sm:h-[85vh] md:h-[90vh] lg:h-[70vh] overflow-hidden bg-[#141414] select-none"
+            // Added 'touch-pan-y' to let the browser natively handle vertical scrolls
+            className="relative w-full h-[75vh] sm:h-[85vh] md:h-[90vh] lg:h-[70vh] overflow-hidden bg-[#141414] select-none touch-pan-y"
             onPointerDown={handlePointerDown}
             onPointerLeave={finishDrag}
         >
-            {/* Slider container */}
             <div
                 ref={containerRef}
                 className="flex h-full w-full will-change-transform"
                 style={{
-                    transform: `translateX(${translateX}%)`,
+                    transform: `translate3d(${translateX}%, 0, 0)`, // Promotes to hardware-accelerated GPU layer
                     transition: isDragging ? 'none' : 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                 }}
             >
@@ -109,14 +119,11 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
                         className="relative min-w-full h-full flex-shrink-0"
                         aria-hidden={idx !== heroIndex}
                     >
-                        {/* Background image with responsive <picture> */}
                         <picture className="absolute inset-0">
-                            {/* Desktop image (hidden on mobile) */}
                             <source
                                 media="(min-width: 768px)"
                                 srcSet={slide.img}
                             />
-                            {/* Mobile image (default) */}
                             <img
                                 src={slide.name}
                                 alt={slide.name2}
@@ -126,13 +133,10 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
                             />
                         </picture>
 
-                        {/* Gradients for readability */}
                         <div className="absolute inset-0 bg-gradient-to-r from-[#252424a5] via-[#141414]/60 to-transparent w-full md:w-[70%]" />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/20 to-transparent" />
 
-                        {/* Slide content */}
                         <div className="absolute bottom-[12%] sm:bottom-[15%] left-0 w-full px-6 md:px-12 lg:px-16 flex flex-col items-start gap-4 z-10 max-w-[95%] md:max-w-[60%] lg:max-w-[50%]">
-                            {/* Network badge */}
                             <div className="flex items-center gap-2 drop-shadow-lg mb-[-10px]">
                                 <span className="flex items-center justify-center font-black text-[#E50914] text-2xl md:text-3xl tracking-tighter">
                                     N
@@ -142,7 +146,6 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
                                 </span>
                             </div>
 
-                            {/* Title / logo */}
                             {slide.nameImg2 ? (
                                 <img
                                     src={slide.nameImg2}
@@ -156,7 +159,6 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
                                 </h1>
                             )}
 
-                            {/* Ranking badge */}
                             <div className="flex items-center gap-3 drop-shadow-md mt-1">
                                 <span className="bg-[#E50914] text-white text-[10px] md:text-xs font-black px-2 py-0.5 rounded-sm tracking-wider">
                                     TOP 10
@@ -166,12 +168,10 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
                                 </h2>
                             </div>
 
-                            {/* Description */}
                             <p className="hidden md:block text-sm lg:text-lg text-gray-200 drop-shadow-xl line-clamp-3 leading-relaxed font-medium mt-2">
                                 {slide.desc}
                             </p>
 
-                            {/* Action button */}
                             <div className="mt-4 flex  gap-3 sm:gap-4 w-full sm:w-auto">
                                 <button
                                     type="button"
@@ -187,7 +187,6 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
                 ))}
             </div>
 
-            {/* Pagination indicators */}
             <div className="relative bottom-10 md:bottom-36 left-0 w-full flex justify-center gap-2 z-20">
                 {slides.slice(0, 5).map((_, i) => (
                     <button

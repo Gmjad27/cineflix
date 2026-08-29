@@ -237,52 +237,250 @@ function Home(props) {
               setTrackRef={setTrackRef}
               onRailScroll={onRailScroll}
               handleRailScroll={handleRailScroll}
-              view='hidden'
+              view="hidden"
               eager
               renderItem={(item) => (
-                <>
+                <div className="flex-shrink-0">
+
                   <div
-                    className="relative flex-shrink-0 w-56 sm:w-64 md:w-80 lg:w-96 aspect-video rounded-md overflow-hidden cursor-pointer group shadow-lg hover:shadow-2xl transition-all duration-300 bg-[#181818]"
-                    onClick={() => openWatch(`${item.type}_${item.tmdbId}`)}
+                    className="
+            relative
+            w-56
+            sm:w-64
+            md:w-80
+            lg:w-96
+            aspect-video
+            rounded-md
+            overflow-hidden
+            cursor-pointer
+            bg-[#181818]
+            sm:transition-[transform,box-shadow]
+            sm:duration-300
+            sm:ease-out
+            sm:hover:scale-[1.02]
+            sm:hover:shadow-2xl
+          "
+                    onClick={() =>
+                      openWatch(`${item.type}_${item.tmdbId}`)
+                    }
                     title={item.title}
                   >
+
                     <button
-                      onClick={(e) => handleRemoveContinueWatching(e, item.streamId)}
-                      className="absolute top-2 right-2 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white/70 hover:text-white flex items-center justify-center opacity-1 group-hover:opacity-100 transition-all duration-300 border border-transparent hover:border-white/50 backdrop-blur-sm"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveContinueWatching(
+                          e,
+                          item.streamId
+                        );
+                      }}
+                      className="
+                            absolute
+              top-2
+              right-2
+              z-20  
+
+              w-8
+              h-8
+
+              rounded-full
+              bg-black/70
+              text-white
+
+              flex
+              items-center
+              justify-center
+
+              opacity-100
+              sm:group-hover:opacity-100
+
+              sm:hover:bg-black
+              sm:hover:text-white
+
+              sm:transition-[background-color,opacity]
+              sm:duration-200
+
+              border
+              border-transparent
+
+              sm:hover:border-white/50
+                      "
                       title="Remove from row"
+                      aria-label={`Remove ${item.title} from Continue Watching`}
                     >
-                      <i className="fa-solid fa-xmark"></i>
+                      <i className="fa-solid fa-xmark" />
                     </button>
 
+                    {/* =========================
+              Poster / Backdrop
+          ========================== */}
                     <img
-                      src={item.image || "https://via.placeholder.com/640x360.png?text=Resume"}
+                      src={
+                        item.image ||
+                        'https://via.placeholder.com/640x360.png?text=Resume'
+                      }
                       alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent opacity-90" />
+                      loading="lazy"
+                      decoding="async"
+                      draggable="false"
+                      className="
+              block
+              w-full
+              h-full
+              object-cover
 
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-white flex items-center justify-center bg-black/50 transform scale-75 group-hover:scale-100 transition-transform duration-300 shadow-xl">
-                        <i className="fa-solid fa-play text-white text-xl md:text-2xl ml-1"></i>
+              /* Desktop only */
+              sm:transition-transform
+              sm:duration-500
+              sm:ease-out
+              sm:hover:scale-105
+            "
+                    />
+                    <div
+                      className="
+              pointer-events-none
+              absolute
+              inset-0
+              bg-gradient-to-t
+              from-[#141414]
+              via-transparent
+              to-transparent
+              opacity-90
+            "
+                    />
+
+                    {/* =========================
+              Play Button
+          ========================== */}
+                    <div
+                      className="
+              pointer-events-none
+              absolute
+              inset-0
+
+              hidden
+              sm:flex
+
+              items-center
+              justify-center
+
+              bg-black/30
+
+              opacity-0
+              group-hover:opacity-100
+
+              transition-opacity
+              duration-200
+            "
+                    >
+                      <div
+                        className="
+                w-12
+                h-12
+                md:w-16
+                md:h-16
+
+                rounded-full
+                border-2
+                border-white
+
+                flex
+                items-center
+                justify-center
+
+                bg-black/50
+
+                transform
+                scale-75
+                group-hover:scale-100
+
+                transition-transform
+                duration-200
+
+                shadow-xl
+              "
+                      >
+                        <i className="fa-solid fa-play text-white text-xl md:text-2xl ml-1" />
                       </div>
                     </div>
 
-                    <div className="absolute bottom-0 left-0 right-0 h-1 md:h-1.5 bg-gray-500/50">
-                      <div className="h-full bg-[#ff000d] rounded-r-full" style={{ width: '100%' }}></div>
+                    <div
+                      className="
+              absolute
+              bottom-0
+              left-0
+              right-0
+
+              h-1
+              md:h-1.5
+
+              bg-gray-500/50
+            "
+                    >
+                      <div
+                        className="
+                h-full
+                bg-[#ff000d]
+                rounded-r-full
+              "
+                        style={{ width: '100%' }}
+                      />
                     </div>
                   </div>
-                  <div className="relative flex-shrink-0 pr-2 w-56 sm:w-64 md:w-80 lg:w-96 bottom-0 left-1 right-4 gap-2
-                   flex flex-row justify-start pointer-events-none">
-                    <h4 className="text-white font-bold text-sm md:text-base line-clamp-1 drop-shadow-md">
+
+                  {/* =========================
+            Movie Information
+        ========================== */}
+                  <div
+                    className="
+            relative
+            flex
+            flex-row
+            justify-start
+            items-center
+            gap-2
+
+            pointer-events-none
+
+            w-56
+            sm:w-64
+            md:w-80
+            lg:w-96
+
+            pr-2
+            pt-2
+            pl-1
+          "
+                  >
+                    <h4
+                      className="
+              min-w-0
+              text-white
+              font-bold
+              text-sm
+              md:text-base
+              line-clamp-1
+            "
+                    >
                       {item.title}
                     </h4>
+
                     {item.type === 'tv' && (
-                      <span className="text-gray-300 text-xs md:text-sm font-medium drop-shadow-md mt-0.5">
+                      <span
+                        className="
+                flex-shrink-0
+                text-gray-300
+                text-xs
+                md:text-sm
+                font-medium
+              "
+                      >
                         S{item.season}:E{item.episode}
                       </span>
                     )}
                   </div>
-                </>
+                </div>
               )}
             />
           )}

@@ -197,7 +197,7 @@ const Tv = (props) => {
           return (
             <div key={section.title}>
               <RailRow
-                title={section.title}
+                title={section.title === 'Popular Movies & TV Series' ? 'Popular Shows' : section.title}
                 railKey={railKey}
                 items={section.items}
                 scrollState={scrollState}

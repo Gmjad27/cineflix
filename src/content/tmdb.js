@@ -536,7 +536,7 @@ export const searchTMDBTitles = async (query, { page = 1, signal } = {}) => {
   const results = await requestTMDB(
     "/search/multi",
     { query: q, page: String(page) },
-    { signal, allowUpcoming: true }
+    { signal, allowUpcoming: false }
   );
 
   return results
