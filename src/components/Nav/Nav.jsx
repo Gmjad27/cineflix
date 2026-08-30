@@ -32,7 +32,7 @@ const Nav = () => {
   const mobileNavItems = useMemo(
     () => [
       { to: '/', label: 'Home', icon: 'fa-house' },
-      { to: '/tv', label: 'TV', icon: 'fa-tv' },
+      { to: '/tv', label: 'TV Shows', icon: 'fa-tv' },
       { to: '/movies', label: 'Movies', icon: 'fa-film' },
       { to: '/search', label: 'Search', icon: 'fa-magnifying-glass' },
     ],

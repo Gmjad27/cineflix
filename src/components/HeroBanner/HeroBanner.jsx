@@ -101,7 +101,7 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
     return (
         <section
             // Added 'touch-pan-y' to let the browser natively handle vertical scrolls
-            className="relative w-full h-[75vh] sm:h-[85vh] md:h-[90vh] lg:h-[70vh] overflow-hidden bg-[#141414] select-none touch-pan-y"
+            className="relative w-full h-[350px] sm:h-[85vh] md:h-[70vh] lg:h-[70vh] overflow-hidden bg-[#141414] select-none touch-pan-y"
             onPointerDown={handlePointerDown}
             onPointerLeave={finishDrag}
         >
@@ -125,7 +125,7 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
                                 srcSet={slide.img}
                             />
                             <img
-                                src={slide.name}
+                                src={slide.img}
                                 alt={slide.name2}
                                 className="absolute inset-0 w-full h-full object-cover object-top"
                                 loading={idx === 0 ? 'eager' : 'lazy'}
@@ -154,16 +154,16 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
                                     draggable="false"
                                 />
                             ) : (
-                                <h1 className="text-4xl md:text-6xl lg:text-7xl font-black leading-tight drop-shadow-2xl text-white tracking-tight line-clamp-2">
+                                <h1 className="text-2xl md:text-6xl lg:text-7xl font-black leading-tight drop-shadow-2xl text-white tracking-tight line-clamp-2">
                                     {slide.name2}
                                 </h1>
                             )}
 
-                            <div className="flex items-center gap-3 drop-shadow-md mt-1">
-                                <span className="bg-[#E50914] text-white text-[10px] md:text-xs font-black px-2 py-0.5 rounded-sm tracking-wider">
+                            <div className="flex items-center gap-3 drop-shadow-md">
+                                <span className="bg-[#E50914] text-white text-[5px] md:text-xs font-black px-2 py-0.5 rounded-sm tracking-wider">
                                     TOP 10
                                 </span>
-                                <h2 className="text-lg md:text-xl font-bold text-white shadow-black drop-shadow-md">
+                                <h2 className="text-[10px] md:text-xl font-bold text-white shadow-black drop-shadow-md">
                                     #{idx + 1} in Trending Today
                                 </h2>
                             </div>
@@ -172,11 +172,11 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
                                 {slide.desc}
                             </p>
 
-                            <div className="mt-4 flex  gap-3 sm:gap-4 w-full sm:w-auto">
+                            <div className="sm:gap-4 w-full sm:w-auto">
                                 <button
                                     type="button"
                                     onClick={() => openWatch(slide.id)}
-                                    className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-6 md:px-8 py-2.5 md:py-3 bg-white/20 text-white font-bold text-sm md:text-lg rounded-md hover:bg-white/30 hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md ring-1 ring-white/30 shadow-lg"
+                                    className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-2 md:px-8  md:py-3 bg-white/20 text-white font-bold text-sm md:text-lg rounded hover:bg-white/30 hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md  ring-white/30 shadow-lg"
                                 >
                                     <i className="fa-solid fa-circle-info text-xl"></i>
                                     More Info

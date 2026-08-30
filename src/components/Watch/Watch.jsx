@@ -260,6 +260,7 @@ const Watch = (props) => {
     : details?.seasonLabel || props.season;
 
   const year = details?.year || props.yr;
+  const rating = details?.rating || props.rating || 0;
   const nextEp = details?.nextEp || "";
   const logo = details?.nameImg2;
   const trailer = details?.trailerUrl;
@@ -482,7 +483,7 @@ const Watch = (props) => {
         <div className="px-4 sm:px-8 md:px-12 py-2 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-x-12 gap-y-5 sm:gap-y-6">
           <div className="space-y-3 sm:space-y-4">
             <div className="flex items-center gap-2 sm:gap-3 text-[13px] sm:text-[15px] font-medium flex-wrap">
-              <span className="text-[#46d369] font-bold">{ratingMatch}</span>
+              <span className="text-[#46d369] font-bold">{(rating * 10).toFixed(0)}% Match</span>
               <span className="text-gray-300">{year}</span>
               <span className="text-gray-300">{props.type === 'tv' ? seasonLabel : formatRuntime(details?.runtime)}</span>
               <span className="border border-gray-400/70 px-1 py-[1px] text-[10px] rounded-[3px] text-gray-300 font-bold tracking-wider leading-none flex items-center h-4">HD</span>

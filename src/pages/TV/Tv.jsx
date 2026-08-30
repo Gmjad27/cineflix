@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom'; // CHANGED: Imported useSearchParams
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Card from '../../components/Card/Card';
 import Watch from '../../components/Watch/Watch';
 import { fetchTMDBTVSections } from '../../content/tmdb';
@@ -8,15 +8,22 @@ import RailRow from '../../components/RailRow/RailRow';
 import { useRailScroll } from '../../hooks/useRailScroll';
 import Skeleton from '../../components/Skeleton/Skeleton';
 
+// Imported HeroBanner
+import HeroBanner from '../../components/HeroBanner/HeroBanner.jsx';
+
+const HERO_ROTATE_MS = 8000;
+
 const Tv = (props) => {
   const navigate = useNavigate();
-  // CHANGED: Using search params to manage the modal's state directly in the URL
   const [searchParams, setSearchParams] = useSearchParams();
 
   const data = Array.isArray(props.data) ? props.data : [];
   const series = useMemo(() => data.filter((item) => item.type === 'tv'), [data]);
   const [pageSections, setPageSections] = useState({ heroBanner: [], rails: [] });
   const [sectionsLoading, setSectionsLoading] = useState(true);
+
+  // Hero Banner State
+  const [heroIndex, setHeroIndex] = useState(0);
 
   // Fetch TMDB TV sections
   useEffect(() => {
@@ -36,13 +43,36 @@ const Tv = (props) => {
     return () => { active = false; };
   }, []);
 
-  // Featured hero item
-  const featured = useMemo(() => {
-    if (Array.isArray(pageSections.heroBanner) && pageSections.heroBanner.length > 0)
-      return pageSections.heroBanner[0];
-    if (series.length === 0) return null;
-    return [...series].sort((a, b) => b.releaseYear - a.releaseYear)[0];
-  }, [pageSections.heroBanner, series]);
+  // Determine mediaData for HeroBanner (fallback to top recent series if no TMDB hero banner)
+  const heroData = useMemo(() => {
+    if (Array.isArray(pageSections.heroBanner) && pageSections.heroBanner.length > 0) {
+      return pageSections.heroBanner.slice(0, 5);
+    }
+    if (series.length === 0) return [];
+    return [...series].sort((a, b) => b.releaseYear - a.releaseYear).slice(0, 5);
+  }, [series, pageSections.heroBanner]);
+
+  const currentHero = heroData[heroIndex % Math.max(heroData.length, 1)] || null;
+
+  // Rotate Hero Images
+  useEffect(() => {
+    if (heroData.length < 2) return undefined;
+    const interval = setInterval(() => {
+      setHeroIndex((prev) => (prev + 1) % heroData.length);
+    }, HERO_ROTATE_MS);
+    return () => clearInterval(interval);
+  }, [heroData]);
+
+  // Warm cache for next hero image
+  useEffect(() => {
+    if (heroData.length < 2) return;
+    const next = heroData[(heroIndex + 1) % heroData.length];
+    if (!next) return;
+    [next.img, next.name].filter(Boolean).forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, [heroIndex, heroData]);
 
   // Section rails (fallback to local data if TMDB fails)
   const sections = useMemo(
@@ -71,11 +101,10 @@ const Tv = (props) => {
   const { scrollState, setTrackRef, onRailScroll, handleRailScroll } = useRailScroll(railKeys);
 
   // ==========================================
-  // ADDED: Rock-Solid URL State Management for Watch Modal
+  // URL State Management for Watch Modal
   // ==========================================
   const watchId = searchParams.get('watch');
 
-  // Derive watchItem directly from the URL. No useState needed!
   const watchItem = useMemo(() => {
     if (!watchId) return null;
     return allItems.find((item) => String(item.id) === String(watchId));
@@ -87,7 +116,6 @@ const Tv = (props) => {
     const selected = allItems.find((item) => String(item.id) === String(id));
     if (!selected) return;
 
-    // Update URL seamlessly
     searchParams.set('watch', selected.id);
     if (selected.name2) searchParams.set('name', selected.name2);
     setSearchParams(searchParams);
@@ -99,13 +127,6 @@ const Tv = (props) => {
     setSearchParams(searchParams);
   }, [searchParams, setSearchParams]);
   // ==========================================
-
-  const playFeatured = useCallback(() => {
-    if (!featured) return;
-    const streamId = `${featured.type}/${featured.tmdbId}/1/1`;
-    props.play(streamId);
-    navigate('/stream');
-  }, [featured, props, navigate]);
 
   // ==========================================
   // Loading state
@@ -125,73 +146,19 @@ const Tv = (props) => {
 
   return (
     <div className="relative min-h-screen bg-[#141414] text-white overflow-hidden selection:bg-[#E50914] selection:text-white">
+
       {/* ── Hero Banner ── */}
-      {featured && (
-        <section className="relative w-full h-[75vh] sm:h-[85vh] md:h-[90vh] lg:h-[70vh] mb-5 overflow-hidden bg-black">
-          {/* Background Images */}
-          <div className="absolute inset-0">
-            <div
-              className="absolute inset-0 bg-cover bg-center block md:hidden transition-opacity duration-1000 ease-in-out"
-              style={{ backgroundImage: `url(${featured.name})` }}
-            />
-            <div
-              className="absolute inset-0 bg-cover bg-center hidden md:block transition-opacity duration-1000 ease-in-out"
-              style={{ backgroundImage: `url(${featured.img})` }}
-            />
-          </div>
-
-          {/* Netflix Signature Gradients */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.6)_100%)]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#141414]/90 via-[#141414]/40 to-transparent w-[80%]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/30 to-transparent bottom-0 h-[100%]" />
-
-          {/* Hero Content */}
-          <div className="absolute bottom-[10%] sm:bottom-[15%] left-0 w-full px-6 md:px-12 lg:px-16 flex flex-col items-start gap-4 z-10 max-w-[90%] md:max-w-[50%]">
-
-            {/* Netflix Series Badge */}
-            <div className="flex items-center gap-3 drop-shadow-md">
-              <span className="flex items-center justify-center font-bold text-[#E50914] text-2xl md:text-4xl">
-                N
-              </span>
-              <span className="text-gray-300 font-semibold tracking-wide text-xs sm:text-sm uppercase flex items-center gap-2">
-                <span className="text-white">Series</span>
-              </span>
-            </div>
-
-            {/* Title / Logo */}
-            {featured.nameImg2 ? (
-              <img src={featured.nameImg2} alt={featured.name2} className="max-w-[200px] md:max-w-[400px] lg:max-w-[500px] object-contain drop-shadow-2xl mb-2" />
-            ) : (
-              <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold leading-tight drop-shadow-2xl line-clamp-2">
-                {featured.name2}
-              </h1>
-            )}
-
-            {/* Meta Info */}
-            <div className="flex items-center gap-3 text-sm md:text-base font-semibold drop-shadow-md text-gray-300">
-              <span className="text-[#46d369] font-bold">New</span>
-            </div>
-
-            <p className="hidden md:block text-base lg:text-lg text-gray-200 drop-shadow-lg line-clamp-3 leading-snug text-shadow-md mt-2">
-              {featured.desc}
-            </p>
-
-            {/* Actions */}
-            <div className="mt-4 flex gap-3 sm:gap-4 w-full sm:w-auto">
-              <button
-                onClick={() => openWatch(featured.id)}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-6 sm:px-8 py-2 md:py-2.5 bg-[#6d6d6e]/70 text-white font-bold text-sm md:text-xl rounded hover:bg-[#6d6d6e] active:scale-95 transition backdrop-blur-sm"
-              >
-                <i className="fa-solid fa-circle-info" /> More Info
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
+      <HeroBanner
+        mediaData={heroData}
+        currentHero={currentHero}
+        heroIndex={heroIndex}
+        setHeroIndex={setHeroIndex}
+        openWatch={openWatch}
+      />
 
       {/* ── Content Rails ── */}
       {/* Heavy negative margin to pull rails up over the hero gradient */}
-      <div className="px-6 md:px-12 lg:px-16 relative z-20 space-y-12 pb-12 -mt-26 md:-mt-32">
+      <div className="px-6 md:px-12 lg:px-16 relative z-20 space-y-12 pb-12">
         {sections.map((section, idx) => {
           const railKey = `rail-${idx}`;
           return (

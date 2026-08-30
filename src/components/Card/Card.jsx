@@ -133,20 +133,17 @@ const Card = React.memo(
           {!hideRating && rating > 0 && (
             <div
               className={`
-                absolute right-2 top-2
+                absolute right-1 top-1
                 flex items-center justify-center
                 rounded border
                 bg-black/70
                 ${color}
                 shadow-lg
                 px-1.5 py-0.5
-
-                /* Remove expensive blur on mobile */
-                sm:backdrop-blur-md
               `}
             >
               <span className="text-[9px] font-bold tracking-tighter sm:text-[10px]">
-                {pct}%
+                {rating.toFixed(1)}
               </span>
             </div>
           )}

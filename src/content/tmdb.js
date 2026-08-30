@@ -564,10 +564,11 @@ export const fetchTMDBDetails = async (mediaType, id) => {
   const backdrop = data.images?.backdrops?.find(
     img => img.iso_639_1 === 'en'
   )?.file_path || data.images?.backdrops?.[0]?.file_path;
-
+  console.log(data);
   const base = {
     title: data.title || data.name || data.original_title || data.original_name,
     // Explicitly ask for 'original' quality for hero backgrounds
+    rating: Number(data.vote_average) || 0,
     mbg: toImageUrl(backdrop, "original"),
     cast,
     nameImg2: toImageUrl(logo?.file_path, "w500"),
