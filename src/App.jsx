@@ -165,7 +165,7 @@ function App() {
       {showIntro ? (
         <div className="fixed inset-0 z-[10000] bg-black flex items-center justify-center overflow-hidden">
           <video
-            src="/intro.mp4"
+            src="../public/"
             autoPlay
             playsInline
             onEnded={() => setShowIntro(false)}
@@ -216,7 +216,7 @@ function App() {
                     <Profile {...sharedProps} E={El} tu={sow} />
                   </>
                 } />
-               
+
                 <Route path="/streaming/:tmdbId/:season/:episode" element={
                   <>
                     {/* <Nav /> */}

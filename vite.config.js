@@ -8,7 +8,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'CINEFLIX - Hotstar Clone',
+        name: 'CINEFLIX',
         short_name: 'CINEFLIX',
         description: 'Stream movies and TV shows with CINEFLIX',
         theme_color: '#000000',
@@ -18,25 +18,25 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: '/icon-192.png',
+            src: 'cineflix.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/icon-512.png',
+            src: 'cineflix.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/icon-maskable-192.png',
+            src: 'cineflix.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'maskable'
           },
           {
-            src: '/icon-maskable-512.png',
+            src: 'cineflix.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
