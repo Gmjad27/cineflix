@@ -12,7 +12,7 @@ import ScrollToTop from "./components/ScrollToTop";
 const Home = lazy(() => import("./pages/Home/Home"));
 const Movie = lazy(() => import("./pages/Movies/Movie"));
 const Profile = lazy(() => import("./pages/Profile/Profile"));
-const Streaming = lazy(() => import("./pages/Stream/Streaming"));
+const Streaming = lazy(() => import("./pages/Stream/streaming.jsx"));
 const Tv = lazy(() => import("./pages/TV/Tv"));
 const Search = lazy(() => import("./pages/Search/Search"));
 const Login = lazy(() => import("./pages/Auth/Login"));
