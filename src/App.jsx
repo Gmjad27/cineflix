@@ -1,19 +1,22 @@
 import React, { useEffect, useState, lazy, Suspense } from "react";
 import Nav from "./components/Nav/Nav";
+import ProtectedRoute from "./components/ProtectedRoute";
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import "./App.css";
 import { fetchTMDBCatalog, fetchTMDBHomeSections } from "./content/tmdb.js";
 import ErrorBoundary from "./components/ErrorBoundary";
 import MovieViewAll from "./pages/ViewAll/MovieViewAll.jsx";
 import ScrollToTop from "./components/ScrollToTop";
-import Streaming from "./pages/Stream/streaming.jsx";
 
 // ✅ Lazy-loaded page components
 const Home = lazy(() => import("./pages/Home/Home"));
 const Movie = lazy(() => import("./pages/Movies/Movie"));
 const Profile = lazy(() => import("./pages/Profile/Profile"));
+const Streaming = lazy(() => import("./pages/Stream/Streaming"));
 const Tv = lazy(() => import("./pages/TV/Tv"));
 const Search = lazy(() => import("./pages/Search/Search"));
+const Login = lazy(() => import("./pages/Auth/Login"));
+const Signup = lazy(() => import("./pages/Auth/Signup"));
 const Studio = lazy(() => import("./pages/Studio/Studio"));
 
 const safeParse = (value, fallback) => {
@@ -54,6 +57,9 @@ function App() {
     if (showIntro) {
       sessionStorage.setItem('hasSeenIntro', 'true');
 
+      // ⚠️ Changed from 4s to a 10s fallback. 
+      // This ensures we wait for the video's onEnded event naturally, 
+      // but if the browser completely blocks the video, it still clears after 10s.
       const fallbackTimer = setTimeout(() => {
         setShowIntro(false);
       }, 10000);
@@ -159,16 +165,17 @@ function App() {
   const sharedProps = { data: catalog, loading: catalogLoading, add, e: El, play };
 
   return (
-    <div className="h-[100vh] sm:pt-16 bg-[#141414] text-white font-sans selection:bg-[#E50914] selection:text-white relative">
+    <div className="h-[100vh]  bg-[#141414] text-white font-sans selection:bg-[#E50914] selection:text-white relative">
 
-      {/* ✅ Intro Video Logic */}
+      {/* ✅ If showIntro is true, ONLY show the video.
+          If false, render the App & Router (showing the Home Page) */}
       {showIntro ? (
         <div className="fixed inset-0 z-[10000] bg-black flex items-center justify-center overflow-hidden">
           <video
-            src="../public/"
+            src="/intro.mp4"
             autoPlay
             playsInline
-            onEnded={() => setShowIntro(false)}
+            onEnded={() => setShowIntro(false)} /* 👈 Triggers rendering of the Router/Home Page immediately when video stops */
             className="w-full h-full object-cover sm:object-contain pointer-events-none"
           />
         </div>
@@ -178,62 +185,62 @@ function App() {
           <ErrorBoundary>
             <Suspense fallback={<PageLoader />}>
               <Routes>
-                {/* ✅ Auth routes removed */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
 
                 <Route path="/" element={
-                  <>
+                  <ProtectedRoute>
                     <Nav />
                     <Home {...sharedProps} homeSections={homeSections} stu={sow} />
-                  </>
+                  </ProtectedRoute>
                 } />
                 <Route path="/movies" element={
-                  <>
+                  <ProtectedRoute>
                     <Nav />
                     <Movie {...sharedProps} />
-                  </>
+                  </ProtectedRoute>
                 } />
                 <Route path="/tv" element={
-                  <>
+                  <ProtectedRoute>
                     <Nav />
                     <Tv {...sharedProps} />
-                  </>
+                  </ProtectedRoute>
                 } />
                 <Route path="/search" element={
-                  <>
+                  <ProtectedRoute>
                     <Nav />
                     <Search {...sharedProps} />
-                  </>
+                  </ProtectedRoute>
                 } />
                 <Route path="/studio/:id" element={
-                  <>
+                  <ProtectedRoute>
                     <Nav />
                     <Studio {...sharedProps} studio={studio} img={Img} />
-                  </>
+                  </ProtectedRoute>
                 } />
                 <Route path="/profile" element={
-                  <>
+                  <ProtectedRoute>
                     <Nav />
                     <Profile {...sharedProps} E={El} tu={sow} />
-                  </>
+                  </ProtectedRoute>
                 } />
-
                 <Route path="/streaming/:tmdbId/:season/:episode" element={
-                  <>
-                    {/* <Nav /> */}
+                  <ProtectedRoute>
+                    <Nav />
                     <Streaming />
-                  </>
+                  </ProtectedRoute>
                 } />
                 <Route path="/streaming/:tmdbId" element={
-                  <>
-                    {/* <Nav /> */}
+                  <ProtectedRoute>
+                    <Nav />
                     <Streaming />
-                  </>
+                  </ProtectedRoute>
                 } />
                 <Route path="/viewall" element={
-                  <>
+                  <ProtectedRoute>
                     <Nav />
                     <MovieViewAll {...sharedProps} sow={sow} />
-                  </>
+                  </ProtectedRoute>
                 } />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
@@ -242,28 +249,19 @@ function App() {
         </Router>
       )}
 
-      {/* Premium Toast Notification */}
+      {/* Toast Notification */}
       <div
-        className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-4 px-5 py-3 rounded-full shadow-2xl backdrop-blur-md border transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] pointer-events-none
-    ${toast.show
-            ? 'opacity-100 translate-y-0 scale-100'
-            : 'opacity-0 translate-y-10 scale-90'
-          }
+        className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3 rounded-full shadow-2xl backdrop-blur-md border transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] pointer-events-none
+    ${toast.show ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95'}
     ${toast.isError
-            ? 'bg-red-600/90 border-red-500/50 text-white shadow-red-600/20'
-            : 'bg-zinc-900/90 border-zinc-700/50 text-white shadow-black/50'
+            ? 'bg-zinc-900/95 border-[#E50914]/50 text-white shadow-[#E50914]/20'
+            : 'bg-zinc-900/95 border-green-500/50 text-white shadow-green-500/20'
           }`}
       >
-        {/* Icon Container with subtle background */}
-        <div
-          className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 transition-transform duration-500 delay-100 ${toast.show ? 'scale-100 rotate-0' : 'scale-0 -rotate-90'
-            } ${toast.isError ? 'bg-white/20 text-white' : 'bg-green-500/20 text-green-400'
-            }`}
-        >
-          <i className={`fa-solid text-sm ${toast.isError ? 'fa-xmark' : 'fa-check'}`}></i>
+        <div className={`flex items-center justify-center w-6 h-6 rounded-full shrink-0 ${toast.isError ? 'bg-[#E50914]/20 text-[#E50914]' : 'bg-green-500/20 text-green-400'
+          }`}>
+          <i className={`fa-solid text-xs ${toast.isError ? 'fa-xmark' : 'fa-check'}`}></i>
         </div>
-
-        {/* Message */}
         <span className="font-medium tracking-wide text-sm whitespace-nowrap">
           {toast.message}
         </span>
