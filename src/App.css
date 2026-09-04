@@ -26,3 +26,58 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(90deg, #9ca3af, #d1d5db);
 }
+
+
+/* --- NETFLIX INTRO ANIMATION --- */
+.netflix-letter {
+  position: absolute;
+  font-size: 18rem;
+  font-weight: 900;
+  color: #E50914;
+  text-transform: uppercase;
+  font-family: "Arial Black", impact, sans-serif;
+  transform-origin: center;
+  /* Zooms the letter toward the screen */
+  animation: letter-zoom 2.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  z-index: 10;
+  text-shadow: 0 0 30px rgba(229, 9, 20, 0.4);
+}
+
+.netflix-lines-container {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  opacity: 0;
+  z-index: 20;
+  transform-origin: center;
+  /* Triggers the lightspeed burst effect */
+  animation: lines-burst 1.2s 1.7s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+
+.netflix-line {
+  height: 100%;
+  flex-shrink: 0;
+  filter: blur(12px);
+}
+
+/* Colors for the barcode effect */
+.c-red { background: #E50914; flex: 2; box-shadow: 0 0 20px #E50914; }
+.c-purple { background: #8e24aa; flex: 1; box-shadow: 0 0 20px #8e24aa; }
+.c-dark-red { background: #b71c1c; flex: 4; box-shadow: 0 0 30px #b71c1c; }
+.c-black { background: #000; flex: 3; }
+.c-yellow { background: #fbc02d; flex: 1.5; box-shadow: 0 0 15px #fbc02d; }
+.c-blue { background: #1976d2; flex: 1; box-shadow: 0 0 20px #1976d2; }
+
+@keyframes letter-zoom {
+  0% { transform: scale(0.7); opacity: 0; }
+  15% { transform: scale(1); opacity: 1; }
+  60% { transform: scale(1.1); opacity: 1; filter: blur(0px); }
+  100% { transform: scale(10); opacity: 0; filter: blur(15px); }
+}
+
+@keyframes lines-burst {
+  0% { opacity: 0; transform: scaleX(0) scaleY(1); }
+  30% { opacity: 1; transform: scaleX(2) scaleY(1.1); }
+  100% { opacity: 0; transform: scaleX(15) scaleY(2); }
+}
