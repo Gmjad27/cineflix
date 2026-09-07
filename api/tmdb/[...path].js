@@ -11,10 +11,11 @@ export default async function handler(request, response) {
         return response.status(500).json({ error: "TMDB proxy is not configured" });
     }
 
-    const segments = Array.isArray(request.query.path)
-        ? request.query.path
-        : request.query.path
-            ? [request.query.path]
+    const rawPath = request.query.path;
+    const segments = Array.isArray(rawPath)
+        ? rawPath.flatMap((segment) => String(segment).split("/"))
+        : rawPath
+            ? String(rawPath).split("/")
             : [];
     const tmdbUrl = new URL(`${TMDB_ORIGIN}/${segments.map(encodeURIComponent).join("/")}`);
 
