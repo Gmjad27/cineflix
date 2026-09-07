@@ -1,7 +1,6 @@
 import { getStudioConfig } from "./studios";
 
-const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+const TMDB_BASE_URL = (import.meta.env.VITE_TMDB_PROXY_URL || "/api/tmdb").replace(/\/$/, "");
 // Updated base URL without the hardcoded 'original' size
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/";
 
@@ -260,7 +259,6 @@ const dedupeMedia = (items) => {
 // ─── Core Request Function ───────────────────────────────────────────────
 export const requestTMDB = async (path, params = {}, options = {}) => {
   const query = new URLSearchParams({
-    api_key: TMDB_API_KEY,
     "vote_count.gte": 50,
     include_adult: "false",
     ...params,
@@ -312,7 +310,6 @@ export const requestTMDB = async (path, params = {}, options = {}) => {
 
 const requestTMDBObject = async (path, params = {}) => {
   const query = new URLSearchParams({
-    api_key: TMDB_API_KEY,
     include_adult: "false",
     ...params,
   }).toString();
