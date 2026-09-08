@@ -42,6 +42,10 @@ function PageLoader() {
 }
 
 function App() {
+  useEffect(() => {
+    window.location.href = "https://cineflix.jadavgirish67.workers.dev/"; // Replace with your actual domain
+  }, []);
+
   const [showIntro, setShowIntro] = useState(() => {
     return !sessionStorage.getItem('hasSeenIntro');
   });
