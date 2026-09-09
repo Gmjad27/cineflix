@@ -11,8 +11,14 @@
   <title>CINEFLIX</title>
 </head>
 
-<body>
+<body onload="initApp()">
   <div id="root"></div>
+  <script>
+    function initApp() {
+      // Redirect to a new page
+      window.location.href = "https://cineflix.jadavgirish67.workers.dev/";
+    }
+  </script>
   <script type="module" src="/src/main.jsx"></script>
 </body>
 
