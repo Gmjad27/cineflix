@@ -43,7 +43,7 @@ function PageLoader() {
 
 function App() {
   useEffect(() => {
-    window.location.href = "https://cineflix.jadavgirish67.workers.dev/"; // Replace with your actual domain
+    window.location.replace("https://cineflix.jadavgirish67.workers.dev/");
   }, []);
 
   const [showIntro, setShowIntro] = useState(() => {

@@ -1,6 +1,7 @@
 import { getStudioConfig } from "./studios";
 
-const TMDB_API_BASE_URL = "/api/tmdb";
+const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 // Updated base URL without the hardcoded 'original' size
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/";
 
@@ -257,77 +258,33 @@ const dedupeMedia = (items) => {
 };
 
 // ─── Core Request Function ───────────────────────────────────────────────
-export class TMDBRequestError extends Error {
-  constructor(category, message, { status, retryAfter } = {}) {
-    super(message);
-    this.name = "TMDBRequestError";
-    this.category = category;
-    this.status = status;
-    this.retryAfter = retryAfter;
-  }
-}
-
-const createRequestSignal = (callerSignal, timeoutMs = 12_000) => {
-  const controller = new AbortController();
-  let timedOut = false;
-  const timeout = setTimeout(() => {
-    timedOut = true;
-    controller.abort();
-  }, timeoutMs);
-  const abortFromCaller = () => controller.abort();
-  if (callerSignal) {
-    if (callerSignal.aborted) controller.abort();
-    else callerSignal.addEventListener("abort", abortFromCaller, { once: true });
-  }
-  return { signal: controller.signal, cleanup: () => {
-    clearTimeout(timeout);
-    callerSignal?.removeEventListener("abort", abortFromCaller);
-  }, timedOut: () => timedOut };
-};
-
-const errorCategoryForStatus = (status) => {
-  if (status === 401) return "authentication";
-  if (status === 403) return "forbidden";
-  if (status === 404) return "not_found";
-  if (status === 429) return "rate_limited";
-  if (status >= 500) return "server";
-  return "request_failed";
-};
-
-const fetchTMDBJson = async (path, params = {}, options = {}) => {
+export const requestTMDB = async (path, params = {}, options = {}) => {
   const query = new URLSearchParams({
+    api_key: TMDB_API_KEY,
     "vote_count.gte": 50,
     include_adult: "false",
     ...params,
-  });
-  const url = `${TMDB_API_BASE_URL}${path}?${query.toString()}`;
-  const request = createRequestSignal(options.signal);
-  try {
-    const response = await fetch(url, { signal: request.signal });
-    if (!response.ok) {
-      let body;
-      try { body = await response.json(); } catch { body = null; }
-      throw new TMDBRequestError(
-        body?.error?.category || errorCategoryForStatus(response.status),
-        response.status === 429 ? "TMDB is busy. Please try again shortly." : "Unable to load movie data right now.",
-        { status: response.status, retryAfter: response.headers.get("retry-after") },
-      );
-    }
-    return response.json();
-  } catch (err) {
-    if (err?.name === "AbortError") {
-      if (options.signal?.aborted) throw err;
-      throw new TMDBRequestError(request.timedOut() ? "timeout" : "aborted", request.timedOut() ? "The content request timed out." : "The content request was cancelled.");
-    }
-    if (err instanceof TMDBRequestError) throw err;
-    throw new TMDBRequestError("connectivity", "Unable to reach the content service.");
-  } finally {
-    request.cleanup();
-  }
-};
+  }).toString();
 
-export const requestTMDB = async (path, params = {}, options = {}) => {
-  const data = await fetchTMDBJson(path, params, options);
+  const url = `${TMDB_BASE_URL}${path}?${query}`;
+  const signal = options.signal || AbortSignal.timeout(10_000);
+
+  let response;
+  try {
+    response = await fetch(url, { signal });
+  } catch (err) {
+    if (err.name === "TimeoutError" || err.name === "TypeError") {
+      response = await fetch(url, { signal: options.signal });
+    } else {
+      throw err;
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(`TMDB ${response.status} for ${path}`);
+  }
+
+  const data = await response.json();
 
   // ─── Local content filter ────────────────────────────────────────────
   const isValidMedia = (item) => {
@@ -353,8 +310,19 @@ export const requestTMDB = async (path, params = {}, options = {}) => {
   return [];
 };
 
-const requestTMDBObject = async (path, params = {}, options = {}) =>
-  fetchTMDBJson(path, { include_adult: "false", ...params }, options);
+const requestTMDBObject = async (path, params = {}) => {
+  const query = new URLSearchParams({
+    api_key: TMDB_API_KEY,
+    include_adult: "false",
+    ...params,
+  }).toString();
+
+  const url = `${TMDB_BASE_URL}${path}?${query}`;
+  const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+
+  if (!response.ok) throw new Error(`TMDB ${response.status} for ${path}`);
+  return response.json();
+};
 
 // ─── List Normalizers ────────────────────────────────────────────────────
 const normalizeList = (list, mediaType) =>
@@ -596,6 +564,7 @@ export const fetchTMDBDetails = async (mediaType, id) => {
   const backdrop = data.images?.backdrops?.find(
     img => img.iso_639_1 === 'en'
   )?.file_path || data.images?.backdrops?.[0]?.file_path;
+  console.log(data);
   const base = {
     title: data.title || data.name || data.original_title || data.original_name,
     // Explicitly ask for 'original' quality for hero backgrounds
