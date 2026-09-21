@@ -35,6 +35,14 @@ const Streaming = () => {
         ? `https://screenscape.me/embed?tmdb=${tmdbId}&type=tv&s=${currentSeason}&e=${currentEpisode}`
         : `https://screenscape.me/embed?tmdb=${tmdbId}&type=movie`;
 
+    // const embedUrl = isTvShow
+    //     ? `https://bingr.one/watch/tv/${tmdbId}/${currentSeason}/${currentEpisode}`
+    //     : `https://bingr.one/watch/movie/${tmdbId}`;
+
+    // const embedUrl = isTvShow
+    //     ? `https://vidout.pages.dev/tv/${tmdbId}/s${currentSeason}/e${currentEpisode}`
+    //     : `https://vidout.pages.dev/movie/${tmdbId}`;
+
     return (
         <div className="absolute inset-0 flex items-center justify-center h-[100%] w-[100%] pt-16 pb-16 sm:pt-0 sm:pb-0 overflow-hidden bg-black">
 
@@ -54,7 +62,7 @@ const Streaming = () => {
                     allowFullScreen
                     allow="accelerometer; autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope;"
                     title="Movie/TV Player"
-                    sandbox="allow-scripts allow-same-origin allow-forms"
+                    // sandbox="allow-scripts allow-same-origin allow-forms"
                 ></iframe>
             ) : (
                 <div className="flex items-center justify-center w-full h-full text-gray-500">

@@ -42,9 +42,9 @@ function PageLoader() {
 }
 
 function App() {
-  useEffect(() => {
-    window.location.replace("https://cineflix.jadavgirish67.workers.dev/");
-  }, []);
+  // useEffect(() => {
+  //   window.location.replace("https://cineflix.jadavgirish67.workers.dev/");
+  // }, []);
 
   const [showIntro, setShowIntro] = useState(() => {
     return !sessionStorage.getItem('hasSeenIntro');
