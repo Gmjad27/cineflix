@@ -62,7 +62,7 @@ const Streaming = () => {
                     allowFullScreen
                     allow="accelerometer; autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope;"
                     title="Movie/TV Player"
-                    // sandbox="allow-scripts allow-same-origin allow-forms"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
                 ></iframe>
             ) : (
                 <div className="flex items-center justify-center w-full h-full text-gray-500">
