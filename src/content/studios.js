@@ -2,7 +2,7 @@ export const STUDIO_COLLECTIONS = [
   {
     key: "PRIME VIDEO",
     label: "PRIME VIDEO",
-    img: "https://1000logos.net/wp-content/uploads/2022/10/Amazon-Prime-Video-Emblem.png",
+    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/90/Prime_Video_logo_%282024%29.svg/3840px-Prime_Video_logo_%282024%29.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnailg",
     bg: "https://1000logos.net/wp-content/uploads/2022/10/Amazon-Prime-Video-Emblem.png",
     color: "#00A8E1",
     companyIds: [21, 41, 60, 20580, 210099],
@@ -12,7 +12,7 @@ export const STUDIO_COLLECTIONS = [
   {
     key: "APPLE TV PLUS",
     label: "APPLE TV PLUS",
-    img: "https://upload.wikimedia.org/wikipedia/commons/2/28/Apple_TV_Plus_Logo.svg",
+    img: "https://www.pngmart.com/files/23/Apple-Tv-Logo-PNG-Photo.png",
     bg: "https://cdn.mos.cms.futurecdn.net/8d8GYMeugMGTHYYNzKPdP-2560-80.jpg",
     color: "#A2A2A2",
     companyIds: [127928, 198031],
@@ -31,7 +31,7 @@ export const STUDIO_COLLECTIONS = [
   {
     key: "HBO MAX",
     label: "HBO MAX",
-    img: "https://1000logos.net/wp-content/uploads/2022/02/HBO-Max-Logo.png",
+    img: "https://media1.giphy.com/avatars/hbomax/Yo99fqMjGRZH.png",
     bg: "https://1000logos.net/wp-content/uploads/2022/02/HBO-Max-Logo.png",
     color: "#8A2BE2",
     companyIds: [3268, 7429, 125306, 158691, 14914, 174, 17, 1957, 2785],
@@ -40,7 +40,7 @@ export const STUDIO_COLLECTIONS = [
   {
     key: "PEACOCK",
     label: "PEACOCK",
-    img: "https://logos-world.net/wp-content/uploads/2023/03/Peacock-Logo.png",
+    img: "https://cdn2.steamgriddb.com/logo_thumb/3d52c23587285dfba2cd37cf57727d60.png",
     bg: "https://logos-world.net/wp-content/uploads/2023/03/Peacock-Logo.png",
     color: "#F5A623",
     companyIds: [33, 26727, 34047, 12053],
@@ -49,7 +49,7 @@ export const STUDIO_COLLECTIONS = [
   {
     key: "PARAMOUNT",
     label: "PARAMOUNT",
-    img: "https://upload.wikimedia.org/wikipedia/commons/4/4e/Paramount%2B_logo.svg",
+    img: "https://upload.wikimedia.org/wikipedia/commons/e/ea/Paramount%2B_logo.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original",
     bg: "https://static0.cbrimages.com/wordpress/wp-content/uploads/2022/09/Paramount-logo.jpg?w=1200&h=675&fit=crop",
     color: "#0064FF",
     companyIds: [4, 6329, 1081, 270146],
@@ -58,7 +58,7 @@ export const STUDIO_COLLECTIONS = [
   {
     key: "DISNEY",
     label: "DISNEY",
-    img: "https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg",
+    img: "https://cdn.freebiesupply.com/logos/large/2x/disney-plus-logo-white.png",
     bg: "https://slidechef.net/wp-content/uploads/2024/03/disney-cartoons-background.jpg",
     color: "#113CCF",
     companyIds: [2, 8036],
@@ -67,7 +67,7 @@ export const STUDIO_COLLECTIONS = [
   {
     key: "MARVEL",
     label: "MARVEL",
-    img: "https://www.pngall.com/wp-content/uploads/13/Marvel-Logo-PNG.png",
+    img: "https://upload.wikimedia.org/wikipedia/commons/b/b9/Marvel_Logo.svg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original",
     bg: "https://www.pngall.com/wp-content/uploads/13/Marvel-Logo-PNG.png",
     color: "#ED1D24",
     companyIds: [420, 7505, 11106, 13252],

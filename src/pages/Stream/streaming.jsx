@@ -31,13 +31,13 @@ const Streaming = () => {
         }
     }, [tmdbId, currentSeason, currentEpisode, isTvShow, state]);
 
-    const embedUrl = isTvShow
-        ? `https://screenscape.me/embed?tmdb=${tmdbId}&type=tv&s=${currentSeason}&e=${currentEpisode}`
-        : `https://screenscape.me/embed?tmdb=${tmdbId}&type=movie`;
-
     // const embedUrl = isTvShow
-    //     ? `https://bingr.one/watch/tv/${tmdbId}/${currentSeason}/${currentEpisode}`
-    //     : `https://bingr.one/watch/movie/${tmdbId}`;
+    //     ? `https://screenscape.me/embed?tmdb=${tmdbId}&type=tv&s=${currentSeason}&e=${currentEpisode}`
+    //     : `https://screenscape.me/embed?tmdb=${tmdbId}&type=movie`;
+
+    const embedUrl = isTvShow
+        ? `https://embed.vidrift.net/embed/tv/${tmdbId}/${currentSeason}/${currentEpisode}?brand=GIRISH&hide=next,episodes&controlBg=solid`
+        : `https://embed.vidrift.net/embed/movie/${tmdbId}?brand=GIRISH&hide=next,episodes&controlBg=solid`;
 
     // const embedUrl = isTvShow
     //     ? `https://vidout.pages.dev/tv/${tmdbId}/s${currentSeason}/e${currentEpisode}`
@@ -46,12 +46,12 @@ const Streaming = () => {
     return (
         <div className="absolute inset-0 flex items-center justify-center h-[100%] w-[100%] pt-16 pb-16 sm:pt-0 sm:pb-0 overflow-hidden bg-black">
 
-            <button
+            {/* <button
                 className="absolute top-4 right-4 z-10 bg-gray-800 text-white px-3 py-1 rounded hover:bg-gray-700 transition-colors"
                 onClick={() => navigate(-1)}
             >
                 X
-            </button>
+            </button> */}
 
             {tmdbId ? (
                 <iframe
@@ -62,7 +62,8 @@ const Streaming = () => {
                     allowFullScreen
                     allow="accelerometer; autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope;"
                     title="Movie/TV Player"
-                    sandbox="allow-scripts allow-same-origin allow-forms"
+                    sandbox="allow-scripts allow-same-origin"
+                // sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups"
                 ></iframe>
             ) : (
                 <div className="flex items-center justify-center w-full h-full text-gray-500">

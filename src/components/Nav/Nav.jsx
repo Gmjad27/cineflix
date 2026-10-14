@@ -53,10 +53,11 @@ const Nav = () => {
     <>
       {/* ---- DESKTOP TOP NAVIGATION ---- */}
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 hidden md:block border-b border-white/5 ${isScrolled
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 hidden md:block border-white/5 ${isScrolled
           ? 'bg-black/90 backdrop-blur-xl shadow-lg'
           : 'bg-gradient-to-b from-black/90 via-black/50 to-transparent'
-          }`}
+          }`
+}
       >
         <div className="max-w-[1920px] mx-auto flex items-center justify-between h-16 px-6 lg:px-12">
 
@@ -116,24 +117,20 @@ const Nav = () => {
             </NavLink>
 
             <NavLink to={profilePath} className="relative flex items-center hover:scale-105 transition-transform duration-200">
-              {username?.profilePic ? (
-                <img
-                  src={username.profilePic}
-                  alt="Profile"
-                  className="w-8 h-8 rounded border border-white/10 object-cover shadow-md"
-                />
-              ) : (
-                <div className="w-8 h-8 bg-gradient-to-br from-red-600 to-red-800 rounded border border-white/10 flex items-center justify-center text-white text-sm font-bold shadow-md">
-                  {(username?.name || 'G')[0].toUpperCase()}
-                </div>
-              )}
+
+              <img
+                src={username.profilePic || 'https://wallpapers.com/images/hd/netflix-profile-pictures-1000-x-1000-qo9h82134t9nv0j0.jpg'}
+                alt="Profile"
+                className="w-8 h-8 rounded border border-white/10 object-cover shadow-md"
+              />
+
             </NavLink>
           </div>
         </div>
       </header>
 
       {/* ---- MOBILE TOP BAR ---- */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black/90 border-b border-white/5 backdrop-blur-xl flex items-center justify-between h-14 px-4 md:hidden">
+      <header className="fixed top-0 left-0 right-0 z-50  bg-black  border-white/5 flex items-center justify-between h-14 px-4 md:hidden">
         <Link to="/" className="flex-shrink-0">
           <img src="cineflix.png" alt="Cineflix" className="h-[35px] object-contain" />
         </Link>

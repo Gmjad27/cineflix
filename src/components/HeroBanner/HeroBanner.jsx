@@ -101,7 +101,7 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
     return (
         <section
             // Added 'touch-pan-y' to let the browser natively handle vertical scrolls
-            className="relative w-full h-[350px] sm:h-[85vh] md:h-[70vh] lg:h-[70vh] overflow-hidden bg-[#141414] select-none touch-pan-y"
+            className="relative w-full h-[260px] sm:h-[85vh] md:h-[70vh] lg:h-[100vh] overflow-hidden bg-[#141414] select-none touch-pan-y"
             onPointerDown={handlePointerDown}
             onPointerLeave={finishDrag}
         >

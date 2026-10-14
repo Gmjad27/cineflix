@@ -5,7 +5,7 @@ const Card = React.memo(
     id,
     name,
     img,
-    type,
+    type = 'Movie',
     rating = 0,
     hideRating,
     width,
@@ -16,47 +16,41 @@ const Card = React.memo(
   }) => {
     const [imgError, setImgError] = useState(false);
 
-    const action = () => {
+    const handleMainAction = () => {
       (onPlay || sow)?.(id, type);
     };
 
-    const pct = Math.round(rating * 10);
-
-    const color =
-      pct >= 70
-        ? 'bg-green-500/20 text-green-400 border-green-500/50'
-        : pct >= 40
-          ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50'
-          : 'bg-red-500/20 text-red-400 border-red-500/50';
+    const matchPct = rating > 0 ? Math.min(Math.round(rating * 10), 99) : null;
 
     return (
       <div
-        className="
-          group relative flex items-end cursor-pointer
-          z-0 hover:z-30
-          sm:transition-transform sm:duration-300 sm:hover:scale-105
-        "
-        onClick={action}
+        className="group relative flex items-end cursor-pointer select-none"
+        onClick={handleMainAction}
       >
-        {/* Ranking */}
+        {/* Flat Lightweight Rank */}
         {rank && (
-          <div
+          <span
+            aria-hidden="true"
             className="
-              absolute bottom-0 left-0 z-20
-              font-black leading-none
-              text-[clamp(4rem,8vw,16rem)]
-              tracking-[-20px]
-              text-black
+              pointer-events-none absolute z-30 shrink-0 select-none
+              font-black leading-[0.72] tracking-[-20px]
+              text-[6.5rem] sm:text-[8rem] md:text-[9.5rem]
+              text-[#0b0b0b]
+              [-webkit-text-stroke:3px_#5b5b5b]
+              transition-colors duration-300
+              group-hover:[-webkit-text-stroke:3px_#9c9c9c]
+             
             "
             style={{
-              WebkitTextStroke: '2px #dc2623',
+              paintOrder: 'stroke fill',
+              fontFamily: "'Bebas Neue', Impact, 'Arial Black', sans-serif",
             }}
           >
             {rank}
-          </div>
+          </span>
         )}
 
-        {/* Card */}
+        {/* Poster Card */}
         <div
           role="button"
           tabIndex={0}
@@ -64,7 +58,7 @@ const Card = React.memo(
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
-              action();
+              handleMainAction();
             }
           }}
           style={{
@@ -75,78 +69,66 @@ const Card = React.memo(
             relative z-10 flex-shrink-0
             w-28 sm:w-32 md:w-40 lg:w-44 xl:w-52
             ${!height ? 'aspect-[2/3]' : ''}
-            overflow-hidden rounded-lg
-            bg-gray-900
+            overflow-hidden rounded-[4px]
+            bg-[#181818]
             ring-1 ring-white/10
-
-            /* Mobile: no expensive animation */
-            sm:shadow-lg
-            sm:transition-shadow
-            sm:duration-300
-            sm:group-hover:shadow-2xl
-
-            ${rank ? 'ml-8 sm:ml-12 md:ml-16' : ''}
+            hover:ring-white/30
+            ${rank ? 'ml-6 sm:ml-9 md:ml-12' : ''}
           `}
         >
+          {/* Top Left "N" Badge */}
+          <div className="absolute top-1.5 left-1.5 z-20 flex items-center gap-1 pointer-events-none">
+            <span className="font-black text-[#E50914] text-xs sm:text-sm tracking-tighter">
+              C
+            </span>
+            {rank && (
+              <span className="bg-[#E50914] text-white text-[7px] font-black uppercase px-1 py-0.2 rounded-[1px] tracking-wider">
+                TOP 10
+              </span>
+            )}
+          </div>
+
           {/* Image */}
           {img && !imgError ? (
             <img
               src={img}
-              alt={name || 'Movie'}
+              alt={name || 'Poster'}
               loading="lazy"
               decoding="async"
               onError={() => setImgError(true)}
-              className="
-                block
-                h-full w-full
-                object-cover
-
-                /* Only animate on desktop */
-                sm:transition-transform
-                sm:duration-700
-                sm:group-hover:scale-110
-              "
+              className="block h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full flex-col items-center justify-center p-4 text-center">
-              <svg
-                className="mb-2 h-8 w-8 text-gray-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-
-              <span className="text-xs font-bold text-gray-400 line-clamp-2 sm:text-sm">
-                {name || 'Unknown'}
+            <div className="flex h-full flex-col items-center justify-center p-3 text-center bg-[#141414]">
+              <div className="text-2xl font-black text-[#E50914] mb-1">N</div>
+              <span className="text-[11px] font-semibold text-gray-300 line-clamp-2">
+                {name || 'Unknown Title'}
               </span>
             </div>
           )}
 
-          {/* Rating */}
-          {!hideRating && rating > 0 && (
-            <div
-              className={`
-                absolute right-1 top-1
-                flex items-center justify-center
-                rounded border
-                bg-black/70
-                ${color}
-                shadow-lg
-                px-1.5 py-0.5
-              `}
-            >
-              <span className="text-[9px] font-bold tracking-tighter sm:text-[10px]">
-                {rating.toFixed(1)}
+          {/* Static Match Badge */}
+          {!hideRating && matchPct && (
+            <div className="absolute top-1.5 right-1.5 z-20 group-hover:opacity-0">
+              <span className="bg-black/90 border border-white/10 text-[#46d369] font-bold text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded">
+                {matchPct}%
               </span>
             </div>
           )}
+
+          {/* Lightweight Hover Overlay (Simple Opacity Fade Only) */}
+          <div
+            className="
+              absolute inset-0 z-30 flex flex-col justify-end p-2.5 sm:p-3
+              bg-gradient-to-t from-black via-black/80 to-transparent
+              opacity-0 group-hover:opacity-100
+              transition-opacity duration-150
+            "
+          >
+
+
+            
+          </div>
         </div>
       </div>
     );

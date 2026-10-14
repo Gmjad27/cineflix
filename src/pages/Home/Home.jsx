@@ -216,6 +216,7 @@ function Home(props) {
       <PrivacyPolicyPopup open={privacyPopupOpen} onClose={() => setPrivacyPopupOpen(false)} />
 
       {/* ===== HERO BANNER ===== */}
+      <div className='w-full h-14'></div>
       <HeroBanner
         mediaData={mediaData}
         currentHero={currentHero}
@@ -244,22 +245,22 @@ function Home(props) {
 
                   <div
                     className="
-            relative
-            w-56
-            sm:w-64
-            md:w-80
-            lg:w-96
-            aspect-video
-            rounded-md
-            overflow-hidden
-            cursor-pointer
-            bg-[#181818]
-            sm:transition-[transform,box-shadow]
-            sm:duration-300
-            sm:ease-out
-            sm:hover:scale-[1.02]
-            sm:hover:shadow-2xl
-          "
+                      relative
+                      w-56
+                      sm:w-64
+                      md:w-80
+                      lg:w-96
+                      aspect-video
+                      rounded-md
+                      overflow-hidden
+                      cursor-pointer
+                      bg-[#181818]
+                      sm:transition-[transform,box-shadow]
+                      sm:duration-300
+                      sm:ease-out
+                      sm:hover:scale-[1.02]
+                      sm:hover:shadow-2xl
+                    "
                     onClick={() =>
                       openWatch(`${item.type}_${item.tmdbId}`)
                     }
@@ -277,35 +278,35 @@ function Home(props) {
                       }}
                       className="
                             absolute
-              top-2
-              right-2
-              z-20  
+                            top-2
+                            right-2
+                            z-20  
 
-              w-8
-              h-8
+                            w-8
+                            h-8
 
-              rounded-full
-              bg-black/70
-              text-white
+                            rounded-full
+                            bg-black/70
+                            text-white
 
-              flex
-              items-center
-              justify-center
+                            flex
+                            items-center
+                            justify-center
 
-              opacity-100
-              sm:group-hover:opacity-100
+                            opacity-100
+                            sm:group-hover:opacity-100
 
-              sm:hover:bg-black
-              sm:hover:text-white
+                            sm:hover:bg-black
+                            sm:hover:text-white
 
-              sm:transition-[background-color,opacity]
-              sm:duration-200
+                            sm:transition-[background-color,opacity]
+                            sm:duration-200
 
-              border
-              border-transparent
+                            border
+                            border-transparent
 
-              sm:hover:border-white/50
-                      "
+                            sm:hover:border-white/50
+                          "
                       title="Remove from row"
                       aria-label={`Remove ${item.title} from Continue Watching`}
                     >
