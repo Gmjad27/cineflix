@@ -289,7 +289,7 @@ const Search = (props) => {
             )}
           </div>
         ) : (
-          /* ═══════════════════════ EXPLORE (pre‑search) ═══════════════════════ */
+
           <div className="animate-[fadeIn_0.5s_ease-out] space-y-16">
 
             {/* Popular Searches Tags */}

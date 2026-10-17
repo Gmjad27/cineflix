@@ -40,18 +40,22 @@ const Streaming = () => {
         : `https://embed.vidrift.net/embed/movie/${tmdbId}?brand=GIRISH&hide=next,episodes&controlBg=solid`;
 
     // const embedUrl = isTvShow
+    //     ? `https://vidbolt.xyz/tv/${tmdbId}/${currentSeason}/${currentEpisode}?theme=e50914&autoPlay=true&audio=hindi`
+    //     : `https://vidbolt.xyz/movie/${tmdbId}?theme=e50914&autoPlay=true&audio=hindi`;
+
+    // const embedUrl = isTvShow
     //     ? `https://vidout.pages.dev/tv/${tmdbId}/s${currentSeason}/e${currentEpisode}`
     //     : `https://vidout.pages.dev/movie/${tmdbId}`;
 
     return (
         <div className="absolute inset-0 flex items-center justify-center h-[100%] w-[100%] pt-16 pb-16 sm:pt-0 sm:pb-0 overflow-hidden bg-black">
 
-            {/* <button
+            <button
                 className="absolute top-4 right-4 z-10 bg-gray-800 text-white px-3 py-1 rounded hover:bg-gray-700 transition-colors"
                 onClick={() => navigate(-1)}
             >
                 X
-            </button> */}
+            </button>
 
             {tmdbId ? (
                 <iframe
@@ -61,7 +65,7 @@ const Streaming = () => {
                     height="100%"
                     allowFullScreen
                     allow="accelerometer; autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope;"
-                    title="Movie/TV Player"
+                    title="Movie/TV Show Player by Jadav Girish"
                     sandbox="allow-scripts allow-same-origin"
                 // sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups"
                 ></iframe>

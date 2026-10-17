@@ -70,7 +70,7 @@ const Card = React.memo(
             w-28 sm:w-32 md:w-40 lg:w-44 xl:w-52
             ${!height ? 'aspect-[2/3]' : ''}
             overflow-hidden rounded-[4px]
-            bg-[#181818]
+            bg-[#181818d1]
             ring-1 ring-white/10
             hover:ring-white/30
             ${rank ? 'ml-6 sm:ml-9 md:ml-12' : ''}
@@ -117,7 +117,7 @@ const Card = React.memo(
           )}
 
           {/* Lightweight Hover Overlay (Simple Opacity Fade Only) */}
-          <div
+          {/* <div
             className="
               absolute inset-0 z-30 flex flex-col justify-end p-2.5 sm:p-3
               bg-gradient-to-t from-black via-black/80 to-transparent
@@ -128,7 +128,7 @@ const Card = React.memo(
 
 
             
-          </div>
+          </div> */}
         </div>
       </div>
     );
