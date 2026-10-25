@@ -35,9 +35,9 @@ const Streaming = () => {
     //     ? `https://screenscape.me/embed?tmdb=${tmdbId}&type=tv&s=${currentSeason}&e=${currentEpisode}`
     //     : `https://screenscape.me/embed?tmdb=${tmdbId}&type=movie`;
 
-    const embedUrl = isTvShow
-        ? `https://embed.vidrift.net/embed/tv/${tmdbId}/${currentSeason}/${currentEpisode}?brand=GIRISH&hide=next,episodes&controlBg=solid`
-        : `https://embed.vidrift.net/embed/movie/${tmdbId}?brand=GIRISH&hide=next,episodes&controlBg=solid`;
+    // const embedUrl = isTvShow
+    //     ? `https://embed.vidrift.net/embed/tv/${tmdbId}/${currentSeason}/${currentEpisode}?brand=GIRISH&hide=next,episodes&controlBg=solid`
+    //     : `https://embed.vidrift.net/embed/movie/${tmdbId}?brand=GIRISH&hide=next,episodes&controlBg=solid`;
 
     // const embedUrl = isTvShow
     //     ? `https://vidbolt.xyz/tv/${tmdbId}/${currentSeason}/${currentEpisode}?theme=e50914&autoPlay=true&audio=hindi`
@@ -46,6 +46,14 @@ const Streaming = () => {
     // const embedUrl = isTvShow
     //     ? `https://vidout.pages.dev/tv/${tmdbId}/s${currentSeason}/e${currentEpisode}`
     //     : `https://vidout.pages.dev/movie/${tmdbId}`;
+
+    // const embedUrl = isTvShow
+    //     ? `https://streams.iqsmartgames.com/embed/tv/${tmdbId}/${currentSeason}/${currentEpisode}?key=e11a7debaaa4f5d25b671706ffe4d2acb56efbd4`
+    //     : `https://streams.iqsmartgames.com/embed/movie/${tmdbId}?key=e11a7debaaa4f5d25b671706ffe4d2acb56efbd4`;
+
+    const embedUrl = isTvShow
+        ? `https://nxsha.space/embed/tv/${tmdbId}/${currentSeason}/${currentEpisode}?color=netflix&disable_app_ad=true&lang=hi`
+        : `https://nxsha.space/embed/movie/${tmdbId}?color=netflix&disable_app_ad=true&lang=hi`;
 
     return (
         <div className="absolute inset-0 flex items-center justify-center h-[100%] w-[100%] pt-16 pb-16 sm:pt-0 sm:pb-0 overflow-hidden bg-black">
