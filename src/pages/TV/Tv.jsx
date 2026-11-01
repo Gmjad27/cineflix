@@ -158,7 +158,7 @@ const Tv = (props) => {
 
       {/* ── Content Rails ── */}
       {/* Heavy negative margin to pull rails up over the hero gradient */}
-      <div className="px-6 md:px-12 lg:px-16 relative z-20 space-y-12 pb-12">
+      <div className="relative z-20 -mt-0 sm:-mt-16 md:-mt-28 lg:-mt-36 px-4 sm:px-8 md:px-12 lg:px-16 space-y-8 md:space-y-11 pb-16">
         {sections.map((section, idx) => {
           const railKey = `rail-${idx}`;
           return (

@@ -121,13 +121,14 @@ export const filterByStudioCollection = (items, studioKey, type = "all") => {
     belongsToStudio(item, studio)
   );
 
-  // separate movies and tv
-  if (type === "movie") {
-    filtered = filtered.filter((item) => item.media_type === "movie");
-  }
-
-  if (type === "tv") {
-    filtered = filtered.filter((item) => item.media_type === "tv");
+  // Separate movies and tv. discover/movie and discover/tv results never
+  // carry a media_type field (only /trending and /search/multi do) — so
+  // when it's missing, trust that the caller already fetched the right
+  // endpoint instead of filtering everything out.
+  if (type !== "all") {
+    filtered = filtered.filter(
+      (item) => !item.media_type || item.media_type === type
+    );
   }
 
   // latest date first

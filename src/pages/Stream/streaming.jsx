@@ -14,6 +14,26 @@ const Streaming = () => {
     const [currentEpisode, setCurrentEpisode] = useState(urlEpisode);
 
     useEffect(() => {
+        const mobileQuery = window.matchMedia('(max-width: 767px) and (pointer: coarse)');
+        const isMobile = mobileQuery.matches;
+        const orientation = window.screen.orientation;
+
+        if (!isMobile || !orientation?.lock) {
+            return undefined;
+        }
+
+        orientation.lock('landscape').catch((error) => {
+            console.warn('Landscape orientation lock is unavailable:', error);
+        });
+
+        return () => {
+            if (orientation.unlock) {
+                orientation.unlock();
+            }
+        };
+    }, []);
+
+    useEffect(() => {
         if (!tmdbId) return;
 
         saveContinueWatching({
@@ -56,7 +76,7 @@ const Streaming = () => {
         : `https://nxsha.space/embed/movie/${tmdbId}?color=netflix&disable_app_ad=true&lang=hi`;
 
     return (
-        <div className="absolute inset-0 flex items-center justify-center h-[100%] w-[100%] pt-16 pb-16 sm:pt-0 sm:pb-0 overflow-hidden bg-black">
+        <div className="absolute inset-0 flex items-center justify-center h-[100%] w-[100%] sm:pt-0 sm:pb-0 overflow-hidden bg-black">
 
             <button
                 className="absolute top-4 right-4 z-10 bg-gray-800 text-white px-3 py-1 rounded hover:bg-gray-700 transition-colors"

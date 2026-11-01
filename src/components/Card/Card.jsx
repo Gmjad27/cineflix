@@ -81,12 +81,31 @@ const Card = React.memo(
             <span className="font-black text-[#E50914] text-xs sm:text-sm tracking-tighter">
               C
             </span>
-            {rank && (
-              <span className="bg-[#E50914] text-white text-[7px] font-black uppercase px-1 py-0.2 rounded-[1px] tracking-wider">
-                TOP 10
+            {!hideRating && matchPct && (
+            <div className="relative z-20 group-hover:opacity-0">
+              <span className="bg-black/90 border border-white/10 text-[#46d369] font-bold text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded">
+                {matchPct}%
               </span>
-            )}
+            </div>
+          )}
           </div>
+            {rank && (
+            <div
+              className="
+                absolute top-0 right-2 z-20 pointer-events-none
+                bg-[#E50914] text-white font-black
+                px-1.5 pt-1 pb-2
+                flex flex-col items-center justify-center
+                leading-none shadow-md
+              "
+              style={{
+                clipPath: 'polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)',
+              }}
+            >
+              <span className="text-[6px] sm:text-[7px] tracking-wider uppercase">TOP</span>
+              <span className="text-[9px] sm:text-[10px] tracking-tighter">10</span>
+            </div>
+          )}
 
           {/* Image */}
           {img && !imgError ? (
@@ -108,13 +127,7 @@ const Card = React.memo(
           )}
 
           {/* Static Match Badge */}
-          {!hideRating && matchPct && (
-            <div className="absolute top-1.5 right-1.5 z-20 group-hover:opacity-0">
-              <span className="bg-black/90 border border-white/10 text-[#46d369] font-bold text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded">
-                {matchPct}%
-              </span>
-            </div>
-          )}
+  
 
           {/* Lightweight Hover Overlay (Simple Opacity Fade Only) */}
           {/* <div

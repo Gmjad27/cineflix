@@ -1,8 +1,25 @@
 import { getStudioConfig } from "./studios";
 
-const TMDB_BASE_URL = "https://cineflix-tmdb-api.jadavgirish67.workers.dev/api/tmdb";
+// ─── TMDB Auth & Base URL ─────────────────────────────────────────────────
+// Set VITE_TMDB_API_KEY in your .env file to your TMDB v4 "Read Access Token"
+// (the long one on https://www.themoviedb.org/settings/api, NOT the v3 api_key).
+const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 // Updated base URL without the hardcoded 'original' size
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/";
+
+if (!TMDB_API_KEY && typeof window !== "undefined") {
+  // Fires once at module load so a misconfigured .env is obvious immediately,
+  // instead of every request silently 401'ing.
+  console.error(
+    "[tmdb] VITE_TMDB_API_KEY is missing. Add it to your .env file (TMDB v4 Read Access Token)."
+  );
+}
+
+const tmdbHeaders = () => ({
+  accept: "application/json",
+  ...(TMDB_API_KEY ? { Authorization: `Bearer ${TMDB_API_KEY}` } : {}),
+});
 
 // ─── Genre Map ───────────────────────────────────────────────────────────
 const genreMap = {
@@ -147,8 +164,9 @@ const pickTMDBTrailer = (videos) => {
   if (youtubeTrailers.length === 0) return "";
 
   // Remove Red Band / Restricted trailers if possible
+  // Guarded: v.name can be missing/null on some TMDB entries, which used to throw.
   const safeTrailers = youtubeTrailers.filter((v) => {
-    const name = v.name.toLowerCase();
+    const name = (v.name || "").toLowerCase();
     return (
       !name.includes("red band") &&
       !name.includes("restricted")
@@ -167,10 +185,10 @@ const pickTMDBTrailer = (videos) => {
 
     return (
       list.find((v) =>
-        v.name.toLowerCase().includes("green band")
+        (v.name || "").toLowerCase().includes("green band")
       ) ||
       list.find((v) =>
-        v.name.toLowerCase().includes("official")
+        (v.name || "").toLowerCase().includes("official")
       ) ||
       list[0]
     );
@@ -187,10 +205,10 @@ const pickTMDBTrailer = (videos) => {
   // 3. Original/any language
   return (
     trailers.find((v) =>
-      v.name.toLowerCase().includes("green band")
+      (v.name || "").toLowerCase().includes("green band")
     ) ||
     trailers.find((v) =>
-      v.name.toLowerCase().includes("official")
+      (v.name || "").toLowerCase().includes("official")
     ) ||
     trailers[0]
   ).key;
@@ -269,10 +287,10 @@ export const requestTMDB = async (path, params = {}, options = {}) => {
 
   let response;
   try {
-    response = await fetch(url, { signal });
+    response = await fetch(url, { signal, headers: tmdbHeaders() });
   } catch (err) {
     if (err.name === "TimeoutError" || err.name === "TypeError") {
-      response = await fetch(url, { signal: options.signal });
+      response = await fetch(url, { signal: options.signal, headers: tmdbHeaders() });
     } else {
       throw err;
     }
@@ -315,7 +333,10 @@ const requestTMDBObject = async (path, params = {}) => {
   }).toString();
 
   const url = `${TMDB_BASE_URL}${path}?${query}`;
-  const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+  const response = await fetch(url, {
+    signal: AbortSignal.timeout(10_000),
+    headers: tmdbHeaders(),
+  });
 
   if (!response.ok) throw new Error(`TMDB ${response.status} for ${path}`);
   return response.json();
@@ -387,8 +408,23 @@ const TARGET_LANGS = [
   { code: "gu", name: "Gujarati" }
 ];
 
-const GENRE_IDS = [
-  28, 35, 18, 878, 27, 10749, 53, 16, 10751, 14, 9648
+// TMDB uses DIFFERENT genre IDs for movies vs TV — several movie genres
+// (Horror, Fantasy, Romance, Thriller) don't exist as TV genres at all.
+// Using the movie list for /discover/tv silently returned empty/wrong rails.
+const MOVIE_GENRE_IDS = [
+  28, 35, 18, 878, 27, 10749, 53, 16, 10751, 14, 9648,
+];
+
+const TV_GENRE_IDS = [
+  10759, // Action & Adventure
+  35,    // Comedy
+  18,    // Drama
+  10765, // Sci-Fi & Fantasy
+  9648,  // Mystery
+  16,    // Animation
+  10751, // Family
+  10762, // Kids
+  10768, // War & Politics
 ];
 
 // ─── HOME PAGE (Movies + TV Mixed) ───────────────────────────────────────
@@ -406,9 +442,12 @@ export const fetchTMDBHomeSections = async () => {
     types.push("tv");
   });
 
-  GENRE_IDS.forEach((id) => {
+  MOVIE_GENRE_IDS.forEach((id) => {
     requests.push(() => requestTMDB("/discover/movie", { with_genres: String(id), sort_by: "popularity.desc", watch_region: "IN" }));
     types.push("movie");
+  });
+
+  TV_GENRE_IDS.forEach((id) => {
     requests.push(() => requestTMDB("/discover/tv", { with_genres: String(id), sort_by: "popularity.desc", watch_region: "IN" }));
     types.push("tv");
   });
@@ -448,7 +487,7 @@ export const fetchTMDBMovieSections = async () => {
     types.push("movie");
   });
 
-  GENRE_IDS.forEach((id) => {
+  MOVIE_GENRE_IDS.forEach((id) => {
     requests.push(() => requestTMDB("/discover/movie", { with_genres: String(id), sort_by: "popularity.desc", watch_region: "IN" }));
     types.push("movie");
   });
@@ -487,7 +526,7 @@ export const fetchTMDBTVSections = async () => {
     types.push("tv");
   });
 
-  GENRE_IDS.forEach((id) => {
+  TV_GENRE_IDS.forEach((id) => {
     requests.push(() => requestTMDB("/discover/tv", { with_genres: String(id), sort_by: "popularity.desc", watch_region: "IN" }));
     types.push("tv");
   });
