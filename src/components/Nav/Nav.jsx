@@ -348,7 +348,7 @@ const Nav = () => {
 
           {username?.profilePic ? (
             <img
-              src={username.profilePic}
+              src={username.profilePic || DEFAULT_PROFILE}
               alt="Profile"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';

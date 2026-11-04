@@ -13,6 +13,7 @@ import { getContinueWatching, removeContinueWatching } from '../../utils/continu
 const Card = lazy(() => import('../../components/Card/Card'));
 const Card2 = lazy(() => import('../../components/Card/Card2'));
 const Footer = lazy(() => import('../../components/Footer/Footer'));
+const LiveSection = lazy(() => import('../../components/Live/LiveSection'));
 
 const HERO_ROTATE_MS = 8000;
 
@@ -355,6 +356,13 @@ function Home(props) {
                 stu={() => props.stu(item.studio, item.bg)}
               />
             )}
+          />
+
+          {/* Live Matches & Live TV Section */}
+          <LiveSection
+            showChannels={true}
+            title="Live Sports & Matches"
+            subtitle="Stream live stadium feeds, tournaments & 24/7 sports channels"
           />
 
           {/* 3. Dynamic Content Rails */}
