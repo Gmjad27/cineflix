@@ -7,6 +7,7 @@ import Footer from '../../components/Footer/Footer';
 import Skeleton from '../../components/Skeleton/Skeleton';
 import RailRow from '../../components/RailRow/RailRow';
 import { useRailScroll } from '../../hooks/useRailScroll';
+import Snowfall from 'react-snowfall';
 
 /* ---------- helpers ---------- */
 const scoreItem = (item, value) => {
@@ -145,17 +146,17 @@ const Search = (props) => {
   /* ---------- card renderer ---------- */
   const renderHotstarCard = useCallback(
     (item) => (
-      
-        <Card
-          sow={openWatch}
-          id={item.id}
-          img={item.name}
-          name={item.name2}
-          type={item.type}
-          tid={item.tmdbId}
-          play={props.play}
-          rating={item.rating}
-        />
+
+      <Card
+        sow={openWatch}
+        id={item.id}
+        img={item.name}
+        name={item.name2}
+        type={item.type}
+        tid={item.tmdbId}
+        play={props.play}
+        rating={item.rating}
+      />
       // </div>
     ),
     [openWatch, props.add, props.e, props.play]
@@ -174,13 +175,24 @@ const Search = (props) => {
   return (
     <div className="min-h-screen bg-[#141414] text-white font-sans selection:bg-[#E50914] selection:text-white">
 
+      <Snowfall
+        style={{
+          position: 'fixed',
+          width: '100vw',
+          height: '100vh',
+          zIndex: 999, // Lower than your intro video (10000) and toast (9999), but above normal page content
+          pointerEvents: 'none',
+        }}
+        snowflakeCount={150} // Optional: adjust particle density
+      />
+      
       {/* ── Hero Search Section (Hotstar‑style) ── */}
       <section className="relative pt-14 pb-12 px-6 md:px-12 lg:px-16 bg-gradient-to-b from-[#1f1f1f] to-[#141414] border-b border-[#2a2a2a]">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">
             {normalizedQuery ? 'Search Results' : 'Discover your next favourite'}
           </h1>
-         
+
 
           <div className="relative max-w-2xl mx-auto">
             <i className="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
@@ -270,7 +282,7 @@ const Search = (props) => {
                 />
               </div>
             )}
-    
+
             {/* Empty State */}
             {!searchLoading && rankedResults.length === 0 && (
               <div className="flex flex-col items-center justify-center py-24 text-center">

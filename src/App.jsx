@@ -9,6 +9,7 @@ import MovieViewAll from "./pages/ViewAll/MovieViewAll.jsx";
 import ScrollToTop from "./components/ScrollToTop";
 import PWAInstallPrompt from "./components/PWAInstallPrompt/PWAInstallPrompt";
 
+
 const Home = lazy(() => import("./pages/Home/Home"));
 const Movie = lazy(() => import("./pages/Movies/Movie"));
 const Profile = lazy(() => import("./pages/Profile/Profile"));
@@ -161,6 +162,8 @@ function App() {
 
   return (
     <div className="h-full bg-[#141414] text-white font-sans  relative min-h-dvh">
+
+      
 
       {introPlaying && (
         <div className="fixed inset-0 z-[10000] w-screen h-screen overflow-hidden bg-black">

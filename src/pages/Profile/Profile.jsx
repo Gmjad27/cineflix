@@ -5,6 +5,7 @@ import Footer from '../../components/Footer/Footer';
 import Watch from '../../components/Watch/Watch';
 import Skeleton from '../../components/Skeleton/Skeleton';
 import { fetchTMDBDetails } from '../../content/tmdb.js';
+import Snowfall from 'react-snowfall';
 
 /* ───────────────────────────── helpers & constants ───────────────────────────── */
 
@@ -50,8 +51,8 @@ const Profile = (props) => {
   const rawListProp = Array.isArray(props.E)
     ? props.E
     : Array.isArray(props.e)
-    ? props.e
-    : [];
+      ? props.e
+      : [];
 
   const [activeTab, setActiveTab] = useState('all');
   const [sortBy, setSortBy] = useState('default');
@@ -311,6 +312,18 @@ const Profile = (props) => {
 
   return (
     <div className="min-h-screen bg-[#141414] text-white font-sans selection:bg-[#E50914] selection:text-white">
+
+      <Snowfall
+        style={{
+          position: 'fixed',
+          width: '100vw',
+          height: '100vh',
+          zIndex: 999, // Lower than your intro video (10000) and toast (9999), but above normal page content
+          pointerEvents: 'none',
+        }}
+        snowflakeCount={150} // Optional: adjust particle density
+      />
+      
       {/* ═══════════════════════ NETFLIX PROFILE BANNER ═══════════════════════ */}
       <section className="relative w-full border-b border-white/10 bg-gradient-to-b from-[#1f1f1f] via-[#181818] to-[#141414] pt-24 pb-8 px-4 sm:px-8 md:px-12 lg:px-16 overflow-hidden">
         {/* Subtle Red Ambient Glow */}
@@ -545,15 +558,13 @@ const Profile = (props) => {
                       key={tab.id}
                       type="button"
                       onClick={() => setActiveTab(tab.id)}
-                      className={`pb-2 text-sm sm:text-base font-bold tracking-wide transition-colors relative flex items-center gap-2 cursor-pointer ${
-                        isActive ? 'text-white' : 'text-gray-400 hover:text-gray-200'
-                      }`}
+                      className={`pb-2 text-sm sm:text-base font-bold tracking-wide transition-colors relative flex items-center gap-2 cursor-pointer ${isActive ? 'text-white' : 'text-gray-400 hover:text-gray-200'
+                        }`}
                     >
                       <span>{tab.label}</span>
                       <span
-                        className={`text-[11px] px-1.5 py-0.2 rounded-sm font-extrabold ${
-                          isActive ? 'bg-[#E50914] text-white' : 'bg-white/10 text-gray-400'
-                        }`}
+                        className={`text-[11px] px-1.5 py-0.2 rounded-sm font-extrabold ${isActive ? 'bg-[#E50914] text-white' : 'bg-white/10 text-gray-400'
+                          }`}
                       >
                         {tab.count}
                       </span>

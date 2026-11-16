@@ -82,7 +82,7 @@ const Nav = () => {
           ${
             isScrolled
               ? 'bg-[#080808]/95 backdrop-blur-2xl shadow-xl shadow-black/30 border-b border-white/[0.06]'
-              : 'bg-gradient-to-b from-black/90 via-black/50 to-transparent border-b border-transparent'
+              : 'bg-gradient-to-b from-black/90 via-black/50 to-transparent  border-transparent'
           }
         `}
       >

@@ -7,6 +7,7 @@ import { STUDIO_COLLECTIONS, getStudioConfig } from '../../content/studios';
 import Footer from '../../components/Footer/Footer';
 import Skeleton from '../../components/Skeleton/Skeleton';
 import RailRow from '../../components/RailRow/RailRow';
+import Snowfall from 'react-snowfall';
 
 /**
  * One tile in the horizontally-scrolling "Studios" strip.
@@ -109,6 +110,16 @@ const Studio = (props) => {
   return (
     <div className="min-h-screen w-full bg-[#141414] text-white font-sans selection:bg-white/90 selection:text-black">
 
+      <Snowfall
+        style={{
+          position: 'fixed',
+          width: '100vw',
+          height: '100vh',
+          zIndex: 999, // Lower than your intro video (10000) and toast (9999), but above normal page content
+          pointerEvents: 'none',
+        }}
+        snowflakeCount={150} // Optional: adjust particle density
+      />
       {/* ── Cinematic Hero Section ── */}
       <div className="relative w-full h-[30vh] md:h-[45vh] flex items-center justify-center overflow-hidden bg-[#141414]">
         {/* Ambient background glow based on studio color */}

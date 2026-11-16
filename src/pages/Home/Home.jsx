@@ -9,6 +9,7 @@ import { fetchTMDBDetails } from '../../content/tmdb.js';
 import Skeleton from '../../components/Skeleton/Skeleton';
 import { STUDIO_COLLECTIONS } from '../../content/studios.js';
 import { getContinueWatching, removeContinueWatching } from '../../utils/continueWatching';
+import Snowfall from 'react-snowfall';
 
 const Card = lazy(() => import('../../components/Card/Card'));
 const Card2 = lazy(() => import('../../components/Card/Card2'));
@@ -236,6 +237,16 @@ function Home(props) {
 
   return (
     <main className="relative min-h-screen bg-[#141414] text-white overflow-x-hidden selection:bg-[#E50914] selection:text-white" id="homepage">
+      {/* <Snowfall
+        style={{
+          position: 'fixed',
+          width: '100vw',
+          height: '100vh',
+          zIndex: 999, // Lower than your intro video (10000) and toast (9999), but above normal page content
+          pointerEvents: 'none',
+        }}
+        snowflakeCount={150} // Optional: adjust particle density
+      /> */}
       <PrivacyPolicyPopup open={privacyPopupOpen} onClose={() => setPrivacyPopupOpen(false)} />
 
       {/* ===== HERO BILLBOARD (Full-Bleed Top) ===== */}
@@ -303,7 +314,7 @@ function Home(props) {
                           <i className="fa-solid fa-xmark text-xs md:text-sm" />
                         </button>
 
-            
+
 
                         {/* Episode Badge on Backdrop (Bottom Left) */}
                         {item.type === 'tv' && (
@@ -329,7 +340,7 @@ function Home(props) {
                           </h4>
                         </div>
 
-                      
+
                       </div>
                     </div>
                   </div>
@@ -359,11 +370,11 @@ function Home(props) {
           />
 
           {/* Live Matches & Live TV Section */}
-          <LiveSection
+          {/* <LiveSection
             showChannels={true}
             title="Live Sports & Matches"
             subtitle="Stream live stadium feeds, tournaments & 24/7 sports channels"
-          />
+          /> */}
 
           {/* 3. Dynamic Content Rails */}
           {rails.map((rail, index) => {

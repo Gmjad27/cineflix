@@ -7,6 +7,7 @@ import Footer from '../../components/Footer/Footer';
 import RailRow from '../../components/RailRow/RailRow';
 import { useRailScroll } from '../../hooks/useRailScroll';
 import Skeleton from '../../components/Skeleton/Skeleton';
+import Snowfall from 'react-snowfall';
 
 // Imported HeroBanner
 import HeroBanner from '../../components/HeroBanner/HeroBanner.jsx';
@@ -147,6 +148,17 @@ const Tv = (props) => {
   return (
     <div className="relative min-h-screen bg-[#141414] text-white overflow-hidden selection:bg-[#E50914] selection:text-white">
 
+
+      <Snowfall
+        style={{
+          position: 'fixed',
+          width: '100vw',
+          height: '100vh',
+          zIndex: 999, // Lower than your intro video (10000) and toast (9999), but above normal page content
+          pointerEvents: 'none',
+        }}
+        snowflakeCount={150} // Optional: adjust particle density
+      />
       {/* ── Hero Banner ── */}
       <HeroBanner
         mediaData={heroData}
