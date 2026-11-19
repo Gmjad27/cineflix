@@ -1,70 +1,71 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RailRow from '../RailRow/RailRow';
-import LiveMatchCard from './LiveMatchCard';
 import LiveTVCard from './LiveTVCard';
-import {
-  fetchLiveStreamsData,
-  flattenLiveMatches,
-  LIVE_TV_CHANNELS,
-} from '../../content/liveStreams';
+import { LIVE_CHANNELS } from '../../content/liveStreams';
+
 const LiveSection = ({
-  showChannels = true,
-  title = 'Live Sports & Matches',
-  subtitle = 'Watch thrilling live tournaments, leagues and 24/7 sports channels',
+  title = 'Live Sports Channels',
+  subtitle = 'Watch 24/7 live sports channels with live streaming',
 }) => {
   const navigate = useNavigate();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  // Fetch Live Data
-  const loadStreams = async (isManual = false) => {
-    if (isManual) setIsRefreshing(true);
-    try {
-      const response = await fetchLiveStreamsData();
-      setData(response);
-    } catch (err) {
-      console.error('Error fetching live streams:', err);
-    } finally {
-      setLoading(false);
-      if (isManual) setTimeout(() => setIsRefreshing(false), 500);
-    }
-  };
-  useEffect(() => {
-    loadStreams();
-  }, []);
-  const allMatches = useMemo(() => flattenLiveMatches(data), [data]);
-  // Categories
-  const categories = useMemo(() => {
-    const set = new Set(['all']);
-    allMatches.forEach((m) => {
-      if (m.category_name) set.add(m.category_name.toLowerCase());
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const categories = [
+    { id: 'all', label: 'All Channels' },
+    { id: 'cricket', label: 'Cricket' },
+    { id: 'sony', label: 'Sony Sports' },
+    { id: 'sky', label: 'Sky Sports' },
+    { id: 'tnt', label: 'TNT Sports' },
+    { id: 'fox', label: 'Fox Sports' },
+  ];
+
+  const filteredChannels = useMemo(() => {
+    return LIVE_CHANNELS.filter((ch) => {
+      // Category match
+      let matchesCategory = true;
+      if (selectedCategory === 'cricket') {
+        matchesCategory =
+          ch.category.toLowerCase().includes('cricket') ||
+          ch.name.toLowerCase().includes('cricket') ||
+          ch.network === 'Willow' ||
+          ch.network === 'Astro';
+      } else if (selectedCategory === 'sony') {
+        matchesCategory = ch.network === 'Sony Sports';
+      } else if (selectedCategory === 'sky') {
+        matchesCategory = ch.network === 'Sky Sports';
+      } else if (selectedCategory === 'tnt') {
+        matchesCategory = ch.network === 'TNT Sports';
+      } else if (selectedCategory === 'fox') {
+        matchesCategory = ch.network === 'Fox Sports';
+      }
+
+      // Search match
+      let matchesSearch = true;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        matchesSearch =
+          ch.name.toLowerCase().includes(q) ||
+          ch.category.toLowerCase().includes(q) ||
+          ch.network.toLowerCase().includes(q) ||
+          String(ch.streamId).includes(q);
+      }
+
+      return matchesCategory && matchesSearch;
     });
-    return Array.from(set);
-  }, [allMatches]);
-  // Filtered matches
-  const filteredMatches = useMemo(() => {
-    if (selectedCategory === 'all') return allMatches;
-    return allMatches.filter(
-      (m) => m.category_name?.toLowerCase() === selectedCategory.toLowerCase()
-    );
-  }, [allMatches, selectedCategory]);
-  const categoryLabels = {
-    all: 'All Sports',
-    football: 'Football',
-    cricket: 'Cricket',
-    basketball: 'Basketball',
-    motorsport: 'Formula 1',
-    tennis: 'Tennis',
+  }, [selectedCategory, searchQuery]);
+
+  const handleOpenStream = (channel) => {
+    navigate(`/live-stream/${channel.streamId || channel.id}`, {
+      state: { stream: channel },
+    });
   };
-  const handleOpenStream = (stream) => {
-    navigate(`/live-stream/${stream.id}`, { state: { stream } });
-  };
+
   return (
     <section className="relative z-20 flex flex-col space-y-4 my-4 sm:my-6">
-      {/* ── Top Bar: Subtitle & Category Pills & Refresh ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-2 md:px-0">
+      {/* ── Top Bar: Subtitle & Network Filter Pills & Search ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-2 md:px-0">
         <div>
           {subtitle && (
             <p className="text-xs sm:text-sm text-gray-400 font-medium">
@@ -72,112 +73,82 @@ const LiveSection = ({
             </p>
           )}
         </div>
-        {/* Category Pills & Refresh Action */}
-        <div className="flex items-center gap-2 self-start sm:self-auto overflow-x-auto scrollbar-none pb-1 max-w-full">
-          <button
-            type="button"
-            onClick={() => loadStreams(true)}
-            disabled={isRefreshing}
-            title="Refresh Live Streams"
-            aria-label="Refresh Live Streams"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-gray-300 transition-colors shrink-0"
-          >
-            <i className={`fa-solid fa-arrows-rotate text-[11px] ${isRefreshing ? 'animate-spin text-red-500' : ''}`} />
-            <span className="hidden sm:inline">Refresh</span>
-          </button>
-          {categories.map((cat) => {
-            const isActive = selectedCategory === cat;
-            return (
+
+        {/* Filter Pills & Quick Search */}
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap overflow-x-auto scrollbar-none pb-1">
+          {/* Search box */}
+          <div className="relative flex items-center">
+            <i className="fa-solid fa-magnifying-glass absolute left-3 text-xs text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search channels..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 pr-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-red-500 w-36 sm:w-44 transition-all"
+            />
+            {searchQuery && (
               <button
-                key={cat}
                 type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors shrink-0 ${isActive
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 text-xs text-gray-400 hover:text-white"
+              >
+                <i className="fa-solid fa-xmark" />
+              </button>
+            )}
+          </div>
+
+          {/* Categories */}
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+            {categories.map((cat) => {
+              const isActive = selectedCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors shrink-0 ${isActive
                     ? 'bg-[#E50914] text-white shadow-sm'
                     : 'bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/5'
-                  }`}
-              >
-                {categoryLabels[cat] || cat.toUpperCase()}
-              </button>
-            );
-          })}
+                    }`}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
-      {/* ── 1. Live Matches Rail (Using RailRow Component) ── */}
-      {loading ? (
-        <div className="flex items-center gap-3 overflow-hidden py-4 px-2 md:px-0">
-          {[1, 2, 3, 4].map((n) => (
-            <div
-              key={n}
-              className="flex-shrink-0 w-[240px] xs:w-[260px] sm:w-[290px] md:w-[320px] aspect-video rounded-lg bg-[#202020] animate-pulse border border-white/5"
-            />
-          ))}
-        </div>
-      ) : filteredMatches.length > 0 ? (
+
+      {/* ── Live TV Channels Rail ── */}
+      {filteredChannels.length > 0 ? (
         <RailRow
           titleAlt={
             <div className="flex items-center gap-2 text-[15px] sm:text-xl md:text-2xl font-bold">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-600 shadow-[0_0_6px_#e50914] shrink-0" />
+              <span className="w-2.5 h-2.5 rounded-full bg-red-600 shadow-[0_0_8px_#e50914] shrink-0 animate-pulse" />
               <span>{title}</span>
+              <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20 ml-1">
+                {filteredChannels.length} Live
+              </span>
             </div>
           }
-          items={filteredMatches}
+          items={filteredChannels}
           eager={true}
-          renderItem={(match) => (
-            <LiveMatchCard
-              key={match.id}
-              match={match}
+          renderItem={(channel) => (
+            <LiveTVCard
+              key={channel.id}
+              channel={channel}
               onSelect={handleOpenStream}
             />
           )}
         />
       ) : (
-        <div className="w-full py-8 text-center text-gray-400 text-xs sm:text-sm">
-          No live matches available in this category right now.
-        </div>
-      )}
-      {/* ── 2. 24/7 Live Sports TV Channels Rail (Using RailRow Component) ── */}
-      {showChannels && (
-        <div className="pt-2">
-          <RailRow
-            titleAlt={
-              <div className="flex items-center gap-2 text-[15px] sm:text-xl md:text-2xl font-bold">
-                <i className="fa-solid fa-satellite-dish text-red-500 text-sm sm:text-base shrink-0" />
-                <span>Live TV Channels</span>
-                <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/20 ml-1">
-                  24/7
-                </span>
-              </div>
-            }
-            items={LIVE_TV_CHANNELS}
-            eager={true}
-            renderItem={(ch) => (
-              <LiveTVCard
-                key={ch.id}
-                channel={ch}
-                onSelect={() =>
-                  handleOpenStream({
-                    id: ch.id,
-                    name: ch.name,
-                    embedUrl: ch.embed,
-                    category_name: ch.category,
-                    viewers: ch.viewers,
-                    sources: [
-                      {
-                        id: ch.id,
-                        name: ch.name,
-                        embed: ch.embed,
-                        hd: 1,
-                      },
-                    ],
-                  })
-                }
-              />
-            )}
-          />
+        <div className="w-full py-8 text-center text-gray-400 text-xs sm:text-sm bg-neutral-900/40 rounded-xl border border-white/5">
+          <i className="fa-solid fa-tv text-2xl text-gray-500 mb-2 block" />
+          No live channels found matching "{searchQuery}".
         </div>
       )}
     </section>
   );
 };
+
 export default React.memo(LiveSection);

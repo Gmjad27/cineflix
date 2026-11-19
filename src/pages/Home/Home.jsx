@@ -369,12 +369,11 @@ function Home(props) {
             )}
           />
 
-          {/* Live Matches & Live TV Section */}
-          {/* <LiveSection
-            showChannels={true}
-            title="Live Sports & Matches"
-            subtitle="Stream live stadium feeds, tournaments & 24/7 sports channels"
-          /> */}
+          {/* Live Channels Section */}
+          <LiveSection
+            title="Live Sports Channels"
+            subtitle="Stream 24/7 live sports channels including Sony, Willow, Sky, TNT & Fox"
+          />
 
           {/* 3. Dynamic Content Rails */}
           {rails.map((rail, index) => {
