@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const NETWORK_COLORS = {
@@ -13,6 +13,10 @@ const NETWORK_COLORS = {
 const LiveTVCard = ({ channel, onSelect }) => {
   const navigate = useNavigate();
   const [badgeError, setBadgeError] = useState(false);
+
+  useEffect(() => {
+    setBadgeError(false);
+  }, [channel.badge]);
 
   const handleClick = () => {
     if (typeof onSelect === 'function') {
@@ -40,22 +44,25 @@ const LiveTVCard = ({ channel, onSelect }) => {
           handleClick();
         }
       }}
-      className="group relative flex flex-col flex-shrink-0 w-[170px] xs:w-[190px] sm:w-[220px] md:w-[240px] rounded-xl overflow-hidden cursor-pointer select-none bg-[#141414] border border-white/10 hover:border-red-600 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-red-900/20"
+      className="group relative flex flex-col shrink-0 w-[168px] sm:w-[215px] md:w-[245px] lg:w-[260px] rounded-xl overflow-hidden cursor-pointer select-none bg-[#141414] border border-white/10 transition-all duration-200 active:scale-[0.97] active:border-red-500/70 sm:hover:border-red-600 sm:hover:-translate-y-1 sm:hover:shadow-lg sm:hover:shadow-red-900/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
     >
       {/* Background Frame */}
-      <div className={`relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br ${networkGradient} flex items-center justify-center p-3`}>
+      <div
+        className={`relative aspect-video w-full overflow-hidden bg-gradient-to-br ${networkGradient} flex items-center justify-center p-2.5 sm:p-3`}
+      >
         {channel.bg && (
           <img
             src={channel.bg}
-            alt={channel.name}
+            alt=""
+            aria-hidden="true"
             loading="lazy"
-            className="absolute inset-0 w-full h-full object-cover opacity-25 group-hover:scale-105 group-hover:opacity-35 transition-all duration-300"
+            className="absolute inset-0 w-full h-full object-cover opacity-25 transition-all duration-300 sm:group-hover:scale-105 sm:group-hover:opacity-35"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/55 to-transparent" />
 
         {/* Live Indicator */}
-        <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-600 text-white font-black text-[8px] sm:text-[9px] tracking-wider uppercase shadow-md">
+        <div className="absolute top-2 left-2 z-10 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded-full bg-red-600 text-white font-black text-[8px] sm:text-[9px] tracking-wider uppercase shadow-md">
           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
           LIVE
         </div>
@@ -63,7 +70,7 @@ const LiveTVCard = ({ channel, onSelect }) => {
         {/* HD Badge + Stream ID */}
         <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
           {channel.streamId && (
-            <span className="text-[8px] font-semibold text-gray-300 bg-black/60 px-1.5 py-0.5 rounded border border-white/10">
+            <span className="text-[8px] sm:text-[9px] font-semibold text-gray-300 bg-black/65 px-1.5 py-0.5 rounded border border-white/10">
               #{channel.streamId}
             </span>
           )}
@@ -75,27 +82,28 @@ const LiveTVCard = ({ channel, onSelect }) => {
         </div>
 
         {/* Channel Center Logo Plate */}
-        <div className="relative z-10 w-24 h-12 sm:w-28 sm:h-14 md:w-32 md:h-16 flex items-center justify-center p-2 rounded-lg bg-black/80 backdrop-blur-sm border border-white/15 group-hover:border-white/40 transition-colors shadow-md">
-          {!badgeError && channel.badge ? (
+        <div className="relative z-10 w-24 h-11 sm:w-28 sm:h-14 md:w-32 md:h-16 flex items-center justify-center p-2 rounded-lg bg-black/80 backdrop-blur-sm border border-white/15 transition-colors shadow-md sm:group-hover:border-white/40">
+          {/* {!badgeError && channel.badge ? (
             <img
               src={channel.badge}
               alt={channel.name}
+              loading="lazy"
               onError={() => setBadgeError(true)}
-              className="max-h-full max-w-full object-contain filter drop-shadow"
+              className="max-h-full max-w-full object-contain drop-shadow"
             />
-          ) : (
-            <div className="flex flex-col items-center gap-0.5 text-center">
-              <i className="fa-solid fa-satellite-dish text-red-500 text-sm sm:text-base" />
-              <span className="text-[9px] sm:text-[10px] font-black text-white truncate max-w-[90px]">
+          ) : ( */}
+            <div className="flex flex-col items-center gap-0.5 text-center px-1">
+              <i className="fa-solid fa-satellite-dish text-red-500 text-xs sm:text-sm md:text-base" />
+              <span className="text-[9px] sm:text-[10px] font-black text-white truncate max-w-[84px] sm:max-w-[105px]">
                 {channel.name}
               </span>
             </div>
-          )}
+         
         </div>
 
-        {/* Hover Action Overlay */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center z-20">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E50914] text-white font-bold text-xs shadow-lg transform scale-95 group-hover:scale-100 transition-transform duration-200">
+        {/* Desktop-Only Hover Action Overlay (Hidden on mobile so taps don't stick) */}
+        <div className="hidden sm:flex absolute inset-0 bg-black/60 opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 items-center justify-center z-20">
+          <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#E50914] text-white font-bold text-xs shadow-lg transform scale-95 sm:group-hover:scale-100 transition-transform duration-200">
             <i className="fa-solid fa-play text-[10px]" />
             <span>Watch Live</span>
           </div>
@@ -104,8 +112,8 @@ const LiveTVCard = ({ channel, onSelect }) => {
 
       {/* Info Section */}
       <div className="p-2.5 sm:p-3 bg-[#161616] flex flex-col gap-1 border-t border-white/5">
-        <div className="flex items-center justify-between gap-1">
-          <h3 className="text-xs sm:text-sm font-bold text-white truncate group-hover:text-red-400 transition-colors">
+        <div className="flex items-center justify-between gap-1.5">
+          <h3 className="text-xs sm:text-sm font-bold text-white truncate transition-colors sm:group-hover:text-red-400">
             {channel.name}
           </h3>
           <span className="text-[9px] sm:text-[10px] font-semibold text-gray-400 shrink-0">

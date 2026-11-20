@@ -183,7 +183,7 @@ const Search = (props) => {
           zIndex: 999, // Lower than your intro video (10000) and toast (9999), but above normal page content
           pointerEvents: 'none',
         }}
-        snowflakeCount={150} // Optional: adjust particle density
+        snowflakeCount={100} // Optional: adjust particle density
       />
       
       {/* ── Hero Search Section (Hotstar‑style) ── */}

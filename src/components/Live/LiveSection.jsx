@@ -1,8 +1,24 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RailRow from '../RailRow/RailRow';
 import LiveTVCard from './LiveTVCard';
 import { LIVE_CHANNELS } from '../../content/liveStreams';
+
+const CATEGORIES = [
+  { id: 'all', label: 'All Channels', match: () => true },
+  {
+    id: 'cricket',
+    label: 'Cricket',
+    match: (ch) =>
+      ch.category?.toLowerCase().includes('cricket') ||
+      ch.name?.toLowerCase().includes('cricket') ||
+      ['Willow', 'Astro'].includes(ch.network),
+  },
+  { id: 'sony', label: 'Sony Sports', match: (ch) => ch.network === 'Sony Sports' },
+  { id: 'sky', label: 'Sky Sports', match: (ch) => ch.network === 'Sky Sports' },
+  { id: 'tnt', label: 'TNT Sports', match: (ch) => ch.network === 'TNT Sports' },
+  { id: 'fox', label: 'Fox Sports', match: (ch) => ch.network === 'Fox Sports' },
+];
 
 const LiveSection = ({
   title = 'Live Sports Channels',
@@ -12,104 +28,68 @@ const LiveSection = ({
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const categories = [
-    { id: 'all', label: 'All Channels' },
-    { id: 'cricket', label: 'Cricket' },
-    { id: 'sony', label: 'Sony Sports' },
-    { id: 'sky', label: 'Sky Sports' },
-    { id: 'tnt', label: 'TNT Sports' },
-    { id: 'fox', label: 'Fox Sports' },
-  ];
-
   const filteredChannels = useMemo(() => {
+    const activeCategory = CATEGORIES.find((c) => c.id === selectedCategory);
+    const q = searchQuery.toLowerCase().trim();
+
     return LIVE_CHANNELS.filter((ch) => {
-      // Category match
-      let matchesCategory = true;
-      if (selectedCategory === 'cricket') {
-        matchesCategory =
-          ch.category.toLowerCase().includes('cricket') ||
-          ch.name.toLowerCase().includes('cricket') ||
-          ch.network === 'Willow' ||
-          ch.network === 'Astro';
-      } else if (selectedCategory === 'sony') {
-        matchesCategory = ch.network === 'Sony Sports';
-      } else if (selectedCategory === 'sky') {
-        matchesCategory = ch.network === 'Sky Sports';
-      } else if (selectedCategory === 'tnt') {
-        matchesCategory = ch.network === 'TNT Sports';
-      } else if (selectedCategory === 'fox') {
-        matchesCategory = ch.network === 'Fox Sports';
-      }
+      const matchesCategory = activeCategory ? activeCategory.match(ch) : true;
+      if (!matchesCategory) return false;
 
-      // Search match
-      let matchesSearch = true;
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        matchesSearch =
-          ch.name.toLowerCase().includes(q) ||
-          ch.category.toLowerCase().includes(q) ||
-          ch.network.toLowerCase().includes(q) ||
-          String(ch.streamId).includes(q);
-      }
-
-      return matchesCategory && matchesSearch;
+      if (!q) return true;
+      return (
+        ch.name?.toLowerCase().includes(q) ||
+        ch.category?.toLowerCase().includes(q) ||
+        ch.network?.toLowerCase().includes(q) ||
+        String(ch.streamId ?? '').includes(q)
+      );
     });
   }, [selectedCategory, searchQuery]);
 
-  const handleOpenStream = (channel) => {
-    navigate(`/live-stream/${channel.streamId || channel.id}`, {
-      state: { stream: channel },
-    });
+  const handleOpenStream = useCallback(
+    (channel) => {
+      navigate(`/live-stream/${channel.streamId || channel.id}`, {
+        state: { stream: channel },
+      });
+    },
+    [navigate]
+  );
+
+  const handleResetFilters = () => {
+    setSelectedCategory('all');
+    setSearchQuery('');
   };
 
   return (
-    <section className="relative z-20 flex flex-col space-y-4 my-4 sm:my-6">
-      {/* ── Top Bar: Subtitle & Network Filter Pills & Search ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-2 md:px-0">
-        <div>
-          {subtitle && (
-            <p className="text-xs sm:text-sm text-gray-400 font-medium">
-              {subtitle}
-            </p>
-          )}
-        </div>
+    <section className="relative z-20 flex flex-col gap-3 sm:gap-4 my-4 sm:my-6">
+      {/* ── Header & Controls Bar ── */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 px-3 sm:px-4 md:px-0">
+        
 
-        {/* Filter Pills & Quick Search */}
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap overflow-x-auto scrollbar-none pb-1">
-          {/* Search box */}
-          <div className="relative flex items-center">
-            <i className="fa-solid fa-magnifying-glass absolute left-3 text-xs text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search channels..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-red-500 w-36 sm:w-44 transition-all"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 text-xs text-gray-400 hover:text-white"
-              >
-                <i className="fa-solid fa-xmark" />
-              </button>
-            )}
-          </div>
+        {/* Responsive Search + Filter Strip */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 w-full lg:w-auto">
+         
 
-          {/* Categories */}
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-            {categories.map((cat) => {
+          {/* Horizontal Scrollable Category Pills (Bleeds cleanly on mobile) */}
+          <div
+            role="tablist"
+            aria-label="Channel networks"
+            className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0 py-0.5"
+          >
+            {CATEGORIES.map((cat) => {
               const isActive = selectedCategory === cat.id;
               return (
                 <button
                   key={cat.id}
                   type="button"
+                  role="tab"
+                  aria-selected={isActive}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors shrink-0 ${isActive
-                    ? 'bg-[#E50914] text-white shadow-sm'
-                    : 'bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/5'
-                    }`}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 select-none transition-all active:scale-95 ${
+                    isActive
+                      ? 'bg-[#E50914] text-white shadow-[0_2px_10px_rgba(229,9,20,0.35)]'
+                      : 'bg-white/[0.06] text-gray-300 border border-white/10 active:bg-white/15 sm:hover:bg-white/12 sm:hover:text-white'
+                  }`}
                 >
                   {cat.label}
                 </button>
@@ -123,10 +103,13 @@ const LiveSection = ({
       {filteredChannels.length > 0 ? (
         <RailRow
           titleAlt={
-            <div className="flex items-center gap-2 text-[15px] sm:text-xl md:text-2xl font-bold">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-600 shadow-[0_0_8px_#e50914] shrink-0 animate-pulse" />
-              <span>{title}</span>
-              <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20 ml-1">
+            <div className="flex items-center gap-2 text-base sm:text-xl md:text-2xl font-bold px-3 sm:px-4 md:px-0">
+              <span className="relative flex h-2.5 w-2.5 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 shadow-[0_0_8px_#e50914]" />
+              </span>
+              <span className="truncate">{title}</span>
+              <span className="text-[10px] sm:text-xs font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20 shrink-0">
                 {filteredChannels.length} Live
               </span>
             </div>
@@ -142,9 +125,24 @@ const LiveSection = ({
           )}
         />
       ) : (
-        <div className="w-full py-8 text-center text-gray-400 text-xs sm:text-sm bg-neutral-900/40 rounded-xl border border-white/5">
-          <i className="fa-solid fa-tv text-2xl text-gray-500 mb-2 block" />
-          No live channels found matching "{searchQuery}".
+        <div className="mx-3 sm:mx-4 md:mx-0 py-10 px-4 text-center text-gray-400 bg-neutral-900/50 rounded-2xl border border-white/10 flex flex-col items-center justify-center">
+          <div className="w-11 h-11 rounded-full bg-white/5 flex items-center justify-center mb-3">
+            <i className="fa-solid fa-tv text-lg text-gray-400" />
+          </div>
+          <p className="text-xs sm:text-sm text-gray-300 font-medium max-w-md">
+            {searchQuery.trim()
+              ? `No live channels found matching "${searchQuery}".`
+              : 'No live channels available in this category right now.'}
+          </p>
+          {(searchQuery || selectedCategory !== 'all') && (
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="mt-4 px-4 py-1.5 rounded-full bg-white/10 active:bg-white/20 sm:hover:bg-white/15 active:scale-95 text-white text-xs font-semibold transition-all"
+            >
+              Reset Filters
+            </button>
+          )}
         </div>
       )}
     </section>

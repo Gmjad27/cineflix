@@ -118,7 +118,7 @@ const Studio = (props) => {
           zIndex: 999, // Lower than your intro video (10000) and toast (9999), but above normal page content
           pointerEvents: 'none',
         }}
-        snowflakeCount={150} // Optional: adjust particle density
+        snowflakeCount={100} // Optional: adjust particle density
       />
       {/* ── Cinematic Hero Section ── */}
       <div className="relative w-full h-[30vh] md:h-[45vh] flex items-center justify-center overflow-hidden bg-[#141414]">

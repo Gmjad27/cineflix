@@ -28,12 +28,22 @@ function Home(props) {
 
   const [heroIndex, setHeroIndex] = useState(0);
   const [isHeroPaused, setIsHeroPaused] = useState(false);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false
+  );
 
   const [continueWatching, setContinueWatching] = useState(() => getContinueWatching());
   const [privacyPopupOpen, setPrivacyPopupOpen] = useState(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem(PRIVACY_POLICY_STORAGE_KEY) !== 'true';
   });
+
+  // Track viewport breakpoint for lightweight mobile particle count
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize, { passive: true });
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Sync Continue Watching on window focus
   useEffect(() => {
@@ -112,7 +122,7 @@ function Home(props) {
   const watchItem = localWatchItem || fetchedWatchItem;
   const watchOpen = Boolean(watchItem);
 
-  // Auto-rotate Hero Banner (Pauses when user hovers or when Watch Modal is open)
+  // Auto-rotate Hero Banner (Desktop hover pause only; never sticks on mobile touch)
   useEffect(() => {
     if (mediaData.length < 2 || isHeroPaused || watchOpen) return undefined;
     const interval = setInterval(() => {
@@ -154,24 +164,6 @@ function Home(props) {
   // ==========================================
   // Continue Watching Handlers
   // ==========================================
-  const resumeContinueWatching = useCallback(
-    (item) => {
-      if (!item?.streamId) {
-        openWatch(`${item.type}_${item.tmdbId}`);
-        return;
-      }
-      if (typeof props.play === 'function') {
-        props.play(item.streamId);
-      }
-      const streamPath =
-        item.type === 'tv'
-          ? `${item.tmdbId}/${item.season || 1}/${item.episode || 1}`
-          : item.streamId;
-      navigate(`/streaming/${streamPath}`);
-    },
-    [navigate, props, openWatch]
-  );
-
   const handleRemoveContinueWatching = useCallback((e, streamId) => {
     e.stopPropagation();
     if (typeof removeContinueWatching === 'function') {
@@ -226,7 +218,7 @@ function Home(props) {
     return (
       <div className="min-h-screen bg-[#141414] text-white" id="homepage">
         <Skeleton type="banner" />
-        <div className="px-4 sm:px-8 md:px-12 lg:px-16 -mt-12 relative z-20 space-y-8">
+        <div className="px-3 sm:px-6 md:px-10 lg:px-16 -mt-6 sm:-mt-12 relative z-20 space-y-6 sm:space-y-8">
           {[1, 2, 3, 4, 5].map((section) => (
             <Skeleton key={section} type="section" count={10} />
           ))}
@@ -236,23 +228,27 @@ function Home(props) {
   }
 
   return (
-    <main className="relative min-h-screen bg-[#141414] text-white overflow-x-hidden selection:bg-[#E50914] selection:text-white" id="homepage">
-      {/* <Snowfall
+    <main
+      className="relative min-h-screen bg-[#141414] text-white overflow-x-hidden selection:bg-[#E50914] selection:text-white"
+      id="homepage"
+    >
+      <Snowfall
         style={{
           position: 'fixed',
           width: '100vw',
           height: '100vh',
-          zIndex: 999, // Lower than your intro video (10000) and toast (9999), but above normal page content
+          zIndex: 999,
           pointerEvents: 'none',
         }}
-        snowflakeCount={150} // Optional: adjust particle density
-      /> */}
+        snowflakeCount={isMobile ? 45 : 140}
+      />
+
       <PrivacyPolicyPopup open={privacyPopupOpen} onClose={() => setPrivacyPopupOpen(false)} />
 
       {/* ===== HERO BILLBOARD (Full-Bleed Top) ===== */}
       <div
-        onMouseEnter={() => setIsHeroPaused(true)}
-        onMouseLeave={() => setIsHeroPaused(false)}
+        onMouseEnter={() => !isMobile && setIsHeroPaused(true)}
+        onMouseLeave={() => !isMobile && setIsHeroPaused(false)}
       >
         <HeroBanner
           mediaData={mediaData}
@@ -263,10 +259,9 @@ function Home(props) {
         />
       </div>
 
-      {/* ===== NETFLIX OVERLAPPING RAIL STACK ===== */}
-      <div className="relative z-20 -mt-[-10px] sm:-mt-16 md:-mt-28 lg:-mt-36 px-4 sm:px-8 md:px-12 lg:px-16 space-y-8 md:space-y-11 pb-16">
+      {/* ===== RESPONSIVE OVERLAPPING RAIL STACK ===== */}
+      <div className="relative z-20 -mt-6 sm:-mt-16 md:-mt-28 lg:-mt-36 px-3 sm:px-6 md:px-10 lg:px-16 space-y-6 sm:space-y-8 md:space-y-11 pb-14 sm:pb-16">
         <Suspense fallback={<Skeleton type="section" count={10} />}>
-
           {/* 1. Continue Watching Rail */}
           {continueWatching.length > 0 && (
             <RailRow
@@ -283,11 +278,27 @@ function Home(props) {
                 const progressPercent = Math.min(100, Math.max(12, Number(item.progress) || 65));
 
                 return (
-                  <div className="flex-shrink-0 group">
+                  <div className="shrink-0 group">
                     <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() => openWatch(`${item.type}_${item.tmdbId}`, item.title)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          openWatch(`${item.type}_${item.tmdbId}`, item.title);
+                        }
+                      }}
                       title={`Resume ${item.title}`}
-                      className="relative w-[200px] sm:w-68 md:w-76 lg:w-80 rounded-[4px] overflow-hidden cursor-pointer bg-[#181818] shadow-md transition-all duration-300 ease-out sm:hover:scale-[1.04] sm:hover:z-30 sm:hover:shadow-2xl ring-1 ring-white/5"
+                      className="
+                        relative w-[195px] sm:w-64 md:w-72 lg:w-80
+                        rounded-md overflow-hidden cursor-pointer select-none
+                        bg-[#181818] shadow-md ring-1 ring-white/10
+                        transition-all duration-200 ease-out
+                        active:scale-[0.97] active:ring-white/30
+                        sm:hover:scale-[1.03] sm:hover:z-30 sm:hover:shadow-2xl sm:hover:ring-white/25
+                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500
+                      "
                     >
                       {/* Thumbnail Container */}
                       <div className="relative aspect-video w-full overflow-hidden bg-[#202020]">
@@ -303,22 +314,30 @@ function Home(props) {
                         {/* Dark Vignette */}
                         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#181818] via-black/20 to-transparent opacity-90" />
 
-                        {/* Remove ("X") Button - Top Right */}
+                        {/* Remove ("X") Button - Always accessible on mobile, hover-revealed on desktop */}
                         <button
                           type="button"
                           onClick={(e) => handleRemoveContinueWatching(e, item.streamId)}
                           title="Remove from Continue Watching"
                           aria-label={`Remove ${item.title} from Continue Watching`}
-                          className="absolute top-2.5 right-2.5 z-30 w-7 h-7 md:w-8 md:h-8 rounded-full bg-black/75  text-white/80 hover:text-white flex items-center justify-center border border-white/20 hover:border-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 cursor-pointer"
+                          className="
+                            absolute top-2 right-2 z-30
+                            w-7 h-7 md:w-8 md:h-8 rounded-full
+                            bg-black/75 backdrop-blur-xs text-white/85
+                            flex items-center justify-center
+                            border border-white/20
+                            opacity-100 sm:opacity-0 sm:group-hover:opacity-100
+                            active:scale-90 active:bg-red-600 active:border-red-500
+                            sm:hover:text-white sm:hover:border-white sm:hover:bg-black/90
+                            transition-all duration-200 cursor-pointer
+                          "
                         >
                           <i className="fa-solid fa-xmark text-xs md:text-sm" />
                         </button>
 
-
-
                         {/* Episode Badge on Backdrop (Bottom Left) */}
                         {item.type === 'tv' && (
-                          <span className="absolute bottom-3 left-3 z-20 text-[11px] md:text-xs font-bold tracking-wide text-white bg-black/65 px-2 py-0.5 rounded backdrop-blur-xs">
+                          <span className="absolute bottom-2.5 left-2.5 z-20 text-[10px] sm:text-xs font-bold tracking-wide text-white bg-black/70 px-2 py-0.5 rounded backdrop-blur-xs">
                             S{item.season || 1}:E{item.episode || 1}
                           </span>
                         )}
@@ -332,15 +351,13 @@ function Home(props) {
                         </div>
                       </div>
 
-                      {/* Bottom Control Bar (Title + More Info Trigger) */}
-                      <div className="flex items-center justify-between px-3 py-2.5 bg-[#181818] text-white">
+                      {/* Bottom Control Bar */}
+                      <div className="flex items-center justify-between px-2.5 sm:px-3 py-2 sm:py-2.5 bg-[#181818] text-white">
                         <div className="min-w-0 pr-2">
                           <h4 className="text-xs sm:text-sm font-bold text-gray-100 truncate">
                             {item.title}
                           </h4>
                         </div>
-
-
                       </div>
                     </div>
                   </div>
@@ -368,14 +385,18 @@ function Home(props) {
               />
             )}
           />
+        </Suspense>
 
-          {/* Live Channels Section */}
+        {/* Live Channels Section (Isolated Suspense so rails never wait on it) */}
+        <Suspense fallback={<Skeleton type="section" count={6} />}>
           <LiveSection
             title="Live Sports Channels"
             subtitle="Stream 24/7 live sports channels including Sony, Willow, Sky, TNT & Fox"
           />
+        </Suspense>
 
-          {/* 3. Dynamic Content Rails */}
+        {/* 3. Dynamic Content Rails */}
+        <Suspense fallback={<Skeleton type="section" count={10} />}>
           {rails.map((rail, index) => {
             const railKey = `${rail.title}-${index}`;
             const isTop10 = rail.title.toUpperCase().includes('TOP 10');
@@ -410,51 +431,49 @@ function Home(props) {
               />
             );
           })}
+        </Suspense>
 
+        <Suspense fallback={null}>
           <Footer />
         </Suspense>
-      </div >
+      </div>
 
       {/* Direct URL Watch Loading Indicator */}
-      {
-        isWatchLoading && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs">
-            <div className="w-10 h-10 border-4 border-[#E50914] border-t-transparent rounded-full animate-spin" />
-          </div>
-        )
-      }
+      {isWatchLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs">
+          <div className="w-10 h-10 border-4 border-[#E50914] border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
 
       {/* Watch Modal */}
-      {
-        watchOpen && watchItem && (
-          <Watch
-            data={data}
-            sow={openWatch}
-            onClose={clearWatchFromUrl}
-            sid={watchItem.id}
-            El={Array.isArray(props.e) && props.e.includes(watchItem.id) ? 'ADDED' : '+'}
-            img={watchItem.img}
-            type={watchItem.type}
-            id={watchItem.tmdbId}
-            s={watchItem.episodes}
-            mname={watchItem.name2}
-            name={watchItem.nameImg2 || watchItem.name2}
-            name2={watchItem.name}
-            yr={watchItem.releaseYear}
-            ua={watchItem.ua}
-            season={watchItem.season}
-            lan={watchItem.language?.length || 0}
-            desc={watchItem.desc}
-            cat={watchItem.category}
-            language={watchItem.language}
-            rating={watchItem.rating}
-            add={props.add}
-            e={props.e}
-            play={props.play}
-          />
-        )
-      }
-    </main >
+      {watchOpen && watchItem && (
+        <Watch
+          data={data}
+          sow={openWatch}
+          onClose={clearWatchFromUrl}
+          sid={watchItem.id}
+          El={Array.isArray(props.e) && props.e.includes(watchItem.id) ? 'ADDED' : '+'}
+          img={watchItem.img}
+          type={watchItem.type}
+          id={watchItem.tmdbId}
+          s={watchItem.episodes}
+          mname={watchItem.name2}
+          name={watchItem.nameImg2 || watchItem.name2}
+          name2={watchItem.name}
+          yr={watchItem.releaseYear}
+          ua={watchItem.ua}
+          season={watchItem.season}
+          lan={watchItem.language?.length || 0}
+          desc={watchItem.desc}
+          cat={watchItem.category}
+          language={watchItem.language}
+          rating={watchItem.rating}
+          add={props.add}
+          e={props.e}
+          play={props.play}
+        />
+      )}
+    </main>
   );
 }
 
