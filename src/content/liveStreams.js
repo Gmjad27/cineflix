@@ -1295,6 +1295,264 @@ export const LIVE_CHANNELS = [
 export const LIVE_TV_CHANNELS = LIVE_CHANNELS;
 
 /**
+ * Fallback live streams conforming to the ondemand.st /papi/api/streams schema
+ */
+export const FALLBACK_LIVE_STREAMS = [
+  {
+    category: "american-football",
+    id: 1,
+    streams: [
+      {
+        id: "espn-401858304",
+        name: "Florida State Seminoles vs NC State Wolfpack",
+        poster: "https://ondemand.st/img/cards/college-football/401858304.jpg?v=nf2nf",
+        starts_at: 1795293000,
+        ends_at: 1795303800,
+        category_name: "american-football",
+        status: "live",
+        league: "NCAAF",
+        teams: {
+          home: {
+            name: "Florida State Seminoles",
+            badge: "https://a.espncdn.com/i/teamlogos/ncaa/500/52.png",
+            color: ""
+          },
+          away: {
+            name: "NC State Wolfpack",
+            badge: "https://a.espncdn.com/i/teamlogos/ncaa/500/152.png",
+            color: ""
+          }
+        },
+        viewers: 17,
+        always_live: 0,
+        sources: [
+          {
+            source: "hls",
+            id: "s1",
+            name: "Server 1",
+            embed: "https://damitv.st/embed/?id=m401858304"
+          },
+          {
+            source: "hls",
+            id: "s2",
+            name: "Server 1 SD",
+            sd: 1,
+            hd: 0,
+            embed: "https://damitv.st/embed/?id=cfb%2F2026-11-21%2Fsdsu-bois_540p"
+          }
+        ],
+        embed: "https://damitv.st/embed/?id=m401858304"
+      },
+      {
+        id: "espn-401860920",
+        name: "Texas State Bobcats vs Washington State Cougars",
+        poster: "https://ondemand.st/img/cards/college-football/401860920.jpg?v=nf2nf",
+        starts_at: 1795302000,
+        ends_at: 1795312800,
+        category_name: "american-football",
+        status: "live",
+        league: "NCAAF",
+        teams: {
+          home: {
+            name: "Texas State Bobcats",
+            badge: "https://a.espncdn.com/i/teamlogos/ncaa/500/326.png",
+            color: ""
+          },
+          away: {
+            name: "Washington State Cougars",
+            badge: "https://a.espncdn.com/i/teamlogos/ncaa/500/265.png",
+            color: ""
+          }
+        },
+        viewers: 14,
+        always_live: 0,
+        sources: [
+          {
+            source: "hls",
+            id: "s1",
+            name: "Server 1",
+            embed: "https://damitv.st/embed/?id=m401860920"
+          },
+          {
+            source: "hls",
+            id: "s2",
+            name: "Server 1 SD",
+            sd: 1,
+            hd: 0,
+            embed: "https://damitv.st/embed/?id=cfb%2F2026-11-21%2Fsdsu-bois_540p"
+          }
+        ],
+        embed: "https://damitv.st/embed/?id=m401860920"
+      }
+    ]
+  },
+  {
+    category: "football",
+    id: 2,
+    streams: [
+      {
+        id: "soccer-arsenal-mancity",
+        name: "Arsenal vs Manchester City",
+        poster: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1200&q=80",
+        starts_at: Math.floor(Date.now() / 1000) - 1800,
+        ends_at: Math.floor(Date.now() / 1000) + 5400,
+        category_name: "football",
+        status: "live",
+        league: "Premier League",
+        teams: {
+          home: {
+            name: "Arsenal",
+            badge: "https://media.api-sports.io/football/teams/42.png",
+            color: "#EF0107"
+          },
+          away: {
+            name: "Manchester City",
+            badge: "https://media.api-sports.io/football/teams/50.png",
+            color: "#6CABDD"
+          }
+        },
+        viewers: 1420,
+        always_live: 0,
+        sources: [
+          {
+            source: "hls",
+            id: "s1",
+            name: "Server 1 (HD)",
+            embed: "https://damitv.st/embed/?id=247-247-sky-main-event"
+          },
+          {
+            source: "hls",
+            id: "s2",
+            name: "Server 2 (TNT)",
+            embed: "https://damitv.st/embed/?id=247-247-tnt-sports-1"
+          }
+        ],
+        embed: "https://damitv.st/embed/?id=247-247-sky-main-event"
+      },
+      {
+        id: "soccer-real-barca",
+        name: "Real Madrid vs FC Barcelona",
+        poster: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1200&q=80",
+        starts_at: Math.floor(Date.now() / 1000) - 3600,
+        ends_at: Math.floor(Date.now() / 1000) + 3600,
+        category_name: "football",
+        status: "live",
+        league: "La Liga - El Clásico",
+        teams: {
+          home: {
+            name: "Real Madrid",
+            badge: "https://media.api-sports.io/football/teams/541.png",
+            color: "#FFFFFF"
+          },
+          away: {
+            name: "FC Barcelona",
+            badge: "https://media.api-sports.io/football/teams/529.png",
+            color: "#A50044"
+          }
+        },
+        viewers: 2830,
+        always_live: 0,
+        sources: [
+          {
+            source: "hls",
+            id: "s1",
+            name: "Server 1 (HD)",
+            embed: "https://damitv.st/embed/?id=247-247-tnt-sports-1"
+          }
+        ],
+        embed: "https://damitv.st/embed/?id=247-247-tnt-sports-1"
+      }
+    ]
+  },
+  {
+    category: "cricket",
+    id: 3,
+    streams: [
+      {
+        id: "cricket-ind-aus",
+        name: "India vs Australia - Border Gavaskar Trophy",
+        poster: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=1200&q=80",
+        starts_at: Math.floor(Date.now() / 1000) - 7200,
+        ends_at: Math.floor(Date.now() / 1000) + 14400,
+        category_name: "cricket",
+        status: "live",
+        league: "ICC Test Series",
+        teams: {
+          home: {
+            name: "India",
+            badge: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=100&q=80",
+            color: "#0078FF"
+          },
+          away: {
+            name: "Australia",
+            badge: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=100&q=80",
+            color: "#FFD700"
+          }
+        },
+        viewers: 8500,
+        always_live: 0,
+        sources: [
+          {
+            source: "hls",
+            id: "s1",
+            name: "Willow Cricket (HD)",
+            embed: "https://damitv.st/embed/?id=247-247-willow"
+          },
+          {
+            source: "hls",
+            id: "s2",
+            name: "Willow 2",
+            embed: "https://damitv.st/embed/?id=247-247-willow"
+          }
+        ],
+        embed: "https://damitv.st/embed/?id=247-247-willow"
+      }
+    ]
+  },
+  {
+    category: "basketball",
+    id: 4,
+    streams: [
+      {
+        id: "nba-lakers-warriors",
+        name: "Los Angeles Lakers vs Golden State Warriors",
+        poster: "https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1200&q=80",
+        starts_at: Math.floor(Date.now() / 1000) - 2400,
+        ends_at: Math.floor(Date.now() / 1000) + 4800,
+        category_name: "basketball",
+        status: "live",
+        league: "NBA",
+        teams: {
+          home: {
+            name: "LA Lakers",
+            badge: "https://a.espncdn.com/i/teamlogos/nba/500/lal.png",
+            color: "#552583"
+          },
+          away: {
+            name: "GS Warriors",
+            badge: "https://a.espncdn.com/i/teamlogos/nba/500/gsw.png",
+            color: "#1D428A"
+          }
+        },
+        viewers: 950,
+        always_live: 0,
+        sources: [
+          {
+            source: "hls",
+            id: "s1",
+            name: "Server 1 (Fox Sports)",
+            embed: "https://damitv.st/embed/?id=247-247-fox-sports-1"
+          }
+        ],
+        embed: "https://damitv.st/embed/?id=247-247-fox-sports-1"
+      }
+    ]
+  }
+];
+
+let memoryLiveMatchesCache = [];
+
+/**
  * Finds a channel by streamId or id
  */
 export function getLiveChannelById(idOrStreamId) {
@@ -1308,21 +1566,138 @@ export function getLiveChannelById(idOrStreamId) {
 }
 
 /**
- * Fetch live channels data - returns the configured live channels
+ * Flattens nested category streams into a single list of match objects
  */
-export async function fetchLiveStreamsData() {
-  return {
-    success: true,
-    channels: LIVE_CHANNELS,
-    streams: [],
-  };
+export function flattenLiveMatches(streamsData) {
+  if (!streamsData) return [];
+  const list = Array.isArray(streamsData)
+    ? streamsData
+    : Array.isArray(streamsData.streams)
+      ? streamsData.streams
+      : [];
+
+  const matches = [];
+
+  list.forEach((catGroup) => {
+    const categoryName = catGroup.category || catGroup.name || 'sports';
+    const subStreams = Array.isArray(catGroup.streams) ? catGroup.streams : [];
+    subStreams.forEach((m) => {
+      if (!m || !m.id) return;
+      matches.push({
+        ...m,
+        category_name: m.category_name || categoryName,
+        embed: m.embed || m.sources?.[0]?.embed || '',
+        status: m.status || (m.always_live ? 'live' : 'live'),
+      });
+    });
+  });
+
+  return matches;
 }
 
 /**
- * Empty array since live sports match events are removed
+ * Returns cached live matches from memory, localStorage or fallback data
  */
-export function flattenLiveMatches() {
-  return [];
+export function getCachedLiveMatches() {
+  if (memoryLiveMatchesCache.length > 0) return memoryLiveMatchesCache;
+  try {
+    const raw = localStorage.getItem('cineflix_live_matches_cache');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        memoryLiveMatchesCache = parsed;
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.error('Error reading live matches cache:', err);
+  }
+  const fallback = flattenLiveMatches(FALLBACK_LIVE_STREAMS);
+  memoryLiveMatchesCache = fallback;
+  return fallback;
+}
+
+/**
+ * Finds either a live match (from ondemand.st API) or a live 24/7 channel by id
+ */
+export function getLiveStreamOrMatchById(idOrStreamId) {
+  if (!idOrStreamId) return null;
+  const str = String(idOrStreamId).trim();
+
+  // 1. Search in cached live matches
+  const matches = getCachedLiveMatches();
+  const match = matches.find((m) => String(m.id) === str || String(m.streamId) === str);
+  if (match) return match;
+
+  // 2. Search in LIVE_CHANNELS
+  const channel = getLiveChannelById(str);
+  if (channel) return channel;
+
+  return null;
+}
+
+/**
+ * Fetch live match streams from https://ondemand.st/papi/api/streams
+ * Uses local proxy /papi/api/streams, direct fallback, and CORS proxies with fallback to cache
+ */
+export async function fetchLiveStreamsData() {
+  const endpoints = [
+    '/papi/api/streams', // Proxied through Vite server or Cloudflare Worker
+    'https://ondemand.st/papi/api/streams', // Direct
+    'https://corsproxy.io/?https%3A%2F%2Fondemand.st%2Fpapi%2Fapi%2Fstreams', // CORS proxy 1
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://ondemand.st/papi/api/streams'), // CORS proxy 2
+  ];
+
+  let rawData = null;
+
+  for (const url of endpoints) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const res = await fetch(url, {
+        headers: { Accept: 'application/json' },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json && Array.isArray(json.streams) && json.streams.length > 0) {
+          rawData = json;
+          break;
+        }
+      }
+    } catch {
+      // Try next endpoint
+    }
+  }
+
+  if (rawData && Array.isArray(rawData.streams) && rawData.streams.length > 0) {
+    const flat = flattenLiveMatches(rawData);
+    memoryLiveMatchesCache = flat;
+    try {
+      localStorage.setItem('cineflix_live_matches_cache', JSON.stringify(flat));
+    } catch {}
+    return {
+      success: true,
+      streams: rawData.streams,
+      matches: flat,
+      channels: LIVE_CHANNELS,
+      isLiveApi: true,
+      timestamp: rawData.timestamp || Math.floor(Date.now() / 1000),
+    };
+  }
+
+  // Fallback to cache or built-in schema-matching data
+  const fallbackMatches = getCachedLiveMatches();
+  return {
+    success: true,
+    streams: FALLBACK_LIVE_STREAMS,
+    matches: fallbackMatches,
+    channels: LIVE_CHANNELS,
+    isLiveApi: false,
+    timestamp: Math.floor(Date.now() / 1000),
+  };
 }
 
 /**

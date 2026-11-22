@@ -1,9 +1,39 @@
 const TMDB_ORIGIN = "https://api.themoviedb.org/3";
 const API_PREFIX = "/api/tmdb";
+const PAPI_ORIGIN = "https://ondemand.st";
 
 export default {
     async fetch(request, env) {
         const requestUrl = new URL(request.url);
+
+        // Proxy live sports streams from ondemand.st
+        if (requestUrl.pathname.startsWith("/papi")) {
+            try {
+                const targetUrl = new URL(`${PAPI_ORIGIN}${requestUrl.pathname}${requestUrl.search}`);
+                const upstream = await fetch(targetUrl, {
+                    headers: {
+                        Accept: "application/json",
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                    },
+                });
+
+                const headers = new Headers(upstream.headers);
+                headers.set("Access-Control-Allow-Origin", "*");
+                headers.set("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+                headers.set("Cache-Control", "public, max-age=60");
+
+                return new Response(upstream.body, {
+                    status: upstream.status,
+                    statusText: upstream.statusText,
+                    headers,
+                });
+            } catch (err) {
+                return new Response(JSON.stringify({ error: "Failed to proxy stream API", message: err.message }), {
+                    status: 502,
+                    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+                });
+            }
+        }
 
         if (!requestUrl.pathname.startsWith(API_PREFIX)) {
             return env.ASSETS.fetch(request);

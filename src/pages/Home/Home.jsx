@@ -232,16 +232,7 @@ function Home(props) {
       className="relative min-h-screen bg-[#141414] text-white overflow-x-hidden selection:bg-[#E50914] selection:text-white"
       id="homepage"
     >
-      <Snowfall
-        style={{
-          position: 'fixed',
-          width: '100vw',
-          height: '100vh',
-          zIndex: 999,
-          pointerEvents: 'none',
-        }}
-        snowflakeCount={isMobile ? 45 : 140}
-      />
+
 
       <PrivacyPolicyPopup open={privacyPopupOpen} onClose={() => setPrivacyPopupOpen(false)} />
 
@@ -387,11 +378,11 @@ function Home(props) {
           />
         </Suspense>
 
-        {/* Live Channels Section (Isolated Suspense so rails never wait on it) */}
+        {/* Live Sports & Channels Section (Isolated Suspense so rails never wait on it) */}
         <Suspense fallback={<Skeleton type="section" count={6} />}>
           <LiveSection
-            title="Live Sports Channels"
-            subtitle="Stream 24/7 live sports channels including Sony, Willow, Sky, TNT & Fox"
+            title="Live Sports & Matches"
+            subtitle="Stream live sporting events & 24/7 sports channels in HD"
           />
         </Suspense>
 

@@ -16,7 +16,7 @@ const Profile = lazy(() => import("./pages/Profile/Profile"));
 const Streaming = lazy(() => import("./pages/Stream/streaming.jsx"));
 const LiveStreaming = lazy(() => import("./pages/Stream/LiveStreaming.jsx"));
 const Tv = lazy(() => import("./pages/TV/Tv"));
-// const Live = lazy(() => import("./pages/Live/Live"));
+const Live = lazy(() => import("./pages/Live/Live"));
 const Search = lazy(() => import("./pages/Search/Search"));
 const Login = lazy(() => import("./pages/Auth/Login"));
 const Signup = lazy(() => import("./pages/Auth/Signup"));
@@ -207,7 +207,13 @@ function App() {
                     <Tv {...sharedProps} />
                   </ProtectedRoute>
                 } />
-                {/* <Route path="/live" element={<ProtectedRoute><Nav /><Live {...sharedProps} /></ProtectedRoute>} /> */}
+                <Route path="/live" element={
+                  <ProtectedRoute>
+                    <Nav />
+                    <Live {...sharedProps} />
+                  </ProtectedRoute>
+                } />
+                <Route path="/sports" element={<Navigate to="/live" replace />} />
                 <Route path="/search" element={
                   <ProtectedRoute>
                     <Nav />

@@ -55,12 +55,14 @@ const Nav = () => {
     { to: '/', label: 'Home' },
     { to: '/tv', label: 'Shows' },
     { to: '/movies', label: 'Movies' },
+    { to: '/live', label: 'Live', isLive: true },
   ];
 
   const mobileNavItems = [
     { to: '/', label: 'Home', icon: 'fa-house' },
     { to: '/tv', label: 'Shows', icon: 'fa-tv' },
     { to: '/movies', label: 'Movies', icon: 'fa-film' },
+    { to: '/live', label: 'Live', icon: 'fa-satellite-dish', isLive: true },
     { to: '/search', label: 'Search', icon: 'fa-magnifying-glass' },
   ];
 
@@ -138,8 +140,14 @@ const Nav = () => {
                   `}
                 >
                   {({ isActive }) => (
-                    <>
-                      {item.label}
+                    <span className="flex items-center gap-1.5">
+                      {item.isLive && (
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600 shadow-[0_0_6px_#e50914]" />
+                        </span>
+                      )}
+                      <span>{item.label}</span>
 
                       <span
                         className={`
@@ -154,8 +162,7 @@ const Nav = () => {
                           }
                         `}
                       />
-
-                    </>
+                    </span>
                   )}
                 </NavLink>
               ))}

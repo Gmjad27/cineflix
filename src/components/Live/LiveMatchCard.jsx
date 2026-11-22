@@ -4,12 +4,18 @@ import { formatViewerCount } from '../../content/liveStreams';
 
 const getCategoryIcon = (category) => {
   switch (category?.toLowerCase()) {
+    case 'american-football':
+    case 'american football':
+    case 'ncaaf':
+    case 'nfl':
+      return 'fa-football';
     case 'football':
     case 'soccer':
       return 'fa-futbol';
     case 'cricket':
       return 'fa-baseball-bat-ball';
     case 'basketball':
+    case 'nba':
       return 'fa-basketball';
     case 'motorsport':
     case 'formula 1':
@@ -60,6 +66,9 @@ const LiveMatchCard = ({ match, onSelect }) => {
           src={match.poster || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1200&q=80'}
           alt={match.name}
           loading="lazy"
+          onError={(e) => {
+            e.currentTarget.src = 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1200&q=80';
+          }}
           className="w-full h-full object-cover"
         />
 

@@ -2,9 +2,11 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import RailRow from '../../components/RailRow/RailRow';
 import LiveTVCard from '../../components/Live/LiveTVCard';
+import LiveMatchCard from '../../components/Live/LiveMatchCard';
 import {
   LIVE_CHANNELS,
-  getLiveChannelById,
+  getLiveStreamOrMatchById,
+  getCachedLiveMatches,
   getStreamEmbedUrl,
   formatViewerCount,
 } from '../../content/liveStreams';
@@ -33,38 +35,67 @@ const LiveStreaming = () => {
     };
   }, []);
 
-  // Resolve channel information from location.state or LIVE_CHANNELS
+  // Resolve channel / match information from location.state or cache
   const channel = useMemo(() => {
     const fromState = location.state?.stream;
     if (fromState && (String(fromState.streamId) === String(streamId) || String(fromState.id) === String(streamId))) {
       return fromState;
     }
-    return getLiveChannelById(streamId) || {
-      id: String(streamId),
-      streamId: String(streamId),
-      name: `Channel ${streamId}`,
-      category: 'Live Broadcast',
-      network: 'Live TV',
-      embed: getStreamEmbedUrl(streamId),
-      viewers: 'Live',
-      hd: true,
-    };
+    return (
+      getLiveStreamOrMatchById(streamId) || {
+        id: String(streamId),
+        streamId: String(streamId),
+        name: `Stream #${streamId}`,
+        category: 'Live Broadcast',
+        network: 'Live TV',
+        embed: getStreamEmbedUrl(streamId),
+        viewers: 'Live',
+        hd: true,
+      }
+    );
   }, [streamId, location.state]);
 
-  const embedUrl = useMemo(() => {
+  // Server sources selection (Server 1, Server 2 / SD / HD)
+  const [activeSourceId, setActiveSourceId] = useState(() => {
+    return channel?.sources?.[0]?.id || null;
+  });
+
+  useEffect(() => {
+    if (channel?.sources && channel.sources.length > 0) {
+      setActiveSourceId(channel.sources[0].id);
+    } else {
+      setActiveSourceId(null);
+    }
+  }, [channel]);
+
+  const activeEmbedUrl = useMemo(() => {
+    if (activeSourceId && Array.isArray(channel?.sources)) {
+      const found = channel.sources.find((s) => s.id === activeSourceId);
+      if (found?.embed) return found.embed;
+    }
     return channel?.embed || getStreamEmbedUrl(streamId);
-  }, [channel, streamId]);
+  }, [channel, activeSourceId, streamId]);
 
   const iframeSnippet = useMemo(() => {
-    return `<iframe src="${embedUrl}" width="100%" height="100%" style="border:0;" allowfullscreen></iframe>`;
-  }, [embedUrl]);
+    return `<iframe src="${activeEmbedUrl}" width="100%" height="100%" style="border:0;" allowfullscreen></iframe>`;
+  }, [activeEmbedUrl]);
 
-  // Other channels for quick channel switching
+  // Other live matches for quick switcher
+  const cachedMatches = useMemo(() => getCachedLiveMatches(), []);
+  const otherMatches = useMemo(() => {
+    return cachedMatches.filter(
+      (m) => String(m.id) !== String(streamId) && String(m.streamId) !== String(streamId)
+    );
+  }, [cachedMatches, streamId]);
+
+  // Other TV channels for quick channel switching
   const otherChannels = useMemo(() => {
     return LIVE_CHANNELS.filter(
       (ch) => String(ch.streamId) !== String(streamId) && String(ch.id) !== String(streamId)
     );
   }, [streamId]);
+
+  const isMatch = Boolean(channel?.teams?.home || channel?.teams?.away || channel?.league);
 
   const handleCopyCode = async () => {
     try {
@@ -82,12 +113,12 @@ const LiveStreaming = () => {
 
   return (
     <div className="min-h-screen w-full bg-[#0a0a0a] text-white flex flex-col select-none">
-      {/* ── Top Bar with Navigation & Channel Title ── */}
+      {/* ── Top Bar with Navigation & Title ── */}
       <header className="h-12 sm:h-14 md:h-16 bg-[#121212] border-b border-white/10 px-3 sm:px-6 flex items-center justify-between z-30 shrink-0">
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           <button
             type="button"
-            onClick={() => navigate('/')}
+            onClick={() => navigate(-1)}
             aria-label="Back to browse"
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold transition-colors shrink-0"
           >
@@ -100,8 +131,8 @@ const LiveStreaming = () => {
             <h1 className="text-xs sm:text-sm md:text-base font-bold text-white truncate max-w-[140px] xs:max-w-[200px] sm:max-w-md md:max-w-xl">
               {channel.name}
             </h1>
-            <span className="text-[10px] font-semibold text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/10 shrink-0">
-              Stream #{channel.streamId || streamId}
+            <span className="text-[10px] font-semibold text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/10 shrink-0 hidden sm:inline-block">
+              {channel.league || channel.category_name || channel.category || `Stream #${channel.streamId || streamId}`}
             </span>
           </div>
         </div>
@@ -138,18 +169,18 @@ const LiveStreaming = () => {
         </div>
       </header>
 
-      {/* ── Main Video Player Viewport with the requested iframe ── */}
+      {/* ── Main Video Player Viewport ── */}
       <main className="relative flex-1 w-full bg-black h-[40vh] sm:min-h-[55vh] md:min-h-[70vh] max-h-[85vh] flex items-center justify-center">
-        {embedUrl ? (
+        {activeEmbedUrl ? (
           <iframe
-            key={`${embedUrl}-${playerKey}`}
-            src={embedUrl}
+            key={`${activeEmbedUrl}-${playerKey}`}
+            src={activeEmbedUrl}
             width="100%"
             height="100%"
             style={{ border: 0 }}
             allowFullScreen
             allow="accelerometer; autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope;"
-            sandbox="allow-scripts allow-same-origin"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-top-navigation-by-user-activation"
             title={channel?.name || 'Live Channel Stream'}
             className="absolute inset-0 w-full h-full"
           />
@@ -161,52 +192,136 @@ const LiveStreaming = () => {
         )}
       </main>
 
-      {/* ── Channel Information & Switcher Footer ── */}
+      {/* ── Information Bar & Multi-Server Controls ── */}
       <footer className="bg-[#121212] border-t border-white/10 p-3 sm:p-5 md:p-6 shrink-0 space-y-4">
-        {/* Channel Info Card */}
-        <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-[#181818] border border-white/5">
-          <div className="flex items-center gap-3 min-w-0">
-            {channel.badge && (
-              <div className="w-12 h-8 sm:w-14 sm:h-9 bg-black/80 rounded-md p-1 border border-white/10 flex items-center justify-center shrink-0">
-                <img
-                  src={channel.badge}
-                  alt={channel.name}
-                  className="max-h-full max-w-full object-contain"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              </div>
-            )}
-            <div className="flex flex-col min-w-0">
+        {/* Stream Servers & Matchup Bar */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-[#181818] border border-white/5">
+          {/* Match / Channel Details */}
+          {isMatch ? (
+            <div className="flex items-center gap-3 sm:gap-5 min-w-0 flex-wrap">
+              {/* Home Team */}
               <div className="flex items-center gap-2">
-                <h2 className="font-bold text-sm sm:text-base text-white truncate">
-                  {channel.name}
-                </h2>
-                {channel.hd && (
-                  <span className="text-[9px] font-black text-amber-400 bg-amber-400/10 px-1.5 py-0.2 rounded border border-amber-400/30">
-                    HD
-                  </span>
+                {channel.teams?.home?.badge && (
+                  <div className="w-8 h-8 rounded-full bg-black/60 p-1 border border-white/10 flex items-center justify-center shrink-0">
+                    <img
+                      src={channel.teams.home.badge}
+                      alt=""
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  </div>
                 )}
+                <span className="font-bold text-sm sm:text-base text-white truncate max-w-[140px] sm:max-w-[200px]">
+                  {channel.teams?.home?.name || 'Home'}
+                </span>
               </div>
-              <p className="text-xs text-gray-400 truncate">
-                {channel.currentShow || channel.category || '24/7 Live Broadcast'}
-              </p>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-2 text-xs text-gray-400">
-            {channel.network && (
-              <span className="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-[11px] font-medium text-gray-300">
-                {channel.network}
+              <span className="px-2 py-0.5 rounded bg-red-950/80 text-red-400 font-black text-xs border border-red-500/30">
+                VS
               </span>
-            )}
-            <span className="text-emerald-400 font-semibold flex items-center gap-1.5 text-[11px] sm:text-xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Live Stream Active
-            </span>
-          </div>
+
+              {/* Away Team */}
+              <div className="flex items-center gap-2">
+                {channel.teams?.away?.badge && (
+                  <div className="w-8 h-8 rounded-full bg-black/60 p-1 border border-white/10 flex items-center justify-center shrink-0">
+                    <img
+                      src={channel.teams.away.badge}
+                      alt=""
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  </div>
+                )}
+                <span className="font-bold text-sm sm:text-base text-white truncate max-w-[140px] sm:max-w-[200px]">
+                  {channel.teams?.away?.name || 'Away'}
+                </span>
+              </div>
+
+              {channel.league && (
+                <span className="text-[11px] font-semibold text-gray-400 bg-white/5 px-2.5 py-1 rounded border border-white/10">
+                  {channel.league}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 min-w-0">
+              {channel.badge && (
+                <div className="w-12 h-8 sm:w-14 sm:h-9 bg-black/80 rounded-md p-1 border border-white/10 flex items-center justify-center shrink-0">
+                  <img
+                    src={channel.badge}
+                    alt={channel.name}
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
+              )}
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-2">
+                  <h2 className="font-bold text-sm sm:text-base text-white truncate">
+                    {channel.name}
+                  </h2>
+                  {channel.hd && (
+                    <span className="text-[9px] font-black text-amber-400 bg-amber-400/10 px-1.5 py-0.2 rounded border border-amber-400/30">
+                      HD
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-400 truncate">
+                  {channel.currentShow || channel.category || '24/7 Live Broadcast'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Server Feed Switcher Buttons (if multiple sources exist) */}
+          {channel.sources && channel.sources.length > 1 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-gray-400 font-medium">Servers:</span>
+              {channel.sources.map((s, idx) => {
+                const isSelected = (activeSourceId || channel.sources[0].id) === s.id;
+                return (
+                  <button
+                    key={s.id || idx}
+                    type="button"
+                    onClick={() => setActiveSourceId(s.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      isSelected
+                        ? 'bg-[#E50914] text-white shadow-md shadow-red-900/40'
+                        : 'bg-white/10 hover:bg-white/20 text-gray-300'
+                    }`}
+                  >
+                    <i className="fa-solid fa-server text-[10px]" />
+                    <span>{s.name || `Server ${idx + 1}`}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
+
+        {/* Switch Live Match Rail */}
+        {otherMatches.length > 0 && (
+          <div className="pt-2">
+            <RailRow
+              titleAlt={
+                <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-300 uppercase tracking-wider">
+                  <i className="fa-solid fa-trophy text-red-500 text-xs" />
+                  <span>Other Live Matches</span>
+                </div>
+              }
+              items={otherMatches}
+              eager={true}
+              renderItem={(m) => (
+                <LiveMatchCard
+                  key={m.id}
+                  match={m}
+                  onSelect={() =>
+                    navigate(`/live-stream/${m.id}`, {
+                      state: { stream: m },
+                    })
+                  }
+                />
+              )}
+            />
+          </div>
+        )}
 
         {/* Switch Channel Rail */}
         {otherChannels.length > 0 && (
@@ -215,7 +330,7 @@ const LiveStreaming = () => {
               titleAlt={
                 <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-300 uppercase tracking-wider">
                   <i className="fa-solid fa-satellite-dish text-red-500 text-xs" />
-                  <span>Switch to Other Live Channels</span>
+                  <span>Live Sports Channels</span>
                 </div>
               }
               items={otherChannels}
