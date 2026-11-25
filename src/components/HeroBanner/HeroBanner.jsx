@@ -107,7 +107,7 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
     <section
       aria-roledescription="carousel"
       aria-label="Featured titles"
-      className="relative w-full h-[42vh] min-h-[35y0px] max-h-[560px] sm:h-[75vh] sm:max-h-none md:h-[85vh] lg:h-[94vh] overflow-hidden bg-[#141414] select-none touch-pan-y group"
+      className="relative w-full h-[42vh] min-h-[350px] max-h-[560px] sm:h-[75vh] sm:max-h-none md:h-[85vh] lg:h-[94vh] overflow-hidden bg-[#07070a] select-none touch-pan-y group transform-gpu [contain:paint]"
       onMouseDown={handlePointerDown}
       onTouchStart={handlePointerDown}
       onMouseLeave={finishDrag}
@@ -129,7 +129,7 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
           return (
             <div
               key={slide.id || idx}
-              className="relative min-w-full h-full shrink-0 overflow-hidden"
+              className="relative min-w-full h-full shrink-0 overflow-hidden transform-gpu"
               aria-hidden={!isActive}
             >
               {/* Background Media with Subtle Desktop Zoom */}
@@ -138,7 +138,7 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
                 <img
                   src={slide.img}
                   alt={slide.name2 || 'Featured Title'}
-                  className={`w-full h-full object-cover object-top transition-transform duration-[10000ms] ease-out ${
+                  className={`w-full h-full object-cover object-top will-change-transform transform-gpu transition-transform duration-[10000ms] ease-out ${
                     isActive ? 'sm:scale-105' : 'scale-100'
                   }`}
                   loading={idx === 0 ? 'eager' : 'lazy'}
@@ -148,20 +148,20 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
 
               {/* Signature Vignettes & Gradients */}
               {/* 1. Top Navbar Shadow */}
-              <div className="absolute inset-x-0 top-0 h-24 sm:h-28 bg-gradient-to-b from-black/85 via-black/35 to-transparent pointer-events-none" />
+              <div className="absolute inset-x-0 top-0 h-28 sm:h-36 bg-gradient-to-b from-[#07070a]/90 via-[#07070a]/40 to-transparent pointer-events-none" />
               {/* 2. Left Side Dark Vignette for Text Readability */}
-              <div className="absolute inset-y-0 left-0 w-full md:w-[68%] bg-gradient-to-r from-[#141414]/95 via-[#141414]/55 to-transparent pointer-events-none" />
-              {/* 3. Bottom Seamless Blend into #141414 Background */}
-              <div className="absolute inset-x-0 bottom-0 h-44 sm:h-52 md:h-64 bg-gradient-to-t from-[#141414] via-[#141414]/85 to-transparent pointer-events-none" />
+              <div className="absolute inset-y-0 left-0 w-full md:w-[68%] bg-gradient-to-r from-[#07070a]/95 via-[#07070a]/60 to-transparent pointer-events-none" />
+              {/* 3. Bottom Seamless Blend into #07070a Background */}
+              <div className="absolute inset-x-0 bottom-0 h-44 sm:h-52 md:h-64 bg-gradient-to-t from-[#07070a] via-[#07070a]/85 to-transparent pointer-events-none" />
 
               {/* Left Content Stack (Billboard Info) */}
               <div className="absolute bottom-[9%] sm:bottom-[16%] md:bottom-[20%] left-0 w-full px-4 sm:px-8 md:px-12 lg:px-16 z-10 flex flex-col items-start max-w-full md:max-w-[62%] lg:max-w-[50%] pointer-events-none">
                 {/* Brand + Media Type Badge */}
-                <div className="flex items-center gap-2 mb-1.5 sm:mb-2 md:mb-3">
-                  <span className="font-black text-[#E50914] text-lg sm:text-2xl md:text-3xl tracking-tighter leading-none drop-shadow-md">
+                <div className="flex items-center gap-2.5 mb-2 sm:mb-2.5 md:mb-3">
+                  <span className="font-black text-[#E50914] text-xl sm:text-2xl md:text-3xl tracking-tighter leading-none drop-shadow-[0_0_12px_rgba(229,9,20,0.6)]">
                     C
                   </span>
-                  <span className="text-gray-300 font-bold tracking-[0.25em] text-[10px] sm:text-xs md:text-sm uppercase drop-shadow">
+                  <span className="text-gray-300 font-bold tracking-[0.25em] text-[10px] sm:text-xs uppercase bg-white/[0.1] border border-white/20 px-3 py-0.5 rounded-full shadow-glass-sm">
                     {slide.type === 'tv' ? 'Series' : slide.type || 'Film'}
                   </span>
                 </div>
@@ -171,19 +171,19 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
                   <img
                     src={slide.nameImg2}
                     alt={slide.name2}
-                    className="w-auto max-h-[56px] sm:max-h-[95px] md:max-h-[125px] lg:max-h-[145px] max-w-[78%] sm:max-w-[85%] object-contain object-left mb-2.5 sm:mb-3 md:mb-5 drop-shadow-[0_4px_12px_rgba(0,0,0,0.85)]"
+                    className="w-auto max-h-[56px] sm:max-h-[95px] md:max-h-[125px] lg:max-h-[145px] max-w-[78%] sm:max-w-[85%] object-contain object-left mb-2.5 sm:mb-3 md:mb-5 drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]"
                     draggable="false"
                   />
                 ) : (
-                  <h1 className="text-1xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight mb-2.5 sm:mb-3 md:mb-5 drop-shadow-[0_4px_12px_rgba(0,0,0,0.85)] line-clamp-2">
+                  <h1 className="text-[18px] sm:text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight mb-2.5 sm:mb-3 md:mb-5 drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)] line-clamp-2">
                     {slide.name2}
                   </h1>
                 )}
 
                 {/* Top 10 Badge + Rank */}
                 <div className="flex items-center gap-2 sm:gap-2.5 mb-3 md:mb-4">
-                  <div className="flex flex-col items-center justify-center bg-[#E50914] text-white font-black px-1.5 py-0.5 rounded-[2px] leading-none shadow-md">
-                    <span className="text-[6px] sm:text-[7px] md:text-[8px] tracking-tighter">
+                  <div className="flex flex-col items-center justify-center bg-[#E50914] text-white font-black px-2 py-0.5 rounded-md leading-none shadow-[0_0_15px_rgba(229,9,20,0.5)] border border-white/20">
+                    <span className="text-[6px] sm:text-[7px] md:text-[8px] tracking-tighter font-extrabold">
                       TOP
                     </span>
                     <span className="text-[10px] sm:text-[11px] md:text-xs">10</span>
@@ -195,30 +195,30 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
 
                 {/* Synopsis (Tablet & Desktop) */}
                 {slide.desc && (
-                  <p className="hidden sm:line-clamp-3 text-xs sm:text-sm md:text-base lg:text-lg text-white/90 font-normal leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] mb-5 md:mb-6 max-w-xl">
+                  <p className="hidden sm:line-clamp-3 text-xs sm:text-sm md:text-base lg:text-lg text-white/90 font-normal leading-snug drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] mb-5 md:mb-6 max-w-xl">
                     {slide.desc}
                   </p>
                 )}
 
-                {/* Action Buttons (Touch-friendly, no sticky mobile hover) */}
-                <div className="flex items-center gap-2.5 sm:gap-3.5 w-full sm:w-auto pointer-events-auto">
-                  {/* Primary Play Button */}
+                {/* Glass Mirror Action Buttons */}
+                <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto pointer-events-auto">
+                  {/* Primary Play Button (Glass Mirror) */}
                   <button
                     type="button"
                     onClick={(e) => handleActionClick(e, slide.id)}
-                    className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-white text-black font-bold text-xs sm:text-base md:text-lg px-4 sm:px-7 py-1 md:py-3 rounded-[4px] shadow-lg cursor-pointer transition-all duration-150 active:scale-[0.97] active:bg-white/80 sm:hover:bg-white/85"
+                    className="flex-1 sm:flex-initial glass-btn-primary flex items-center justify-center gap-2.5 text-white font-black text-xs sm:text-sm md:text-base px-6 sm:px-8 py-2.5 md:py-3.5 rounded-xl cursor-pointer"
                   >
-                    <i className="fa-solid fa-play text-sm sm:text-lg md:text-xl" />
-                    <span>Play</span>
+                    <i className="fa-solid fa-play text-sm sm:text-base" />
+                    <span>Play Now</span>
                   </button>
 
-                  {/* Secondary More Info Button */}
+                  {/* Secondary More Info Button (Frosted Glass Mirror) */}
                   <button
                     type="button"
                     onClick={(e) => handleActionClick(e, slide.id)}
-                    className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-[#6d6d6e]/75 text-white font-bold text-xs sm:text-base md:text-lg px-4 sm:px-7 py-1 md:py-3 rounded-[4px] backdrop-blur-sm shadow-lg cursor-pointer transition-all duration-150 active:scale-[0.97] active:bg-[#6d6d6e]/50 sm:hover:bg-[#6d6d6e]/50"
+                    className="flex-1 sm:flex-initial glass-btn-secondary flex items-center justify-center gap-2.5 font-bold text-xs sm:text-sm md:text-base px-5 sm:px-7 py-2.5 md:py-3.5 rounded-xl cursor-pointer"
                   >
-                    <i className="fa-solid fa-circle-info text-sm sm:text-lg md:text-xl" />
+                    <i className="fa-solid fa-circle-info text-sm sm:text-base text-gray-300" />
                     <span>More Info</span>
                   </button>
                 </div>
@@ -226,7 +226,7 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
 
               {/* Right Side Maturity Rating Badge (Tablet & Desktop) */}
               <div className="hidden sm:flex absolute bottom-[30%] md:bottom-[34%] right-0 items-center z-20 pointer-events-none">
-                <div className="bg-[#333333]/70 border-l-[3px] border-white/80 py-1.5 pl-3 pr-6 md:pr-10 text-white text-xs md:text-sm font-semibold backdrop-blur-sm">
+                <div className="bg-black/75 border-l-[3px] border-[#E50914] border-y border-r border-white/15 rounded-l-xl py-1.5 pl-4 pr-6 md:pr-10 text-white text-xs md:text-sm font-semibold shadow-glass-sm">
                   {slide.ua || slide.maturity || 'U/A 16+'}
                 </div>
               </div>
@@ -235,7 +235,7 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
         })}
       </div>
 
-      {/* Desktop-Only Previous / Next Arrows */}
+      {/* Desktop-Only Previous / Next Glass Arrows */}
       {totalSlides > 1 && (
         <>
           {heroIndex > 0 && (
@@ -246,7 +246,7 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
                 e.stopPropagation();
                 setHeroIndex((prev) => Math.max(0, prev - 1));
               }}
-              className="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/45 text-white/80 items-center justify-center border border-white/15 opacity-0 md:group-hover:opacity-100 md:hover:bg-black/75 md:hover:text-white transition-all cursor-pointer"
+              className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full glass-mirror text-white/90 hover:text-white items-center justify-center transition-all cursor-pointer hover:scale-110 shadow-glass-md opacity-0 md:group-hover:opacity-100"
             >
               <i className="fa-solid fa-chevron-left text-sm" />
             </button>
@@ -259,44 +259,14 @@ function HeroBanner({ mediaData, currentHero, heroIndex, setHeroIndex, openWatch
                 e.stopPropagation();
                 setHeroIndex((prev) => Math.min(totalSlides - 1, prev + 1));
               }}
-              className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/45 text-white/80 items-center justify-center border border-white/15 opacity-0 md:group-hover:opacity-100 md:hover:bg-black/75 md:hover:text-white transition-all cursor-pointer"
+              className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full glass-mirror text-white/90 hover:text-white items-center justify-center transition-all cursor-pointer hover:scale-110 shadow-glass-md opacity-0 md:group-hover:opacity-100"
             >
               <i className="fa-solid fa-chevron-right text-sm" />
             </button>
           )}
         </>
       )}
-
-      {/* Slide Progress Indicators */}
-      {totalSlides > 1 && (
-        <div
-          role="tablist"
-          aria-label="Featured slides"
-          className="absolute bottom-3 sm:bottom-[10%] md:bottom-[14%] right-4 sm:right-8 md:right-12 lg:right-16 z-20 flex items-center gap-1.5"
-        >
-          {slides.map((slide, idx) => {
-            const isActive = idx === heroIndex;
-            return (
-              <button
-                key={slide.id || idx}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                aria-label={`Slide ${idx + 1}: ${slide.name2 || 'Featured'}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setHeroIndex(idx);
-                }}
-                className={`h-1 rounded-full transition-all duration-300 cursor-pointer ${
-                  isActive
-                    ? 'w-5 sm:w-6 bg-[#E50914]'
-                    : 'w-2 sm:w-2.5 bg-white/35 sm:hover:bg-white/60'
-                }`}
-              />
-            );
-          })}
-        </div>
-      )}
+     
     </section>
   );
 }

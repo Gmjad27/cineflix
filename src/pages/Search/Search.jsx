@@ -7,7 +7,7 @@ import Footer from '../../components/Footer/Footer';
 import Skeleton from '../../components/Skeleton/Skeleton';
 import RailRow from '../../components/RailRow/RailRow';
 import { useRailScroll } from '../../hooks/useRailScroll';
-import Snowfall from 'react-snowfall';
+import { useNetworkStatus } from '../../context/NetworkContext';
 
 /* ---------- helpers ---------- */
 const scoreItem = (item, value) => {
@@ -28,6 +28,7 @@ const scoreItem = (item, value) => {
 const Search = (props) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { isOnline, isWeak } = useNetworkStatus();
 
   const urlQuery = searchParams.get('q') || '';
   const [query, setQuery] = useState(urlQuery);
@@ -165,55 +166,62 @@ const Search = (props) => {
   /* ---------- loading state ---------- */
   if (props.loading) {
     return (
-      <div className="min-h-screen bg-[#141414] text-white pt-24 px-6 md:px-12 lg:px-16">
-        <div className="h-14 bg-[#2a2a2a] rounded animate-pulse w-full max-w-3xl mb-12" />
-        <Skeleton type="card" count={12} />
+      <div className="min-h-screen bg-[#07070a] text-white pt-24 px-6 md:px-12 lg:px-16">
+        <div className="h-14 glass-mirror rounded-2xl animate-pulse w-full max-w-3xl mb-12 mx-auto" />
+        <Skeleton type="search" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#141414] text-white font-sans selection:bg-[#E50914] selection:text-white">
+    <div className="min-h-screen bg-[#07070a] text-white font-sans selection:bg-[#E50914] selection:text-white">
+      {/* ── Hero Search Section (Glass Mirror Aesthetic) ── */}
+      <section className="relative pt-20 pb-12 px-6 md:px-12 lg:px-16 bg-gradient-to-b from-white/[0.04] via-transparent to-transparent border-b border-white/[0.08] overflow-hidden">
+        {/* Ambient Red Spotlight */}
+        <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-64 bg-[#E50914]/15 blur-[120px] rounded-full" />
 
-      <Snowfall
-        style={{
-          position: 'fixed',
-          width: '100vw',
-          height: '100vh',
-          zIndex: 999, // Lower than your intro video (10000) and toast (9999), but above normal page content
-          pointerEvents: 'none',
-        }}
-        snowflakeCount={100} // Optional: adjust particle density
-      />
-      
-      {/* ── Hero Search Section (Hotstar‑style) ── */}
-      <section className="relative pt-14 pb-12 px-6 md:px-12 lg:px-16 bg-gradient-to-b from-[#1f1f1f] to-[#141414] border-b border-[#2a2a2a]">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">
-            {normalizedQuery ? 'Search Results' : 'Discover your next favourite'}
+        <div className="relative max-w-4xl mx-auto text-center">
+          <h1 className="text-3xl md:text-5xl font-black mb-6 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400">
+            {normalizedQuery ? 'Search Results' : 'Discover Your Next Favorite'}
           </h1>
 
-
           <div className="relative max-w-2xl mx-auto">
-            <i className="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
-            <input
-              type="text"
-              inputMode="search"
-              className="w-full pl-14 pr-12 py-4 bg-[#2a2a2a]/80 border border-[#404040] hover:border-[#606060] rounded-xl text-white text-lg placeholder-gray-500 focus:outline-none focus:border-[#E50914] focus:ring-2 focus:ring-[#E50914]/20 transition-all shadow-2xl backdrop-blur-sm"
-              placeholder="Search your favourite Movies, shows"
-              value={query}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              autoFocus
-            />
-            {query && (
-              <button
-                onClick={() => handleSearchChange('')}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition"
-                aria-label="Clear search"
-              >
-                <i className="fa-solid fa-xmark text-xl"></i>
-              </button>
-            )}
+            <div className="glass-mirror rounded-2xl p-1.5 focus-within:border-[#E50914]/80 focus-within:shadow-neon-red transition-all duration-300">
+              <div className="relative flex items-center">
+                {/* <i className="fa-solid fa-magnifying-glass absolute left-5 text-gray-400 text-lg pointer-events-none" /> */}
+                <input
+                  type="text"
+                  inputMode="search"
+                  className="w-full pl-13 pr-12 py-3.5 bg-transparent rounded-xl text-white text-base md:text-lg placeholder-gray-500 focus:outline-none"
+                  placeholder="Search movies, TV shows, studios..."
+                  value={query}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  autoFocus
+                />
+                {query && (
+                  <button
+                    onClick={() => handleSearchChange('')}
+                    className="absolute right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white flex items-center justify-center transition cursor-pointer"
+                    aria-label="Clear search"
+                  >
+                    <i className="fa-solid fa-xmark text-sm"></i>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Offline / Weak Network Status Badge */}
+            {!isOnline ? (
+              <div className="mt-3 inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-950/70 border border-red-500/40 text-[11px] font-semibold text-red-300 shadow-sm">
+                <i className="fa-solid fa-wifi-slash text-[10px]" />
+                <span>Offline: Showing cached titles only</span>
+              </div>
+            ) : isWeak ? (
+              <div className="mt-3 inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-950/70 border border-amber-500/40 text-[11px] font-semibold text-amber-300 shadow-sm">
+                <i className="fa-solid fa-gauge-simple-low text-[10px]" />
+                <span>Slow connection: Live search may be delayed</span>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>
@@ -223,14 +231,22 @@ const Search = (props) => {
         {normalizedQuery ? (
           /* ═══════════════════════ SEARCH RESULTS ═══════════════════════ */
           <div className="animate-[fadeIn_0.3s_ease-out]">
-            {searchLoading && (
+            {searchLoading && rankedResults.length === 0 ? (
+              <div className="mb-12">
+                <div className="flex items-center gap-3 px-3 md:px-0 mb-6">
+                  <div className="w-4 h-4 border-2 border-white/20 border-t-[#E50914] rounded-full animate-spin" />
+                  <span className="text-xs uppercase font-bold tracking-widest text-gray-400">Searching titles...</span>
+                </div>
+                <Skeleton type="search" />
+              </div>
+            ) : searchLoading ? (
               <div className="flex justify-center mb-8">
-                <div className="flex items-center gap-3 text-[#E50914]">
-                  <i className="fa-solid fa-spinner animate-spin text-xl"></i>
-                  <span className="font-semibold tracking-wider uppercase">Searching…</span>
+                <div className="flex items-center gap-3 px-5 py-2.5 rounded-full glass-mirror text-[#E50914]">
+                  <i className="fa-solid fa-spinner animate-spin text-lg"></i>
+                  <span className="font-bold tracking-wider text-sm uppercase">Searching…</span>
                 </div>
               </div>
-            )}
+            ) : null}
 
             {/* Top Results Rail */}
             {topResults.length > 0 && (
@@ -285,15 +301,19 @@ const Search = (props) => {
 
             {/* Empty State */}
             {!searchLoading && rankedResults.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-24 text-center">
-                <i className="fa-regular fa-face-frown text-5xl text-gray-600 mb-6"></i>
-                <h3 className="text-2xl font-bold mb-3">No matches found</h3>
-                <p className="text-gray-400 text-lg max-w-md">
-                  We couldn't find anything for "{query}". Try a different spelling or browse by genre.
+              <div className="glass-modal max-w-md mx-auto p-8 rounded-3xl text-center border border-white/10 shadow-glass-md my-12">
+                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4 text-gray-400">
+                  <i className="fa-regular fa-face-frown text-3xl"></i>
+                </div>
+                <h3 className="text-2xl font-bold mb-2 text-white">No matches found</h3>
+                <p className="text-gray-400 text-sm max-w-sm mx-auto mb-6">
+                  {!isOnline
+                    ? "You're currently offline. Reconnect to internet to search the full TMDB catalog."
+                    : `We couldn't find anything for "${query}". Try a different spelling or browse trending titles.`}
                 </p>
                 <button
                   onClick={() => handleSearchChange('')}
-                  className="mt-6 px-6 py-2 border border-gray-600 rounded-full text-gray-300 hover:border-white hover:text-white transition"
+                  className="glass-btn-secondary px-6 py-2.5 text-sm font-semibold rounded-full cursor-pointer"
                 >
                   Clear search
                 </button>
@@ -306,13 +326,13 @@ const Search = (props) => {
 
             {/* Popular Searches Tags */}
             <section className="px-6 md:px-12 lg:px-16">
-              <h2 className="text-2xl font-bold mb-6">Popular Searches</h2>
+              <h2 className="text-xl md:text-2xl font-bold mb-6 text-white/90">Popular Searches</h2>
               <div className="flex flex-wrap gap-3">
                 {popularSearches.map((term) => (
                   <button
                     key={term}
                     onClick={() => handleSearchChange(term)}
-                    className="px-5 py-2.5 bg-[#2a2a2a] border border-[#3a3a3a] hover:border-[#E50914] hover:bg-[#3a1a1a]/20 rounded-full text-sm font-medium transition-all duration-200"
+                    className="px-5 py-2.5 glass-mirror-card rounded-full text-sm font-semibold text-gray-300 hover:text-white hover:border-[#E50914]/80 hover:bg-[#E50914]/15 hover:shadow-neon-red transition-all duration-200 cursor-pointer"
                   >
                     {term}
                   </button>

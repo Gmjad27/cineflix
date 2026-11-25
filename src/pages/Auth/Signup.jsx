@@ -50,69 +50,77 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900 relative overflow-hidden p-4">
-      {/* Background overlay – same as login */}
-      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1925&q=80')] bg-cover bg-center opacity-10"></div>
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
-      <div className="absolute inset-0 overflow-hidden hidden sm:block">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-red-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-1000"></div>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-[#07070a] relative overflow-hidden p-4">
+      {/* Dark Ambient Mesh & Glowing Orbs */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(229,9,20,0.18),rgba(255,255,255,0))] pointer-events-none" />
+      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1925&q=80')] bg-cover bg-center opacity-[0.06] pointer-events-none"></div>
+      <div className="absolute inset-0 bg-gradient-to-t from-[#07070a] via-transparent to-transparent pointer-events-none"></div>
+
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cine-red/20 rounded-full mix-blend-screen filter blur-[100px] pointer-events-none animate-pulse"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-900/25 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
 
       <div className="relative z-10 w-full max-w-md px-4 sm:px-6">
-        <div className="bg-black/80 backdrop-blur-xl rounded-2xl shadow-2xl p-6 sm:p-8 border border-gray-800">
+        {/* Glass Mirror Card */}
+        <div className="glass-modal rounded-3xl p-6 sm:p-10 shadow-glass-lg border border-white/15 relative overflow-hidden">
+          {/* Specular Top Glow */}
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+
           {/* Logo */}
           <div className="text-center mb-6 sm:mb-8">
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-              CINE<span className="text-red-600">FLIX</span>
+            <h1 className="text-4xl sm:text-5xl font-black tracking-tight drop-shadow-[0_0_25px_rgba(229,9,20,0.4)]">
+              CINE<span className="text-[#E50914]">FLIX</span>
             </h1>
-            <p className="text-gray-400 text-xs sm:text-sm mt-2">Create your account</p>
+            <p className="text-gray-400 text-xs sm:text-sm mt-2 font-medium">Create your account</p>
           </div>
 
-          <form className="space-y-5 sm:space-y-6" onSubmit={handleSignup}>
-            <h2 className="text-xl sm:text-2xl font-semibold text-white">Sign Up</h2>
+          <form className="space-y-4 sm:space-y-5" onSubmit={handleSignup}>
+            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Sign Up</h2>
 
             {error && (
-              <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-2 rounded-lg text-sm animate-shake">
+              <div className="bg-red-500/10 border border-red-500/40 text-red-400 px-4 py-2.5 rounded-xl text-sm animate-shake backdrop-blur-md">
                 {error}
               </div>
             )}
 
-            <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-3.5 sm:space-y-4">
               <input
                 type="text"
                 placeholder="Full Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2.5 sm:py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-200 text-sm sm:text-base"
+                required
+                className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-gray-500 focus:outline-none transition-all duration-200 text-sm sm:text-base"
               />
               <input
                 type="email"
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2.5 sm:py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-200 text-sm sm:text-base"
+                required
+                className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-gray-500 focus:outline-none transition-all duration-200 text-sm sm:text-base"
               />
               <input
                 type="password"
                 placeholder="Password (min 6 characters)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2.5 sm:py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-200 text-sm sm:text-base"
+                required
+                className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-gray-500 focus:outline-none transition-all duration-200 text-sm sm:text-base"
               />
               <input
                 type="password"
                 placeholder="Confirm Password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-2.5 sm:py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-200 text-sm sm:text-base"
+                required
+                className="w-full px-4 py-3 glass-input rounded-xl text-white placeholder-gray-500 focus:outline-none transition-all duration-200 text-sm sm:text-base"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 sm:py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg shadow-red-600/20 text-sm sm:text-base"
+              className="w-full py-3 glass-btn-primary text-white font-bold rounded-xl transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-neon-red text-sm sm:text-base flex items-center justify-center cursor-pointer"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -127,24 +135,23 @@ const Signup = () => {
               )}
             </button>
 
-            {/* Password strength indicator – responsive */}
-            <div className="text-[10px] sm:text-xs text-gray-500 space-y-1">
-              <p>Password must be at least 6 characters long.</p>
-              <p className="flex items-center gap-1">
-                <span className={`inline-block w-2 h-2 rounded-full ${password.length >= 6 ? 'bg-green-500' : 'bg-gray-600'}`}></span>
-                Minimum 6 characters
+            {/* Password strength indicator */}
+            <div className="text-[11px] sm:text-xs text-gray-400 space-y-1.5 pt-1">
+              <p className="flex items-center gap-2">
+                <span className={`inline-block w-2.5 h-2.5 rounded-full transition-colors ${password.length >= 6 ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-gray-600'}`}></span>
+                <span>Minimum 6 characters</span>
               </p>
             </div>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-400 text-sm sm:text-base">
+          <div className="mt-8 pt-6 border-t border-white/[0.08] text-center">
+            <p className="text-gray-400 text-sm">
               Already have an account?{" "}
-              <Link to="/login" className="text-white hover:text-red-500 font-semibold transition-colors">
+              <Link to="/login" className="text-white hover:text-[#E50914] font-bold transition-colors">
                 Sign in now
               </Link>
             </p>
-            <p className="text-[10px] sm:text-xs text-gray-500 mt-4">
+            <p className="text-[10px] sm:text-xs text-gray-500 mt-4 leading-relaxed">
               By clicking Register, you agree to our Terms of Use and Privacy Policy.
             </p>
           </div>

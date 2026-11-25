@@ -7,7 +7,8 @@ import Footer from '../../components/Footer/Footer';
 import RailRow from '../../components/RailRow/RailRow';
 import { useRailScroll } from '../../hooks/useRailScroll';
 import Skeleton from '../../components/Skeleton/Skeleton';
-import Snowfall from 'react-snowfall';
+import { useNetworkStatus } from '../../context/NetworkContext';
+import OfflineScreen from '../../components/NetworkStatus/OfflineScreen';
 
 // Imported HeroBanner
 import HeroBanner from '../../components/HeroBanner/HeroBanner.jsx';
@@ -17,6 +18,7 @@ const HERO_ROTATE_MS = 8000;
 const Tv = (props) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { isOnline } = useNetworkStatus();
 
   const data = Array.isArray(props.data) ? props.data : [];
   const series = useMemo(() => data.filter((item) => item.type === 'tv'), [data]);
@@ -27,22 +29,21 @@ const Tv = (props) => {
   const [heroIndex, setHeroIndex] = useState(0);
 
   // Fetch TMDB TV sections
-  useEffect(() => {
-    let active = true;
-    const loadSections = async () => {
-      setSectionsLoading(true);
-      try {
-        const sections = await fetchTMDBTVSections();
-        if (active) setPageSections(sections);
-      } catch {
-        if (active) setPageSections({ heroBanner: [], rails: [] });
-      } finally {
-        if (active) setSectionsLoading(false);
-      }
-    };
-    loadSections();
-    return () => { active = false; };
+  const loadSections = useCallback(async () => {
+    setSectionsLoading(true);
+    try {
+      const sections = await fetchTMDBTVSections();
+      setPageSections(sections);
+    } catch {
+      setPageSections({ heroBanner: [], rails: [] });
+    } finally {
+      setSectionsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadSections();
+  }, [loadSections]);
 
   // Determine mediaData for HeroBanner (fallback to top recent series if no TMDB hero banner)
   const heroData = useMemo(() => {
@@ -134,7 +135,7 @@ const Tv = (props) => {
   // ==========================================
   if (props.loading || (sectionsLoading && sections.length === 0)) {
     return (
-      <div className="min-h-screen bg-[#141414] text-white">
+      <div className="min-h-screen bg-[#07070a] text-white">
         <Skeleton type="banner" />
         <div className="px-6 md:px-12 lg:px-16 mt-4 space-y-12">
           {[1, 2, 3, 4].map((section) => (
@@ -145,20 +146,17 @@ const Tv = (props) => {
     );
   }
 
+  // Offline empty state
+  if (!props.loading && !sectionsLoading && !isOnline && allItems.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#07070a] pt-16 sm:pt-20">
+        <OfflineScreen onRetry={loadSections} title="TV Shows Unavailable Offline" />
+      </div>
+    );
+  }
+
   return (
-    <div className="relative min-h-screen bg-[#141414] text-white overflow-hidden selection:bg-[#E50914] selection:text-white">
-
-
-      <Snowfall
-        style={{
-          position: 'fixed',
-          width: '100vw',
-          height: '100vh',
-          zIndex: 999, // Lower than your intro video (10000) and toast (9999), but above normal page content
-          pointerEvents: 'none',
-        }}
-        snowflakeCount={100} // Optional: adjust particle density
-      />
+    <div className="relative min-h-screen bg-[#07070a] text-white overflow-hidden selection:bg-[#E50914] selection:text-white">
       {/* ── Hero Banner ── */}
       <HeroBanner
         mediaData={heroData}

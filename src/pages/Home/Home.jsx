@@ -9,7 +9,8 @@ import { fetchTMDBDetails } from '../../content/tmdb.js';
 import Skeleton from '../../components/Skeleton/Skeleton';
 import { STUDIO_COLLECTIONS } from '../../content/studios.js';
 import { getContinueWatching, removeContinueWatching } from '../../utils/continueWatching';
-import Snowfall from 'react-snowfall';
+import { useNetworkStatus } from '../../context/NetworkContext';
+import OfflineScreen from '../../components/NetworkStatus/OfflineScreen';
 
 const Card = lazy(() => import('../../components/Card/Card'));
 const Card2 = lazy(() => import('../../components/Card/Card2'));
@@ -21,6 +22,7 @@ const HERO_ROTATE_MS = 8000;
 function Home(props) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { isOnline } = useNetworkStatus();
 
   const data = Array.isArray(props.data) ? props.data : [];
   const homeSections = props.homeSections || { heroBanner: [], rails: [] };
@@ -216,7 +218,7 @@ function Home(props) {
 
   if (props.loading) {
     return (
-      <div className="min-h-screen bg-[#141414] text-white" id="homepage">
+      <div className="min-h-screen bg-[#07070a] text-white" id="homepage">
         <Skeleton type="banner" />
         <div className="px-3 sm:px-6 md:px-10 lg:px-16 -mt-6 sm:-mt-12 relative z-20 space-y-6 sm:space-y-8">
           {[1, 2, 3, 4, 5].map((section) => (
@@ -227,9 +229,18 @@ function Home(props) {
     );
   }
 
+  // Offline empty catalog state
+  if (!props.loading && !isOnline && data.length === 0) {
+    return (
+      <main className="min-h-screen bg-[#07070a] pt-16 sm:pt-20" id="homepage">
+        <OfflineScreen onRetry={props.onRetryCatalog} />
+      </main>
+    );
+  }
+
   return (
     <main
-      className="relative min-h-screen bg-[#141414] text-white overflow-x-hidden selection:bg-[#E50914] selection:text-white"
+      className="relative min-h-screen bg-[#07070a] text-white overflow-x-hidden selection:bg-[#E50914] selection:text-white"
       id="homepage"
     >
 
@@ -283,16 +294,17 @@ function Home(props) {
                       title={`Resume ${item.title}`}
                       className="
                         relative w-[195px] sm:w-64 md:w-72 lg:w-80
-                        rounded-md overflow-hidden cursor-pointer select-none
-                        bg-[#181818] shadow-md ring-1 ring-white/10
-                        transition-all duration-200 ease-out
-                        active:scale-[0.97] active:ring-white/30
-                        sm:hover:scale-[1.03] sm:hover:z-30 sm:hover:shadow-2xl sm:hover:ring-white/25
-                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500
+                        rounded-xl overflow-hidden cursor-pointer select-none
+                        glass-mirror-card bg-[#0d0d15]/95 shadow-glass-sm
+                        transition-transform duration-200 ease-out
+                        will-change-transform [contain:paint_layout]
+                        active:scale-[0.97]
+                        sm:hover:scale-[1.03] sm:hover:z-30 sm:hover:shadow-glass-lg sm:hover:border-white/30
+                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E50914]
                       "
                     >
                       {/* Thumbnail Container */}
-                      <div className="relative aspect-video w-full overflow-hidden bg-[#202020]">
+                      <div className="relative aspect-video w-full overflow-hidden bg-[#101018]">
                         <img
                           src={item.image || 'https://via.placeholder.com/640x360.png?text=Resume'}
                           alt={item.title}
@@ -303,7 +315,7 @@ function Home(props) {
                         />
 
                         {/* Dark Vignette */}
-                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#181818] via-black/20 to-transparent opacity-90" />
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0d0d15] via-black/20 to-transparent opacity-90" />
 
                         {/* Remove ("X") Button - Always accessible on mobile, hover-revealed on desktop */}
                         <button
@@ -314,7 +326,7 @@ function Home(props) {
                           className="
                             absolute top-2 right-2 z-30
                             w-7 h-7 md:w-8 md:h-8 rounded-full
-                            bg-black/75 backdrop-blur-xs text-white/85
+                            bg-black/85 text-white/85
                             flex items-center justify-center
                             border border-white/20
                             opacity-100 sm:opacity-0 sm:group-hover:opacity-100
@@ -328,22 +340,22 @@ function Home(props) {
 
                         {/* Episode Badge on Backdrop (Bottom Left) */}
                         {item.type === 'tv' && (
-                          <span className="absolute bottom-2.5 left-2.5 z-20 text-[10px] sm:text-xs font-bold tracking-wide text-white bg-black/70 px-2 py-0.5 rounded backdrop-blur-xs">
+                          <span className="absolute bottom-2.5 left-2.5 z-20 text-[10px] sm:text-xs font-bold tracking-wide text-white bg-black/80 px-2 py-0.5 rounded-md border border-white/10">
                             S{item.season || 1}:E{item.episode || 1}
                           </span>
                         )}
 
                         {/* Netflix Red Progress Bar */}
-                        <div className="absolute bottom-0 inset-x-0 h-[3px] md:h-1 bg-white/25 z-20">
+                        <div className="absolute bottom-0 inset-x-0 h-[3px] md:h-1 bg-white/20 z-20">
                           <div
-                            className="h-full bg-[#E50914]"
+                            className="h-full bg-[#E50914] shadow-neon-red"
                             style={{ width: `${progressPercent}%` }}
                           />
                         </div>
                       </div>
 
                       {/* Bottom Control Bar */}
-                      <div className="flex items-center justify-between px-2.5 sm:px-3 py-2 sm:py-2.5 bg-[#181818] text-white">
+                      <div className="flex items-center justify-between px-3 py-2.5 bg-[#0d0d15] text-white">
                         <div className="min-w-0 pr-2">
                           <h4 className="text-xs sm:text-sm font-bold text-gray-100 truncate">
                             {item.title}
@@ -379,7 +391,7 @@ function Home(props) {
         </Suspense>
 
         {/* Live Sports & Channels Section (Isolated Suspense so rails never wait on it) */}
-        <Suspense fallback={<Skeleton type="section" count={6} />}>
+        <Suspense fallback={<Skeleton type="live-section" count={6} />}>
           <LiveSection
             title="Live Sports & Matches"
             subtitle="Stream live sporting events & 24/7 sports channels in HD"
@@ -431,8 +443,8 @@ function Home(props) {
 
       {/* Direct URL Watch Loading Indicator */}
       {isWatchLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs">
-          <div className="w-10 h-10 border-4 border-[#E50914] border-t-transparent rounded-full animate-spin" />
+        <div className="fixed inset-0 z-[100] flex justify-center items-start pt-0 sm:pt-8 overflow-y-auto bg-black/80 backdrop-blur-xl px-4">
+          <Skeleton type="detail" />
         </div>
       )}
 

@@ -77,12 +77,16 @@ const Card = React.memo(
             relative z-10 shrink-0
             w-[116px] sm:w-36 md:w-44 lg:w-48 xl:w-52
             ${!height ? 'aspect-[2/3]' : ''}
-            overflow-hidden rounded-md
-            bg-[#181818]
-            ring-1 ring-white/10
-            transition-all duration-200 ease-out
-            active:scale-[0.96] active:ring-white/40
-            sm:group-hover:ring-white/35 sm:group-hover:-translate-y-1 sm:group-hover:shadow-xl sm:group-hover:shadow-black/60
+            overflow-hidden rounded-xl
+            bg-[#0c0c12]
+            border border-white/[0.09]
+            shadow-glass-sm
+            transition-transform duration-250 ease-out, border-color 0.2s ease, box-shadow 0.2s ease
+            will-change-transform
+            [contain:paint_layout]
+            active:scale-[0.96] active:border-white/40
+            sm:group-hover:border-white/35 sm:group-hover:-translate-y-1.5
+            sm:group-hover:shadow-[0_18px_40px_-8px_rgba(0,0,0,0.9),0_0_20px_rgba(229,9,20,0.2)]
             group-focus-visible:ring-2 group-focus-visible:ring-red-500
             ${rank
               ? isDoubleDigitRank
@@ -94,11 +98,11 @@ const Card = React.memo(
         >
           {/* Top-Left Brand + Match Badge */}
           <div className="absolute top-1.5 left-1.5 z-20 flex items-center gap-1 pointer-events-none">
-            <span className="font-black text-[#E50914] text-xs sm:text-sm tracking-tighter drop-shadow">
+            <span className="font-black text-[#E50914] text-xs sm:text-sm tracking-tighter drop-shadow-[0_0_6px_rgba(229,9,20,0.6)]">
               C
             </span>
             {!hideRating && matchPct && (
-              <span className="bg-black/85 border border-white/10 text-[#46d369] font-bold text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded transition-opacity duration-150 sm:group-hover:opacity-0">
+              <span className="bg-black/80 border border-emerald-500/30 text-emerald-400 font-bold text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full transition-opacity duration-150 sm:group-hover:opacity-0 shadow-glass-sm">
                 {matchPct}%
               </span>
             )}
@@ -109,16 +113,16 @@ const Card = React.memo(
             <div
               className="
                 absolute top-0 right-2 z-20 pointer-events-none
-                bg-[#E50914] text-white font-black
+                bg-gradient-to-b from-[#ff1a26] to-[#b80710] text-white font-black
                 px-1.5 pt-1 pb-2
                 flex flex-col items-center justify-center
-                leading-none shadow-md
+                leading-none shadow-md border-t border-white/40
               "
               style={{
                 clipPath: 'polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)',
               }}
             >
-              <span className="text-[6px] sm:text-[7px] tracking-wider uppercase">
+              <span className="text-[6px] sm:text-[7px] tracking-wider uppercase font-extrabold">
                 TOP
               </span>
               <span className="text-[9px] sm:text-[10px] tracking-tighter">
@@ -136,10 +140,10 @@ const Card = React.memo(
               decoding="async"
               draggable="false"
               onError={() => setImgError(true)}
-              className="block h-full w-full object-cover transition-transform duration-300 ease-out sm:group-hover:scale-105"
+              className="block h-full w-full object-cover transition-transform duration-500 ease-out sm:group-hover:scale-105"
             />
           ) : (
-            <div className="flex h-full flex-col items-center justify-center p-3 text-center bg-[#141414]">
+            <div className="flex h-full flex-col items-center justify-center p-3 text-center bg-[#0d0d14]">
               <div className="text-2xl font-black text-[#E50914] mb-1">C</div>
               <span className="text-[11px] font-semibold text-gray-300 line-clamp-2">
                 {name || 'Unknown Title'}
@@ -147,28 +151,16 @@ const Card = React.memo(
             </div>
           )}
 
-          {/* Desktop-Only Hover Info Overlay (Hidden on mobile so taps don't stick) */}
+          {/* Desktop-Only Glass Mirror Hover Info Overlay */}
           <div
             className="
-              hidden sm:flex absolute inset-0 z-20 flex-col justify-end p-2.5 md:p-3
-              bg-gradient-to-t from-black/95 via-black/50 to-transparent
+              hidden sm:flex absolute inset-0 z-20 flex-col justify-end p-3
+              bg-gradient-to-t from-[#07070a]/95 via-[#07070a]/65 to-transparent
               opacity-0 sm:group-hover:opacity-100
               transition-opacity duration-200 pointer-events-none
             "
           >
-            <p className="text-xs md:text-sm font-bold text-white line-clamp-2 leading-tight mb-1">
-              {name}
-            </p>
-            <div className="flex items-center justify-between text-[10px] font-semibold text-gray-300">
-              {!hideRating && matchPct ? (
-                <span className="text-[#46d369] font-bold">{matchPct}% Match</span>
-              ) : (
-                <span>{type}</span>
-              )}
-              <span className="inline-flex items-center gap-1 text-white bg-[#E50914] px-2 py-0.5 rounded-full text-[9px] font-bold">
-                <i className="fa-solid fa-play text-[8px]" /> Play
-              </span>
-            </div>
+          
           </div>
         </div>
       </div>

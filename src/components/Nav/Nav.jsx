@@ -1,19 +1,29 @@
 
 import React, { memo, useEffect, useMemo, useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
+import { useNetworkStatus } from '../../context/NetworkContext';
 
 const DEFAULT_PROFILE =
   'https://wallpapers.com/images/hd/netflix-profile-pictures-1000-x-1000-qo9h82134t9nv0j0.jpg';
 
 const Nav = () => {
   const location = useLocation();
+  const { isOnline, isWeak } = useNetworkStatus();
   const [isScrolled, setIsScrolled] = useState(false);
   const [canInstall, setCanInstall] = useState(false);
 
-  // Scroll detection
+  // Scroll detection (rAF-throttled for zero main-thread scroll jank)
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 30);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const next = window.scrollY > 30;
+          setIsScrolled((prev) => (prev !== next ? next : prev));
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
     handleScroll();
@@ -83,8 +93,8 @@ const Nav = () => {
           transition-all duration-500 ease-in-out
           ${
             isScrolled
-              ? 'bg-[#080808]/95 backdrop-blur-2xl shadow-xl shadow-black/30 border-b border-white/[0.06]'
-              : 'bg-gradient-to-b from-black/90 via-black/50 to-transparent  border-transparent'
+              ? 'bg-[#07070a]/80 backdrop-blur-2xl shadow-[0_10px_35px_-5px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.12)]'
+              : 'bg-gradient-to-b from-[#07070a]/95 via-[#07070a]/60 to-transparent'
           }
         `}
       >
@@ -97,7 +107,7 @@ const Nav = () => {
 
           {/* LEFT SECTION */}
 
-          <div className="flex items-center gap-10 xl:gap-14">
+          <div className="flex items-center gap-8 xl:gap-12">
 
             {/* LOGO */}
 
@@ -113,14 +123,14 @@ const Nav = () => {
                   h-10 lg:h-12
                   object-contain
                   transition-transform duration-300
-                  group-hover:scale-105
+                  group-hover:scale-105 group-hover:drop-shadow-[0_0_15px_rgba(229,9,20,0.5)]
                 "
               />
             </Link>
 
             {/* NAV LINKS */}
 
-            <nav className="flex items-center gap-7 lg:gap-9">
+            <nav className="flex items-center gap-2 lg:gap-3 bg-white/[0.03] p-1.5 rounded-full border border-white/[0.07] backdrop-blur-xl shadow-inner">
 
               {desktopNavItems.map((item) => (
                 <NavLink
@@ -128,40 +138,26 @@ const Nav = () => {
                   to={item.to}
                   end={item.to === '/'}
                   className={({ isActive }) => `
-                    relative py-3
+                    relative px-4 py-1.5 rounded-full
                     text-[13px] lg:text-sm
                     font-semibold tracking-wide
-                    transition-colors duration-300
+                    transition-all duration-300
                     ${
                       isActive
-                        ? 'text-white'
-                        : 'text-gray-400 hover:text-white'
+                        ? 'bg-white/[0.12] text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_4px_12px_rgba(0,0,0,0.5)] border border-white/20'
+                        : 'text-gray-400 hover:text-white hover:bg-white/[0.06] border border-transparent'
                     }
                   `}
                 >
                   {({ isActive }) => (
-                    <span className="flex items-center gap-1.5">
+                    <span className="flex items-center gap-2">
                       {item.isLive && (
                         <span className="relative flex h-2 w-2">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600 shadow-[0_0_6px_#e50914]" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600 shadow-[0_0_8px_#e50914]" />
                         </span>
                       )}
                       <span>{item.label}</span>
-
-                      <span
-                        className={`
-                          absolute bottom-0 left-0
-                          h-[2px] w-full rounded-full
-                          bg-[#E50914]
-                          transition-transform duration-300 origin-left
-                          ${
-                            isActive
-                              ? 'scale-x-100'
-                              : 'scale-x-0'
-                          }
-                        `}
-                      />
                     </span>
                   )}
                 </NavLink>
@@ -172,7 +168,7 @@ const Nav = () => {
 
           {/* RIGHT SECTION */}
 
-          <div className="flex items-center gap-6 lg:gap-9">
+          <div className="flex items-center gap-5 lg:gap-7">
 
             {/* CREATOR BADGE */}
 
@@ -181,12 +177,14 @@ const Nav = () => {
               <div className="
                 relative flex items-center gap-2.5
                 rounded-full
-                border border-orange-500/20
-                bg-orange-500/[0.07]
-                px-3.5 py-2
+                border border-orange-500/30
+                bg-gradient-to-r from-orange-500/[0.08] via-amber-500/[0.08] to-orange-500/[0.08]
+                px-3.5 py-1.5
+                backdrop-blur-xl
+                shadow-[inset_0_1px_1px_rgba(255,255,255,0.18)]
                 transition-all duration-300
-                hover:border-orange-500/50
-                hover:bg-orange-500/10
+                hover:border-orange-500/60
+                hover:shadow-[0_0_20px_rgba(249,115,22,0.25)]
               ">
 
                 <span className="relative flex h-2 w-2">
@@ -204,7 +202,7 @@ const Nav = () => {
 
                 <span className="
                   text-[10px] xl:text-[11px]
-                  font-semibold tracking-wide
+                  font-bold tracking-wider
                   text-orange-200
                 ">
                   CREATED BY GIRISH JADAV
@@ -222,18 +220,18 @@ const Nav = () => {
               className={({ isActive }) => `
                 group relative flex items-center justify-center
                 w-10 h-10 rounded-full
-                transition-all duration-300
-                hover:bg-white/10
+                border transition-all duration-300
+                backdrop-blur-xl shadow-glass-sm
                 ${
                   isActive
-                    ? 'text-white'
-                    : 'text-gray-300 hover:text-white'
+                    ? 'bg-red-600/20 text-white border-red-500/50 shadow-[0_0_15px_rgba(229,9,20,0.3)]'
+                    : 'bg-white/[0.05] text-gray-300 hover:text-white hover:bg-white/[0.12] border-white/10 hover:border-white/30'
                 }
               `}
             >
               <i className="
                 fa-solid fa-magnifying-glass
-                text-lg
+                text-base
                 transition-transform duration-300
                 group-hover:scale-110
               " />
@@ -248,12 +246,13 @@ const Nav = () => {
             >
               <div className="
                 relative h-9 w-9 lg:h-10 lg:w-10
-                rounded-lg overflow-hidden
-                border border-white/20
+                rounded-full overflow-hidden
+                border-2 border-white/20
+                shadow-glass-sm
                 transition-all duration-300
                 group-hover:border-red-500
                 group-hover:scale-105
-                group-hover:shadow-[0_0_15px_rgba(229,9,20,0.25)]
+                group-hover:shadow-[0_0_15px_rgba(229,9,20,0.4)]
               ">
 
                 <img
@@ -267,12 +266,20 @@ const Nav = () => {
 
               </div>
 
-              <span className="
+              <span className={`
                 absolute bottom-[-2px] right-[-2px]
                 h-3 w-3 rounded-full
-                border-2 border-black
-                bg-green-500
-              " />
+                border-2 border-black transition-colors duration-300
+                ${
+                  !isOnline
+                    ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]'
+                    : isWeak
+                    ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]'
+                    : 'bg-green-500'
+                }
+              `}
+              title={!isOnline ? 'Offline' : isWeak ? 'Weak Connection' : 'Connected'}
+              />
 
             </Link>
 
@@ -373,6 +380,19 @@ const Nav = () => {
             </div>
           )}
 
+          <span className={`
+            absolute bottom-0 right-0
+            h-2 w-2 rounded-full
+            border border-black transition-colors duration-300
+            ${
+              !isOnline
+                ? 'bg-red-500'
+                : isWeak
+                ? 'bg-amber-400'
+                : 'bg-green-500'
+            }
+          `} />
+
         </Link>
 
       </header>
@@ -382,15 +402,16 @@ const Nav = () => {
       <nav className="
         fixed bottom-0 left-0 right-0 z-50
         md:hidden
-        bg-[#090909]/95
-        backdrop-blur-2xl
-        border-t border-white/[0.08]
+        bg-[#07070a]/85
+        backdrop-blur-3xl
+        border-t border-white/[0.12]
+        shadow-[0_-10px_35px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.15)]
         pb-[env(safe-area-inset-bottom)]
       ">
 
         <div className="
           flex items-center justify-around
-          h-[62px] px-2
+          h-[64px] px-3
         ">
 
           {mobileNavItems.map((item) => {
@@ -404,25 +425,25 @@ const Nav = () => {
                 aria-label={item.label}
                 className={`
                   relative flex-1
-                  h-full
+                  h-[52px] rounded-xl
                   flex flex-col items-center justify-center
                   gap-1
                   transition-all duration-300
                   ${
                     isActive
-                      ? 'text-white'
-                      : 'text-[#777] active:text-white'
+                      ? 'bg-white/[0.08] text-white shadow-inner border border-white/10'
+                      : 'text-gray-400 active:text-white hover:bg-white/[0.04]'
                   }
                 `}
               >
 
-                {/* Active Indicator */}
+                {/* Active Indicator Top Glow */}
 
                 <span className={`
                   absolute top-0
-                  h-[2px] w-7 rounded-full
+                  h-[2px] w-8 rounded-full
                   bg-[#E50914]
-                  shadow-[0_0_10px_rgba(229,9,20,0.6)]
+                  shadow-[0_0_12px_rgba(229,9,20,0.9)]
                   transition-all duration-300
                   ${
                     isActive
@@ -439,8 +460,8 @@ const Nav = () => {
                   transition-all duration-300
                   ${
                     isActive
-                      ? 'text-white scale-110'
-                      : 'text-gray-500'
+                      ? 'text-[#E50914] scale-110 drop-shadow-[0_0_8px_rgba(229,9,20,0.6)]'
+                      : 'text-gray-400'
                   }
                 `} />
 
@@ -453,7 +474,7 @@ const Nav = () => {
                   ${
                     isActive
                       ? 'font-bold text-white'
-                      : 'font-medium text-gray-500'
+                      : 'font-medium text-gray-400'
                   }
                 `}>
                   {item.label}

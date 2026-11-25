@@ -45,23 +45,26 @@ const StudioCard = ({
         rounded-xl sm:rounded-2xl
 
         /* Base Glass / Dark Surface */
-        bg-gradient-to-b from-neutral-800/80 to-neutral-900/95
-        backdrop-blur-md
-        border border-white/10
-        shadow-md
+        bg-gradient-to-b from-white/[0.08] via-white/[0.02] to-black/80
+        border border-white/15
+        border-t-white/30
+        shadow-glass-sm
+        will-change-transform
+        [contain:paint_layout]
 
         /* Transitions */
-        transition-all duration-300 ease-out
+        transition-all duration-250 ease-out
         motion-reduce:transition-none motion-reduce:transform-none
 
         /* Mobile Tap Feedback (No sticky hover) */
-        active:scale-[0.96] active:border-white/30
+        active:scale-[0.96] active:border-white/40
 
         /* Desktop-Only Hover State */
         sm:hover:z-20
-        sm:hover:-translate-y-1 sm:hover:scale-[1.03]
-        sm:hover:border-white/25
-        sm:hover:shadow-[0_12px_32px_-4px_var(--studio-accent)]
+        sm:hover:-translate-y-1 sm:hover:scale-[1.04]
+        sm:hover:border-white/40
+        sm:hover:border-t-white/60
+        sm:hover:shadow-[0_16px_40px_-4px_var(--studio-accent),inset_0_1px_2px_rgba(255,255,255,0.4)]
 
         /* Keyboard Focus */
         focus-visible:outline-none

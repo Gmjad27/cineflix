@@ -1,31 +1,40 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import LiveSection from '../../components/Live/LiveSection';
+import LiveRailRow from '../../components/Live/LiveRailRow';
 import LiveMatchCard from '../../components/Live/LiveMatchCard';
 import LiveTVCard from '../../components/Live/LiveTVCard';
-import RailRow from '../../components/RailRow/RailRow';
 import Footer from '../../components/Footer/Footer';
+import { useLiveFavorites } from '../../hooks/useLiveFavorites';
+import { ShimmerBlock } from '../../components/Skeleton/Skeleton';
+import { useNetworkStatus } from '../../context/NetworkContext';
+import OfflineScreen from '../../components/NetworkStatus/OfflineScreen';
 import {
   LIVE_CHANNELS,
   fetchLiveStreamsData,
   getCachedLiveMatches,
-  formatViewerCount,
 } from '../../content/liveStreams';
 
 const Live = () => {
   const navigate = useNavigate();
-  const [matches, setMatches] = useState(() => getCachedLiveMatches());
-  const [channels] = useState(LIVE_CHANNELS);
-  const [isLoading, setIsLoading] = useState(true);
+  const { isFavorite, toggleFavorite } = useLiveFavorites();
+  const { isOnline } = useNetworkStatus();
+
+  // Data & Network States
+  const [matches, setMatches] = useState(() => getCachedLiveMatches() || []);
+  const [isLoading, setIsLoading] = useState(
+    () => !(getCachedLiveMatches()?.length > 0)
+  );
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter & Search States
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadData = useCallback(async (isManual = false) => {
     if (isManual) setIsRefreshing(true);
     try {
       const data = await fetchLiveStreamsData();
-      if (Array.isArray(data.matches) && data.matches.length > 0) {
+      if (Array.isArray(data?.matches)) {
         setMatches(data.matches);
       }
     } catch (err) {
@@ -38,214 +47,296 @@ const Live = () => {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(() => loadData(), 60000);
+    const interval = setInterval(() => loadData(false), 60000);
     return () => clearInterval(interval);
   }, [loadData]);
 
-  // Featured Hero Item: pick top match with teams or top channel
-  const heroItem = useMemo(() => {
-    if (matches.length > 0) {
-      // Find match with highest viewers or first match with valid teams
-      const sorted = [...matches].sort((a, b) => (b.viewers || 0) - (a.viewers || 0));
-      return sorted[0];
-    }
-    return LIVE_CHANNELS[0] || null;
+  // Dynamic Category Counts
+  const categoryList = useMemo(() => {
+    const map = new Map();
+    matches.forEach((m) => {
+      const raw = (m.category_name || m.category || m.sport || '').trim();
+      if (!raw) return;
+      const key = raw.toLowerCase();
+      if (map.has(key)) {
+        map.get(key).count += 1;
+      } else {
+        const label =
+          key === 'american-football' || key === 'american football'
+            ? 'NFL'
+            : raw.replace(/-/g, ' ');
+        map.set(key, { id: key, label, count: 1 });
+      }
+    });
+    return [{ id: 'all', label: 'All Sports', count: matches.length }, ...map.values()];
   }, [matches]);
 
-  const isHeroMatch = Boolean(heroItem?.teams?.home);
+  // Reset selectedCategory if that category ends
+  useEffect(() => {
+    if (
+      selectedCategory !== 'all' &&
+      !categoryList.some((c) => c.id === selectedCategory)
+    ) {
+      setSelectedCategory('all');
+    }
+  }, [categoryList, selectedCategory]);
 
-  const handleOpenStream = (item) => {
-    navigate(`/live-stream/${item.streamId || item.id}`, {
-      state: { stream: item },
+  // Filtered Matches & Channels based on category & search
+  const filteredMatches = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return matches.filter((m) => {
+      const cat = (m.category_name || m.category || m.sport || '').trim().toLowerCase();
+      const catOk = selectedCategory === 'all' || cat === selectedCategory;
+      if (!catOk) return false;
+      if (!q) return true;
+      return (
+        m.name?.toLowerCase().includes(q) ||
+        m.league?.toLowerCase().includes(q) ||
+        m.teams?.home?.name?.toLowerCase().includes(q) ||
+        m.teams?.away?.name?.toLowerCase().includes(q)
+      );
     });
-  };
+  }, [matches, selectedCategory, searchQuery]);
+
+  const filteredChannels = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return LIVE_CHANNELS;
+    return LIVE_CHANNELS.filter(
+      (ch) =>
+        ch.name?.toLowerCase().includes(q) ||
+        ch.category?.toLowerCase().includes(q) ||
+        ch.network?.toLowerCase().includes(q)
+    );
+  }, [searchQuery]);
+
+  // Partition Matches into:
+  // Row 1: Live Now
+  // Row 2: Upcoming Matches
+  const { liveNowMatches, upcomingMatches } = useMemo(() => {
+    const live = [];
+    const upcoming = [];
+
+    filteredMatches.forEach((m) => {
+      const isUp =
+        m.status === 'upcoming' ||
+        m.category_name === 'upcoming-matches' ||
+        (m.starts_at && m.starts_at * 1000 > Date.now());
+
+      if (isUp) {
+        upcoming.push(m);
+      } else {
+        live.push(m);
+      }
+    });
+
+    if (live.length > 0 && upcoming.length === 0 && filteredMatches.length > 4) {
+      return {
+        liveNowMatches: filteredMatches.slice(0, Math.ceil(filteredMatches.length / 2)),
+        upcomingMatches: filteredMatches.slice(Math.ceil(filteredMatches.length / 2)),
+      };
+    }
+
+    return {
+      liveNowMatches: live.length > 0 ? live : filteredMatches.slice(0, 6),
+      upcomingMatches: upcoming.length > 0 ? upcoming : filteredMatches.slice(6),
+    };
+  }, [filteredMatches]);
+
+  const handleOpenStream = useCallback(
+    (item) => {
+      if (!item) return;
+      navigate(`/live-stream/${item.streamId || item.id}`, {
+        state: { stream: item },
+      });
+    },
+    [navigate]
+  );
+
+  // Loading Skeleton State
+  if (isLoading && matches.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#07070a] text-white pt-[58px] md:pt-[76px] pb-20 px-3 sm:px-6 lg:px-12">
+        {/* Filter bar shimmer */}
+        <div className="flex items-center justify-between py-4 border-b border-white/10 mb-6">
+          <div className="flex items-center gap-2 overflow-hidden">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <ShimmerBlock key={i} className="w-20 h-7 rounded-full shrink-0" />
+            ))}
+          </div>
+          <ShimmerBlock className="w-56 h-8 rounded-xl hidden sm:block" />
+        </div>
+
+        {/* 3 Rail Shimmers matching screenshot */}
+        <div className="space-y-8">
+          {[1, 2, 3].map((row) => (
+            <div key={row} className="space-y-3">
+              <div className="flex items-center justify-between">
+                <ShimmerBlock className="w-40 h-6 rounded-md" />
+                <div className="flex gap-2">
+                  <ShimmerBlock className="w-8 h-8 rounded-full" />
+                  <ShimmerBlock className="w-8 h-8 rounded-full" />
+                </div>
+              </div>
+              <div className="flex gap-3 overflow-hidden">
+                {[1, 2, 3, 4, 5].map((card) => (
+                  <div key={card} className="w-[260px] shrink-0 space-y-2">
+                    <ShimmerBlock className="w-full aspect-video rounded-xl" />
+                    <ShimmerBlock className="w-3/4 h-4 rounded" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Offline State
+  if (!isLoading && !isOnline && matches.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#07070a] pt-[76px] pb-20">
+        <OfflineScreen
+          onRetry={() => loadData(true)}
+          title="Live Sports & TV Offline"
+          message="Live matches and channel streams require an active internet connection to load current schedules."
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="relative min-h-screen bg-[#0e0e0e] text-white selection:bg-[#E50914] selection:text-white pt-[58px] md:pt-[82px]">
-      {/* ===== HERO LIVE SHOWCASE ===== */}
-      {heroItem && (
-        <div className="relative w-full min-h-[400px] sm:min-h-[460px] md:min-h-[520px] flex items-center overflow-hidden bg-black">
-          {/* Background backdrop */}
-          <img
-            src={
-              heroItem.poster ||
-              heroItem.bg ||
-              'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1920&q=80'
-            }
-            alt={heroItem.name}
-            className="absolute inset-0 w-full h-full object-cover brightness-[0.25]"
-            onError={(e) => {
-              e.currentTarget.src =
-                'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=1920&q=80';
-            }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0e0e0e] via-[#0e0e0e]/80 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0e0e0e] via-[#0e0e0e]/85 to-transparent" />
-
-          {/* Hero Content */}
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 lg:px-16 py-8 sm:py-12 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-10 w-full">
-            <div className="flex flex-col space-y-3 sm:space-y-4 max-w-2xl w-full">
-              {/* Badges */}
-              <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-red-600 text-white font-extrabold text-[10px] sm:text-xs tracking-wider uppercase shadow-md shadow-red-900/50">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                  FEATURED LIVE MATCH
-                </span>
-
-                {(heroItem.league || heroItem.category_name || heroItem.category) && (
-                  <span className="px-2.5 py-1 rounded bg-white/10 text-[10px] sm:text-xs font-semibold text-gray-200 border border-white/10 uppercase">
-                    {heroItem.league || heroItem.category_name || heroItem.category}
-                  </span>
-                )}
-
-                {heroItem.viewers && (
-                  <span className="flex items-center gap-1 px-2.5 py-1 rounded bg-black/80 text-[10px] sm:text-xs font-medium text-red-400 border border-white/10">
-                    <i className="fa-solid fa-users text-[10px]" />
-                    {formatViewerCount(heroItem.viewers)} Watching
-                  </span>
-                )}
-              </div>
-
-              {/* Matchup Center or Channel Title */}
-              {isHeroMatch ? (
-                <div className="flex flex-col gap-3 py-1">
-                  <div className="flex items-center gap-3 sm:gap-5 flex-wrap">
-                    {/* Home Team */}
-                    <div className="flex items-center gap-2 sm:gap-3 bg-black/40 px-3 py-2 rounded-xl border border-white/10">
-                      {heroItem.teams?.home?.badge && (
-                        <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/5 p-1 flex items-center justify-center shrink-0">
-                          <img
-                            src={heroItem.teams.home.badge}
-                            alt={heroItem.teams.home.name}
-                            className="max-h-full max-w-full object-contain"
-                          />
-                        </div>
-                      )}
-                      <span className="text-base sm:text-xl font-black text-white">
-                        {heroItem.teams?.home?.name}
-                      </span>
-                    </div>
-
-                    <span className="px-2 py-0.5 rounded bg-red-900/60 text-red-400 font-black text-xs sm:text-sm border border-red-500/30">
-                      VS
+    <div className="min-h-screen bg-[#07070a] text-white selection:bg-[#E50914] selection:text-white pt-[58px] md:pt-[76px] pb-20 overflow-x-hidden">
+      {/* ── STICKY CONTROL & SEARCH DOCK ── */}
+      <div className="sticky top-[58px] md:top-[76px] z-30 bg-[#07070a]/95 backdrop-blur-2xl border-b border-white/[0.08] shadow-lg">
+        <div className="max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-12 py-2.5 sm:py-3 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 sm:gap-4">
+          {/* Sport Category Pills */}
+          <div
+            role="tablist"
+            aria-label="Filter live sports"
+            className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar touch-pan-x py-0.5"
+          >
+            {categoryList.map(({ id, label, count }) => {
+              const isActive = selectedCategory === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setSelectedCategory(id)}
+                  className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold capitalize transition-all cursor-pointer select-none active:scale-95 ${
+                    isActive
+                      ? 'bg-[#E50914] text-white shadow-[0_0_15px_rgba(229,9,20,0.45)]'
+                      : 'bg-white/[0.05] text-gray-300 border border-white/10 active:bg-white/15 sm:hover:bg-white/[0.1]'
+                  }`}
+                >
+                  <span>{label}</span>
+                  {count > 0 && (
+                    <span
+                      className={`text-[9px] sm:text-[10px] px-1.5 py-0.5 leading-none rounded-full ${
+                        isActive ? 'bg-black/30 text-white' : 'bg-white/10 text-gray-400'
+                      }`}
+                    >
+                      {count}
                     </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
-                    {/* Away Team */}
-                    <div className="flex items-center gap-2 sm:gap-3 bg-black/40 px-3 py-2 rounded-xl border border-white/10">
-                      {heroItem.teams?.away?.badge && (
-                        <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/5 p-1 flex items-center justify-center shrink-0">
-                          <img
-                            src={heroItem.teams.away.badge}
-                            alt={heroItem.teams.away.name}
-                            className="max-h-full max-w-full object-contain"
-                          />
-                        </div>
-                      )}
-                      <span className="text-base sm:text-xl font-black text-white">
-                        {heroItem.teams?.away?.name}
-                      </span>
-                    </div>
-                  </div>
-                  <h1 className="text-xl sm:text-2xl text-gray-300 font-semibold truncate">
-                    {heroItem.name}
-                  </h1>
-                </div>
-              ) : (
-                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
-                  {heroItem.name}
-                </h1>
+          {/* Search Input & Sync Controls */}
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="relative flex-1 md:w-64 lg:w-72">
+              <i className="fa-solid fa-magnifying-glass text-xs text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search match, team or channel..."
+                aria-label="Search match, team or channel"
+                className="w-full bg-white/[0.06] focus:bg-white/[0.09] border border-white/10 focus:border-[#E50914] rounded-xl pl-9 pr-8 py-1.5 sm:py-2 text-xs sm:text-sm text-white placeholder-gray-400 outline-none transition-all shadow-inner"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear search"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-400 active:text-white sm:hover:text-white"
+                >
+                  <i className="fa-solid fa-xmark text-xs" />
+                </button>
               )}
-
-              <p className="text-xs sm:text-sm text-gray-400 max-w-xl">
-                {heroItem.league
-                  ? `Live ${heroItem.league} broadcast with multiple high-definition servers and instant play.`
-                  : heroItem.currentShow || 'Live streaming sports events and television feeds in full HD.'}
-              </p>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3 sm:gap-4 pt-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => handleOpenStream(heroItem)}
-                  className="flex items-center gap-2.5 px-6 sm:px-8 py-3 rounded-lg bg-[#E50914] hover:bg-[#f40612] text-white font-black text-xs sm:text-sm tracking-wider uppercase transition-colors shadow-lg shadow-red-900/40"
-                >
-                  <i className="fa-solid fa-play text-xs" />
-                  <span>WATCH MATCH LIVE</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => loadData(true)}
-                  disabled={isRefreshing}
-                  className="flex items-center gap-2 px-4 py-3 rounded-lg bg-white/10 hover:bg-white/15 text-white font-semibold text-xs border border-white/10 transition-colors"
-                >
-                  <i className={`fa-solid fa-arrows-rotate text-xs ${isRefreshing ? 'animate-spin text-red-500' : ''}`} />
-                  <span>{isRefreshing ? 'Refreshing...' : 'Refresh Matches'}</span>
-                </button>
-              </div>
             </div>
 
-            {/* Right Quick Match / Channel Preview */}
-            <div className="hidden lg:flex flex-col gap-2.5 w-80 shrink-0 bg-[#141414] p-3.5 rounded-xl border border-white/10">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <i className="fa-solid fa-trophy text-red-500" />
-                  Other Live Events
-                </span>
-                <span className="text-[10px] text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded">
-                  {matches.length} Live
-                </span>
-              </span>
-
-              {matches.slice(1, 5).map((m) => (
-                <div
-                  key={m.id}
-                  onClick={() => handleOpenStream(m)}
-                  className="flex items-center gap-3 p-2.5 rounded-lg bg-[#1a1a1a] hover:bg-[#222222] border border-white/5 hover:border-red-500/50 cursor-pointer transition-colors group"
-                >
-                  <div className="w-10 h-10 rounded bg-black p-1 flex items-center justify-center border border-white/10 shrink-0">
-                    {m.teams?.home?.badge ? (
-                      <img src={m.teams.home.badge} alt="" className="max-h-full max-w-full object-contain" />
-                    ) : (
-                      <i className="fa-solid fa-shield text-xs text-red-500" />
-                    )}
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-bold text-white truncate group-hover:text-red-400 transition-colors">
-                      {m.name}
-                    </span>
-                    <span className="text-[10px] text-gray-400 truncate">
-                      {m.league || m.category_name} • {formatViewerCount(m.viewers)} viewers
-                    </span>
-                  </div>
-                  <i className="fa-solid fa-play text-[10px] text-gray-400 group-hover:text-red-500 ml-auto" />
-                </div>
-              ))}
-            </div>
+            <button
+              type="button"
+              onClick={() => loadData(true)}
+              disabled={isRefreshing}
+              title="Refresh Live Streams"
+              className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/[0.06] border border-white/10 text-gray-300 hover:text-white transition active:scale-90 cursor-pointer shrink-0 disabled:opacity-60"
+            >
+              <i className={`fa-solid fa-arrows-rotate text-xs ${isRefreshing ? 'animate-spin text-red-500' : ''}`} />
+            </button>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* ===== MAIN CONTENT RAILS ===== */}
-      <div className="max-w-[1920px] mx-auto px-4 sm:px-8 md:px-12 lg:px-16 space-y-8 sm:space-y-12 pb-24 md:pb-16 mt-4 sm:mt-8">
-        {/* Live Matches from API */}
-        <LiveSection
-          title="Live Sports Matches"
-          subtitle="Real-time match broadcasts powered by ondemand.st API"
-          defaultTab="matches"
-          showAllLink={false}
+      {/* ── 3 DISTINCT MAIN RAILS (Matching User's Reference Screenshot) ── */}
+      <main className="max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-12 pt-5 sm:pt-7 space-y-6 sm:space-y-8">
+        {/* ── ROW 1: LIVE | Live Now ── */}
+        <LiveRailRow
+          tag="LIVE"
+          title="Live Now"
+          items={liveNowMatches}
+          renderItem={(match) => (
+            <LiveMatchCard
+              key={match.id}
+              match={match}
+              variant="live"
+              onSelect={handleOpenStream}
+              isFavorite={isFavorite(match)}
+              onToggleFavorite={toggleFavorite}
+            />
+          )}
         />
 
-        {/* 24/7 Live Sports Channels */}
-        <LiveSection
-          title="24/7 Live Sports Channels"
-          subtitle="Stream Willow, Sony Sports, Sky Sports, TNT Sports & Fox Sports around the clock"
-          defaultTab="channels"
-          showAllLink={false}
+        {/* ── ROW 2: | Upcoming Matches ── */}
+        <LiveRailRow
+          tag={null}
+          title="Upcoming Matches"
+          items={upcomingMatches}
+          renderItem={(match) => (
+            <LiveMatchCard
+              key={match.id}
+              match={match}
+              variant="upcoming"
+              onSelect={handleOpenStream}
+              isFavorite={isFavorite(match)}
+              onToggleFavorite={toggleFavorite}
+            />
+          )}
+        />
+
+        {/* ── ROW 3: TV | Trending Channels ── */}
+        <LiveRailRow
+          tag="TV"
+          title="Trending Channels"
+          items={filteredChannels}
+          renderItem={(channel) => (
+            <LiveTVCard
+              key={channel.id}
+              channel={channel}
+              onSelect={handleOpenStream}
+              isFavorite={isFavorite(channel)}
+              onToggleFavorite={toggleFavorite}
+            />
+          )}
         />
 
         <Footer />
-      </div>
+      </main>
     </div>
   );
 };

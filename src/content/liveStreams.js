@@ -11,6 +11,99 @@ export const getStreamEmbedUrl = (streamId) => {
 };
 
 export const LIVE_CHANNELS = [
+  // --- FEATURED TRENDING CHANNELS (As shown in reference screenshot) ---
+  {
+    id: '3c1c199431',
+    streamId: '3c1c199431',
+    name: 'ESPN USA',
+    category: 'Sports',
+    network: 'ESPN',
+    color: '#dc2626',
+    badge: '',
+    viewersCount: 10,
+    currentShow: 'Live Sports & Highlights',
+    hd: true,
+    embed: 'https://damitv.st/player/hls/?v=542&url=%2Fc%2F3c1c199431.m3u8&name=ESPN%20USA',
+  },
+  {
+    id: '247-nfl-network',
+    streamId: '247-nfl-network',
+    name: 'NFL Network',
+    category: 'American Football',
+    network: 'NFL',
+    color: '#1d4ed8',
+    badge: '',
+    viewersCount: 10,
+    currentShow: '24/7 NFL GameDay & Live Coverage',
+    hd: true,
+    embed: 'https://damitv.st/embed/?id=247-nfl-network',
+  },
+  {
+    id: '247-abc-usa',
+    streamId: '247-abc-usa',
+    name: 'ABC USA',
+    category: 'General',
+    network: 'ABC',
+    color: '#ffffff',
+    badge: '',
+    viewersCount: 5,
+    currentShow: 'Live News & Entertainment',
+    hd: true,
+    embed: 'https://damitv.st/embed/?id=247-abc',
+  },
+  {
+    id: '247-espn-2',
+    streamId: '247-espn-2',
+    name: 'ESPN2 USA',
+    category: 'Sports',
+    network: 'ESPN 2',
+    color: '#dc2626',
+    badge: '',
+    viewersCount: 8,
+    currentShow: 'Live NCAA & Pro Sports',
+    hd: true,
+    embed: 'https://damitv.st/player/hls/?v=542&url=%2Fc%2F3c1c199431.m3u8&name=ESPN2%20USA',
+  },
+  {
+    id: '1f31c3c89a',
+    streamId: '1f31c3c89a',
+    name: 'Willow',
+    category: 'Cricket',
+    network: 'Willow',
+    color: '#16a34a',
+    badge: '',
+    viewersCount: 2,
+    currentShow: 'Live International & T20 Cricket',
+    hd: true,
+    embed: 'https://ondemand.to/player/hls/?v=542&url=%2Fc%2F1f31c3c89a.m3u8&name=Willow%20Cricket',
+  },
+  {
+    id: '247-nbc-usa',
+    streamId: '247-nbc-usa',
+    name: 'NBC USA',
+    category: 'General',
+    network: 'NBC',
+    color: '#a855f7',
+    badge: '',
+    viewersCount: 3,
+    currentShow: 'Live Primetime & Sports',
+    hd: true,
+    embed: 'https://damitv.st/embed/?id=247-nbc',
+  },
+  {
+    id: '247-fox-footy',
+    streamId: '247-fox-footy',
+    name: 'Fox Footy',
+    category: 'Australian Football',
+    network: 'Fox Footy',
+    color: '#ea580c',
+    badge: '',
+    viewersCount: 7,
+    currentShow: '24/7 AFL Footy Live & Analysis',
+    hd: true,
+    embed: 'https://damitv.st/embed/?id=247-fox-footy',
+  },
+
   // --- CRICKET ---
   {
     id: '28897bfbe1',
@@ -1298,6 +1391,219 @@ export const LIVE_TV_CHANNELS = LIVE_CHANNELS;
  * Fallback live streams conforming to the ondemand.st /papi/api/streams schema
  */
 export const FALLBACK_LIVE_STREAMS = [
+  // --- ROW 1: LIVE NOW (Matching user screenshot) ---
+  {
+    category: "live-now",
+    id: 101,
+    streams: [
+      {
+        id: "live-america-deportivo",
+        name: "América de Cali vs Deportivo Cali",
+        poster: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1200&q=80",
+        starts_at: Math.floor(Date.now() / 1000) - 3600,
+        ends_at: Math.floor(Date.now() / 1000) + 3600,
+        category_name: "football",
+        status: "live",
+        league: "LIGA BETPLAY COLOMBIA",
+        teams: {
+          home: {
+            name: "América de Cali",
+            badge: "https://media.api-sports.io/football/teams/1126.png",
+          },
+          away: {
+            name: "Deportivo Cali",
+            badge: "https://media.api-sports.io/football/teams/1127.png",
+          }
+        },
+        viewers: 24,
+        always_live: 1,
+        embed: "https://damitv.st/embed/?id=m401858304"
+      },
+      {
+        id: "live-amazing-race",
+        name: "The Amazing Race S39. E10",
+        poster: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80",
+        starts_at: Math.floor(Date.now() / 1000) - 1800,
+        ends_at: Math.floor(Date.now() / 1000) + 5400,
+        category_name: "motorsport",
+        status: "live",
+        league: "MOTORSPORT",
+        viewers: 18,
+        always_live: 1,
+        embed: "https://damitv.st/embed/?id=247-rally-tv"
+      },
+      {
+        id: "live-supercars-supports",
+        name: "Supercars: Thursday Supports",
+        poster: "https://images.unsplash.com/photo-1541348263662-e0c8de4259ba?auto=format&fit=crop&w=800&q=80",
+        starts_at: Math.floor(Date.now() / 1000) - 2400,
+        ends_at: Math.floor(Date.now() / 1000) + 4800,
+        category_name: "motorsport",
+        status: "live",
+        league: "MOTORSPORT",
+        viewers: 14,
+        always_live: 1,
+        embed: "https://damitv.st/embed/?id=247-rally-tv"
+      },
+      {
+        id: "live-nfl-network-stream",
+        name: "NFL Network",
+        poster: "https://images.unsplash.com/photo-1566577739112-5180d4bf9390?auto=format&fit=crop&w=800&q=80",
+        starts_at: Math.floor(Date.now() / 1000) - 5000,
+        ends_at: Math.floor(Date.now() / 1000) + 15000,
+        category_name: "american-football",
+        status: "live",
+        league: "AMERICAN FOOTBALL",
+        viewers: 32,
+        always_live: 1,
+        embed: "https://damitv.st/embed/?id=247-nfl-network"
+      },
+      {
+        id: "live-fox-footy-stream",
+        name: "Fox Footy",
+        poster: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=800&q=80",
+        starts_at: Math.floor(Date.now() / 1000) - 3000,
+        ends_at: Math.floor(Date.now() / 1000) + 12000,
+        category_name: "australian-football",
+        status: "live",
+        league: "AUSTRALIAN FOOTBALL",
+        viewers: 28,
+        always_live: 1,
+        embed: "https://damitv.st/embed/?id=247-fox-footy"
+      },
+      {
+        id: "live-willow-stream",
+        name: "Willow",
+        poster: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=800&q=80",
+        starts_at: Math.floor(Date.now() / 1000) - 4000,
+        ends_at: Math.floor(Date.now() / 1000) + 10000,
+        category_name: "cricket",
+        status: "live",
+        league: "CRICKET",
+        viewers: 45,
+        always_live: 1,
+        embed: "https://ondemand.to/player/hls/?v=542&url=%2Fc%2F1f31c3c89a.m3u8&name=Willow%20Cricket"
+      }
+    ]
+  },
+
+  // --- ROW 2: UPCOMING MATCHES (Matching user screenshot) ---
+  {
+    category: "upcoming-matches",
+    id: 102,
+    streams: [
+      {
+        id: "upcoming-colorado-stanford",
+        name: "Colorado vs Stanford",
+        starts_at: Math.floor(Date.now() / 1000) + 900, // 15 mins
+        countdown: "15M",
+        time: "10:29 AM",
+        category_name: "basketball",
+        status: "upcoming",
+        league: "NCAA DIVISION I BASKETBALL MENS",
+        teams: {
+          home: {
+            name: "Colorado",
+            badge: "https://a.espncdn.com/i/teamlogos/ncaa/500/38.png",
+          },
+          away: {
+            name: "Stanford",
+            badge: "https://a.espncdn.com/i/teamlogos/ncaa/500/24.png",
+          }
+        },
+        viewers: 0,
+        embed: "https://damitv.st/embed/?id=m401860920"
+      },
+      {
+        id: "upcoming-kansas-gonzaga",
+        name: "Kansas State Wildcats vs Gonzaga Bulldogs",
+        starts_at: Math.floor(Date.now() / 1000) + 3960, // 1 hr 6m
+        countdown: "1H 6M",
+        time: "11:00 AM",
+        category_name: "basketball",
+        status: "upcoming",
+        league: "NCAAB",
+        teams: {
+          home: {
+            name: "Kansas State",
+            badge: "https://a.espncdn.com/i/teamlogos/ncaa/500/2306.png",
+          },
+          away: {
+            name: "Gonzaga",
+            badge: "https://a.espncdn.com/i/teamlogos/ncaa/500/2250.png",
+          }
+        },
+        viewers: 0,
+        embed: "https://damitv.st/embed/?id=m401860920"
+      },
+      {
+        id: "upcoming-melbourne-thecong",
+        name: "Melbourne Victory vs Thể Công Viettel",
+        starts_at: Math.floor(Date.now() / 1000) + 12060, // 3 hr 21m
+        countdown: "3H 21M",
+        time: "1:15 PM",
+        category_name: "football",
+        status: "upcoming",
+        league: "AFC CHAMPIONS LEAGUE TWO",
+        teams: {
+          home: {
+            name: "Melbourne Victory",
+            badge: "https://media.api-sports.io/football/teams/198.png",
+          },
+          away: {
+            name: "Thể Công Viettel",
+            badge: "https://media.api-sports.io/football/teams/3719.png",
+          }
+        },
+        viewers: 0,
+        embed: "https://damitv.st/embed/?id=m401858304"
+      },
+      {
+        id: "upcoming-sa-bangladesh",
+        name: "South Africa vs Bangladesh",
+        starts_at: Math.floor(Date.now() / 1000) + 12960, // 3 hr 36m
+        countdown: "3H 36M",
+        time: "1:30 PM",
+        category_name: "cricket",
+        status: "upcoming",
+        league: "BANGLADESH TOUR OF SOUTH AFRICA 2026/27",
+        teams: {
+          home: {
+            name: "South Africa",
+            badge: "https://a.espncdn.com/i/teamlogos/cricket/500/3.png",
+          },
+          away: {
+            name: "Bangladesh",
+            badge: "https://a.espncdn.com/i/teamlogos/cricket/500/25.png",
+          }
+        },
+        viewers: 0,
+        embed: "https://ondemand.to/player/hls/?v=542&url=%2Fc%2F1f31c3c89a.m3u8&name=Willow%20Cricket"
+      },
+      {
+        id: "upcoming-renegades-heat",
+        name: "Melbourne Renegades Women vs Brisbane Heat",
+        starts_at: Math.floor(Date.now() / 1000) + 13560, // 3 hr 46m
+        countdown: "3H 46M",
+        time: "1:40 PM",
+        category_name: "cricket",
+        status: "upcoming",
+        league: "WBBL",
+        teams: {
+          home: {
+            name: "Melb. Renegades",
+            badge: "https://a.espncdn.com/i/teamlogos/cricket/500/3015.png",
+          },
+          away: {
+            name: "Brisbane Heat",
+            badge: "https://a.espncdn.com/i/teamlogos/cricket/500/3012.png",
+          }
+        },
+        viewers: 0,
+        embed: "https://ondemand.to/player/hls/?v=542&url=%2Fc%2F1f31c3c89a.m3u8&name=Willow%20Cricket"
+      }
+    ]
+  },
   {
     category: "american-football",
     id: 1,

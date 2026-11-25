@@ -1,22 +1,92 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import NetworkLogo from './NetworkLogos';
 
-const NETWORK_COLORS = {
-  'Sony Sports': 'from-blue-600/30 to-indigo-900/40 border-blue-500/40',
-  Willow: 'from-emerald-600/30 to-green-900/40 border-emerald-500/40',
-  Astro: 'from-rose-600/30 to-red-900/40 border-rose-500/40',
-  'TNT Sports': 'from-fuchsia-600/30 to-pink-900/40 border-pink-500/40',
-  'Sky Sports': 'from-sky-600/30 to-blue-900/40 border-sky-500/40',
-  'Fox Sports': 'from-amber-600/30 to-yellow-900/40 border-amber-500/40',
+const getChannelTheme = (name = '', network = '') => {
+  const norm = `${name} ${network}`.toLowerCase();
+  if (norm.includes('espn')) {
+    return {
+      gradient: 'from-[#1c0d0f] via-[#120708] to-[#080304]',
+      category: 'SPORTS',
+      defaultViewers: 10,
+    };
+  }
+  if (norm.includes('nfl')) {
+    return {
+      gradient: 'from-[#1e0a12] via-[#13050a] to-[#090204]',
+      category: 'AMERICAN FOOTBALL',
+      defaultViewers: 10,
+    };
+  }
+  if (norm.includes('abc')) {
+    return {
+      gradient: 'from-[#181824] via-[#0e0e16] to-[#07070c]',
+      category: 'GENERAL',
+      defaultViewers: 5,
+    };
+  }
+  if (norm.includes('willow')) {
+    return {
+      gradient: 'from-[#032a1c] via-[#021a11] to-[#010d08]',
+      category: 'CRICKET',
+      defaultViewers: 2,
+    };
+  }
+  if (norm.includes('nbc')) {
+    return {
+      gradient: 'from-[#1c152a] via-[#100c1a] to-[#07050d]',
+      category: 'GENERAL',
+      defaultViewers: 3,
+    };
+  }
+  if (norm.includes('fox footy') || norm.includes('footy')) {
+    return {
+      gradient: 'from-[#2e1302] via-[#1b0a01] to-[#0d0400]',
+      category: 'AUSTRALIAN FOOTBALL',
+      defaultViewers: 7,
+    };
+  }
+  if (norm.includes('fox')) {
+    return {
+      gradient: 'from-[#281305] via-[#180a02] to-[#0c0401]',
+      category: 'FOOTBALL',
+      defaultViewers: 8,
+    };
+  }
+  if (norm.includes('sky')) {
+    return {
+      gradient: 'from-[#071d38] via-[#041224] to-[#020912]',
+      category: 'FOOTBALL',
+      defaultViewers: 12,
+    };
+  }
+  if (norm.includes('cricket') || norm.includes('supersport')) {
+    return {
+      gradient: 'from-[#03261a] via-[#021810] to-[#010c08]',
+      category: 'CRICKET',
+      defaultViewers: 15,
+    };
+  }
+  return {
+    gradient: 'from-[#141420] via-[#0d0d16] to-[#07070c]',
+    category: 'SPORTS',
+    defaultViewers: 6,
+  };
 };
 
-const LiveTVCard = ({ channel, onSelect }) => {
+const LiveTVCard = ({
+  channel,
+  onSelect,
+  isFavorite = false,
+  onToggleFavorite,
+  className = '',
+}) => {
   const navigate = useNavigate();
   const [badgeError, setBadgeError] = useState(false);
 
-  useEffect(() => {
-    setBadgeError(false);
-  }, [channel.badge]);
+  const theme = getChannelTheme(channel?.name, channel?.network);
+  const categoryText = (channel?.category || theme.category || 'Sports').toUpperCase();
+  const viewersCount = channel?.viewerCount || channel?.viewers || theme.defaultViewers;
 
   const handleClick = () => {
     if (typeof onSelect === 'function') {
@@ -28,103 +98,113 @@ const LiveTVCard = ({ channel, onSelect }) => {
     }
   };
 
-  const networkGradient =
-    NETWORK_COLORS[channel.network] ||
-    'from-neutral-800/50 to-neutral-950/60 border-white/10';
+  const handleFavoriteClick = (e) => {
+    e.stopPropagation();
+    if (typeof onToggleFavorite === 'function') {
+      onToggleFavorite(channel, e);
+    }
+  };
 
   return (
     <div
       onClick={handleClick}
       role="button"
       tabIndex={0}
-      aria-label={`Watch ${channel.name} Live`}
+      aria-label={`Watch ${channel?.name || 'Channel'} Live`}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           handleClick();
         }
       }}
-      className="group relative flex flex-col shrink-0 w-[168px] sm:w-[215px] md:w-[245px] lg:w-[260px] rounded-xl overflow-hidden cursor-pointer select-none bg-[#141414] border border-white/10 transition-all duration-200 active:scale-[0.97] active:border-red-500/70 sm:hover:border-red-600 sm:hover:-translate-y-1 sm:hover:shadow-lg sm:hover:shadow-red-900/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+      className={`
+        group relative flex flex-col shrink-0
+        w-[230px] sm:w-[260px] md:w-[285px] lg:w-[300px]
+        cursor-pointer select-none touch-manipulation
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-xl
+        ${className}
+      `}
     >
-      {/* Background Frame */}
+      {/* ── CARD MEDIA BOX (16:9 Aspect Ratio Container) ── */}
       <div
-        className={`relative aspect-video w-full overflow-hidden bg-gradient-to-br ${networkGradient} flex items-center justify-center p-2.5 sm:p-3`}
+        className={`
+          relative aspect-video w-full overflow-hidden rounded-xl sm:rounded-2xl
+          bg-gradient-to-br ${theme.gradient}
+          border border-white/10 group-hover:border-white/30
+          shadow-[0_4px_16px_rgba(0,0,0,0.6)] group-hover:shadow-[0_8px_25px_rgba(0,0,0,0.85)]
+          transition-all duration-300 ease-out
+          group-hover:scale-[1.02]
+          flex items-center justify-center p-3
+        `}
       >
-        {channel.bg && (
-          <img
-            src={channel.bg}
-            alt=""
-            aria-hidden="true"
-            loading="lazy"
-            className="absolute inset-0 w-full h-full object-cover opacity-25 transition-all duration-300 sm:group-hover:scale-105 sm:group-hover:opacity-35"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/55 to-transparent" />
+        {/* Ambient Dark Gradient for Legibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/35 pointer-events-none" />
 
-        {/* Live Indicator */}
-        <div className="absolute top-2 left-2 z-10 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded-full bg-red-600 text-white font-black text-[8px] sm:text-[9px] tracking-wider uppercase shadow-md">
-          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-          LIVE
+        {/* ── TOP BADGES ROW ── */}
+        <div className="absolute top-2 left-2 right-2 sm:top-2.5 sm:left-2.5 sm:right-2.5 flex items-center justify-between gap-1.5 z-10">
+          {/* Top Left: LIVE pill badge */}
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#e50914] text-white font-black text-[9px] sm:text-[10px] tracking-wider uppercase shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            LIVE
+          </span>
+
+          {/* Top Right: Orange Eye / Viewers Badge */}
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#e65100] text-white font-bold text-[9px] sm:text-[10px] shadow-sm">
+              <i className="fa-regular fa-eye text-[8px]" />
+              <span>{typeof viewersCount === 'number' ? viewersCount : String(viewersCount).replace(/[^\d]/g, '') || 10}</span>
+            </span>
+
+            {/* Favorite toggle on hover/touch */}
+            {onToggleFavorite && (
+              <button
+                type="button"
+                onClick={handleFavoriteClick}
+                aria-label={isFavorite ? 'Remove favorite' : 'Add favorite'}
+                className={`w-6 h-6 rounded-full flex items-center justify-center transition-opacity cursor-pointer backdrop-blur-md ${
+                  isFavorite ? 'opacity-100 text-red-500' : 'opacity-0 group-hover:opacity-100 text-gray-400 hover:text-white'
+                }`}
+              >
+                <i className={`text-[10px] ${isFavorite ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}`} />
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* HD Badge + Stream ID */}
-        <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
-          {channel.streamId && (
-            <span className="text-[8px] sm:text-[9px] font-semibold text-gray-300 bg-black/65 px-1.5 py-0.5 rounded border border-white/10">
-              #{channel.streamId}
-            </span>
-          )}
-          {channel.hd && (
-            <span className="text-[8px] sm:text-[9px] font-black text-amber-400 bg-black/80 px-1.5 py-0.5 rounded border border-amber-400/30">
-              HD
-            </span>
-          )}
-        </div>
-
-        {/* Channel Center Logo Plate */}
-        <div className="relative z-10 w-24 h-11 sm:w-28 sm:h-14 md:w-32 md:h-16 flex items-center justify-center p-2 rounded-lg bg-black/80 backdrop-blur-sm border border-white/15 transition-colors shadow-md sm:group-hover:border-white/40">
-          {/* {!badgeError && channel.badge ? (
+        {/* ── CENTER: Crisp Channel Logo (Iconic Brand Identity) ── */}
+        <div className="relative z-10 flex items-center justify-center w-full px-4 transition-transform duration-300 group-hover:scale-110">
+          {!badgeError && channel?.badge && !channel?.badge?.includes('ondemand.st/img/cards') ? (
             <img
               src={channel.badge}
               alt={channel.name}
               loading="lazy"
               onError={() => setBadgeError(true)}
-              className="max-h-full max-w-full object-contain drop-shadow"
+              className="max-h-12 sm:max-h-14 max-w-[150px] object-contain drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]"
             />
-          ) : ( */}
-            <div className="flex flex-col items-center gap-0.5 text-center px-1">
-              <i className="fa-solid fa-satellite-dish text-red-500 text-xs sm:text-sm md:text-base" />
-              <span className="text-[9px] sm:text-[10px] font-black text-white truncate max-w-[84px] sm:max-w-[105px]">
-                {channel.name}
-              </span>
-            </div>
-         
+          ) : (
+            <NetworkLogo
+              name={channel?.name}
+              network={channel?.network}
+              className="h-10 sm:h-12 w-auto max-w-[160px]"
+            />
+          )}
         </div>
 
-        {/* Desktop-Only Hover Action Overlay (Hidden on mobile so taps don't stick) */}
-        <div className="hidden sm:flex absolute inset-0 bg-black/60 opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 items-center justify-center z-20">
-          <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#E50914] text-white font-bold text-xs shadow-lg transform scale-95 sm:group-hover:scale-100 transition-transform duration-200">
-            <i className="fa-solid fa-play text-[10px]" />
-            <span>Watch Live</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Info Section */}
-      <div className="p-2.5 sm:p-3 bg-[#161616] flex flex-col gap-1 border-t border-white/5">
-        <div className="flex items-center justify-between gap-1.5">
-          <h3 className="text-xs sm:text-sm font-bold text-white truncate transition-colors sm:group-hover:text-red-400">
-            {channel.name}
-          </h3>
-          <span className="text-[9px] sm:text-[10px] font-semibold text-gray-400 shrink-0">
-            {channel.viewers || 'Live'}
+        {/* ── BOTTOM-LEFT INSIDE MEDIA BOX: CATEGORY ── */}
+        <div className="absolute bottom-2 left-2.5 right-2.5 z-10 flex items-center justify-between">
+          <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-white/95 truncate drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+            {categoryText}
           </span>
         </div>
-
-        <p className="text-[10px] sm:text-[11px] text-gray-400 truncate">
-          {channel.currentShow || channel.category || '24/7 Live Broadcast'}
-        </p>
       </div>
+
+      {/* ── OUTSIDE CARD FOOTER: CHANNEL NAME (Matching Reference Image) ── */}
+      <h3
+        className="mt-1.5 px-0.5 text-xs sm:text-[13px] font-medium text-white/85 group-hover:text-white truncate transition-colors leading-snug"
+        title={channel?.name}
+      >
+        {channel?.name || 'Live Channel'}
+      </h3>
     </div>
   );
 };

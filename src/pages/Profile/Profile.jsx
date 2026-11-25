@@ -5,7 +5,6 @@ import Footer from '../../components/Footer/Footer';
 import Watch from '../../components/Watch/Watch';
 import Skeleton from '../../components/Skeleton/Skeleton';
 import { fetchTMDBDetails } from '../../content/tmdb.js';
-import Snowfall from 'react-snowfall';
 
 /* ───────────────────────────── helpers & constants ───────────────────────────── */
 
@@ -303,36 +302,24 @@ const Profile = (props) => {
   /* Loading State */
   if (props.loading) {
     return (
-      <div className="min-h-screen bg-[#141414] text-white pt-24 px-6 md:px-12 lg:px-16">
-        <div className="mx-auto mb-10 h-36 w-full max-w-[1400px] animate-pulse rounded-[4px] bg-[#1f1f1f]" />
+      <div className="min-h-screen bg-[#07070a] text-white pt-24 px-6 md:px-12 lg:px-16">
+        <div className="mx-auto mb-10 h-36 w-full max-w-[1400px] animate-pulse rounded-2xl glass-mirror" />
         <Skeleton type="card" count={12} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#141414] text-white font-sans selection:bg-[#E50914] selection:text-white">
-
-      <Snowfall
-        style={{
-          position: 'fixed',
-          width: '100vw',
-          height: '100vh',
-          zIndex: 999, // Lower than your intro video (10000) and toast (9999), but above normal page content
-          pointerEvents: 'none',
-        }}
-        snowflakeCount={100} // Optional: adjust particle density
-      />
-      
+    <div className="min-h-screen bg-[#07070a] text-white font-sans selection:bg-[#E50914] selection:text-white">
       {/* ═══════════════════════ NETFLIX PROFILE BANNER ═══════════════════════ */}
-      <section className="relative w-full border-b border-white/10 bg-gradient-to-b from-[#1f1f1f] via-[#181818] to-[#141414] pt-24 pb-8 px-4 sm:px-8 md:px-12 lg:px-16 overflow-hidden">
+      <section className="relative w-full border-b border-white/[0.08] bg-gradient-to-b from-white/[0.04] via-transparent to-transparent pt-24 pb-10 px-4 sm:px-8 md:px-12 lg:px-16 overflow-hidden">
         {/* Subtle Red Ambient Glow */}
-        <div className="pointer-events-none absolute -top-24 left-1/4 w-96 h-96 bg-[#E50914]/10 rounded-full blur-3xl" />
+        <div className="pointer-events-none absolute -top-24 left-1/4 w-96 h-96 bg-[#E50914]/15 rounded-full blur-[100px]" />
 
         <div className="relative z-10 max-w-[1400px] mx-auto flex flex-col md:flex-row items-center md:items-end justify-between gap-6 md:gap-8">
           {/* Avatar + Identity */}
           <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 sm:gap-7 text-center sm:text-left">
-            {/* Netflix Square Rounded Avatar */}
+            {/* Netflix Square Rounded Avatar with Glass Specular Ring */}
             <div className="relative group flex-shrink-0">
               <div
                 role="button"
@@ -345,14 +332,14 @@ const Profile = (props) => {
                     setShowAvatarPicker((prev) => !prev);
                   }
                 }}
-                className="w-24 h-24 sm:w-32 sm:h-32 rounded-[4px] bg-[#222] overflow-hidden cursor-pointer shadow-[0_8px_28px_rgba(0,0,0,0.8)] ring-2 ring-transparent group-hover:ring-white transition-all duration-200 relative"
+                className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-[#101018] overflow-hidden cursor-pointer shadow-glass-md border border-white/20 ring-2 ring-transparent group-hover:ring-[#E50914] transition-all duration-300 relative"
               >
                 <img
                   src={userData.profilePic || DEFAULT_AVATAR}
                   alt={userData?.name || 'Profile'}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1 transition-opacity duration-200">
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1 transition-opacity duration-200 backdrop-blur-xs">
                   <i className="fa-solid fa-pen text-white text-lg" />
                   <span className="text-[10px] uppercase font-bold tracking-wider text-gray-200">
                     Avatar
@@ -368,22 +355,22 @@ const Profile = (props) => {
                 onChange={handleImageUpload}
               />
 
-              {/* Quick Avatar Picker Popover */}
+              {/* Quick Avatar Picker Popover - Glass Modal */}
               {showAvatarPicker && (
-                <div className="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-full mt-3 z-40 w-64 p-3 rounded-[4px] bg-[#181818] border border-white/15 shadow-2xl">
-                  <div className="flex items-center justify-between mb-2.5">
-                    <span className="text-xs font-bold text-gray-300 uppercase tracking-wider">
+                <div className="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-full mt-3 z-40 w-72 p-4 rounded-2xl glass-modal border border-white/20 shadow-glass-lg animate-[fadeIn_0.2s_ease-out]">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold text-gray-200 uppercase tracking-wider">
                       Choose Icon
                     </span>
                     <button
                       type="button"
                       onClick={() => setShowAvatarPicker(false)}
-                      className="text-gray-400 hover:text-white text-xs"
+                      className="w-6 h-6 rounded-full bg-white/5 hover:bg-white/15 text-gray-400 hover:text-white flex items-center justify-center text-xs transition cursor-pointer"
                     >
                       <i className="fa-solid fa-xmark" />
                     </button>
                   </div>
-                  <div className="grid grid-cols-4 gap-2 mb-3">
+                  <div className="grid grid-cols-4 gap-2.5 mb-3">
                     {NETFLIX_PRESET_AVATARS.map((url, i) => (
                       <button
                         key={i}
@@ -392,7 +379,7 @@ const Profile = (props) => {
                           saveUserPatch({ profilePic: url });
                           setShowAvatarPicker(false);
                         }}
-                        className="aspect-square rounded-[3px] overflow-hidden ring-1 ring-white/15 hover:ring-2 hover:ring-white transition"
+                        className="aspect-square rounded-xl overflow-hidden border border-white/15 hover:border-[#E50914] hover:shadow-neon-red transition-all cursor-pointer"
                       >
                         <img src={url} alt={`Preset ${i + 1}`} className="w-full h-full object-cover" />
                       </button>
@@ -401,7 +388,7 @@ const Profile = (props) => {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-[3px] flex items-center justify-center gap-2 transition"
+                    className="w-full py-2 glass-btn-secondary text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-2 transition cursor-pointer"
                   >
                     <i className="fa-solid fa-upload text-[11px]" />
                     <span>Upload Custom Photo</span>
@@ -411,9 +398,9 @@ const Profile = (props) => {
             </div>
 
             {/* User Details & Watchlist Stats */}
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <div className="flex items-center justify-center sm:justify-start gap-2">
-                <span className="bg-[#E50914] text-white text-[10px] font-black uppercase px-1.5 py-0.5 rounded-[2px] tracking-wider shadow">
+                <span className="bg-[#E50914] text-white text-[10px] font-black uppercase px-2 py-0.5 rounded shadow-neon-red tracking-wider">
                   N
                 </span>
                 <span className="text-xs text-gray-300 font-semibold tracking-wide uppercase">
@@ -430,11 +417,11 @@ const Profile = (props) => {
                     onChange={(e) => setNameInput(e.target.value)}
                     maxLength={24}
                     autoFocus
-                    className="bg-[#2a2a2a] text-white text-xl sm:text-2xl font-bold px-3 py-1 rounded-[3px] border border-white/40 focus:outline-none focus:border-white w-48 sm:w-60"
+                    className="glass-input text-white text-xl sm:text-2xl font-bold px-3 py-1.5 rounded-xl border border-white/30 focus:outline-none w-48 sm:w-60"
                   />
                   <button
                     type="submit"
-                    className="px-3 py-1.5 bg-white text-black font-bold text-xs rounded-[3px] hover:bg-gray-200 cursor-pointer"
+                    className="px-3.5 py-1.5 glass-btn-primary text-white font-bold text-xs rounded-xl cursor-pointer"
                   >
                     Save
                   </button>
@@ -444,21 +431,21 @@ const Profile = (props) => {
                       setNameInput(userData?.name || 'Guest');
                       setIsEditingName(false);
                     }}
-                    className="px-2.5 py-1.5 bg-white/10 text-gray-300 text-xs rounded-[3px] hover:bg-white/20 cursor-pointer"
+                    className="px-3 py-1.5 glass-btn-secondary text-gray-300 text-xs rounded-xl cursor-pointer"
                   >
                     Cancel
                   </button>
                 </form>
               ) : (
                 <div className="flex items-center justify-center sm:justify-start gap-3 group">
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight drop-shadow-sm">
                     {String(userData?.name || 'Guest')}
                   </h1>
                   <button
                     type="button"
                     onClick={() => setIsEditingName(true)}
                     title="Edit Profile Name"
-                    className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white flex items-center justify-center transition opacity-80 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
+                    className="w-8 h-8 rounded-full glass-mirror hover:border-white/40 text-gray-300 hover:text-white flex items-center justify-center transition opacity-80 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer shadow-glass-sm"
                   >
                     <i className="fa-solid fa-pen text-xs" />
                   </button>
@@ -466,30 +453,28 @@ const Profile = (props) => {
               )}
 
               {/* Metrics Row */}
-              <div className="flex items-center justify-center sm:justify-start gap-5 pt-1 text-gray-400">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="font-black text-white text-base sm:text-lg">
+              <div className="flex items-center justify-center sm:justify-start gap-2.5 pt-1 text-gray-400">
+                <div className="glass-mirror-card px-3 py-1 rounded-full flex items-baseline gap-1.5 border border-white/10">
+                  <span className="font-black text-white text-sm">
                     {watchListItems.length}
                   </span>
-                  <span className="text-[11px] uppercase tracking-wider font-semibold">
+                  <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">
                     My List
                   </span>
                 </div>
-                <div className="h-3.5 w-px bg-white/15" />
-                <div className="flex items-baseline gap-1.5">
-                  <span className="font-black text-white text-base sm:text-lg">
+                <div className="glass-mirror-card px-3 py-1 rounded-full flex items-baseline gap-1.5 border border-white/10">
+                  <span className="font-black text-white text-sm">
                     {movieItems.length}
                   </span>
-                  <span className="text-[11px] uppercase tracking-wider font-semibold">
+                  <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">
                     Movies
                   </span>
                 </div>
-                <div className="h-3.5 w-px bg-white/15" />
-                <div className="flex items-baseline gap-1.5">
-                  <span className="font-black text-white text-base sm:text-lg">
+                <div className="glass-mirror-card px-3 py-1 rounded-full flex items-baseline gap-1.5 border border-white/10">
+                  <span className="font-black text-white text-sm">
                     {seriesItems.length}
                   </span>
-                  <span className="text-[11px] uppercase tracking-wider font-semibold">
+                  <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">
                     TV Shows
                   </span>
                 </div>
@@ -502,7 +487,7 @@ const Profile = (props) => {
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="px-4 sm:px-5 py-2 rounded-[4px] bg-white/10 hover:bg-white/20 text-xs sm:text-sm font-semibold text-white transition cursor-pointer flex items-center gap-2"
+              className="px-4 sm:px-5 py-2.5 rounded-xl glass-btn-secondary text-xs sm:text-sm font-semibold text-white transition cursor-pointer flex items-center gap-2"
             >
               <i className="fa-solid fa-house text-xs" />
               <span>Browse Home</span>
@@ -510,7 +495,7 @@ const Profile = (props) => {
             <button
               type="button"
               onClick={logout}
-              className="px-4 sm:px-5 py-2 rounded-[4px] border border-white/25 hover:border-[#E50914] hover:bg-[#E50914] text-xs sm:text-sm font-semibold text-gray-200 hover:text-white transition duration-200 cursor-pointer flex items-center gap-2"
+              className="px-4 sm:px-5 py-2.5 rounded-xl border border-red-500/30 bg-red-950/20 hover:bg-[#E50914] text-xs sm:text-sm font-semibold text-red-300 hover:text-white transition duration-200 cursor-pointer flex items-center gap-2 shadow-neon-red"
             >
               <i className="fa-solid fa-right-from-bracket text-xs" />
               <span>Sign Out</span>
@@ -523,9 +508,9 @@ const Profile = (props) => {
       <main className="max-w-[1400px] mx-auto px-4 sm:px-8 md:px-12 lg:px-16 py-8 min-h-[55vh]">
         {watchListItems.length === 0 ? (
           /* Empty Watchlist State */
-          <div className="flex flex-col items-center justify-center py-20 text-center max-w-md mx-auto">
-            <div className="w-20 h-20 rounded-full border border-white/10 bg-[#1a1a1a] flex items-center justify-center mb-5 text-gray-500 shadow-inner">
-              <i className="fa-solid fa-film text-3xl text-gray-500" />
+          <div className="glass-modal max-w-md mx-auto p-10 rounded-3xl text-center border border-white/10 shadow-glass-md my-16">
+            <div className="w-20 h-20 rounded-2xl glass-mirror flex items-center justify-center mb-5 mx-auto text-gray-400 shadow-glass-sm">
+              <i className="fa-solid fa-film text-3xl" />
             </div>
             <h2 className="text-xl sm:text-2xl font-bold mb-2 text-white">
               Your List is currently empty
@@ -536,17 +521,18 @@ const Profile = (props) => {
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="px-7 py-2.5 bg-white hover:bg-white/85 text-black font-bold text-sm rounded-[4px] transition shadow-lg cursor-pointer"
+              className="glass-btn-primary px-7 py-3 text-white font-bold text-sm rounded-xl transition shadow-neon-red cursor-pointer inline-flex items-center gap-2"
             >
-              Explore Titles
+              <i className="fa-solid fa-compass" />
+              <span>Explore Titles</span>
             </button>
           </div>
         ) : (
           <div>
             {/* Filter Tabs + Search & Sort Controls */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-white/10 pb-3">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-white/[0.08] pb-4">
               {/* Category Tabs */}
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
                 {[
                   { id: 'all', label: 'My List', count: watchListItems.length },
                   { id: 'movies', label: 'Movies', count: movieItems.length },
@@ -558,20 +544,20 @@ const Profile = (props) => {
                       key={tab.id}
                       type="button"
                       onClick={() => setActiveTab(tab.id)}
-                      className={`pb-2 text-sm sm:text-base font-bold tracking-wide transition-colors relative flex items-center gap-2 cursor-pointer ${isActive ? 'text-white' : 'text-gray-400 hover:text-gray-200'
-                        }`}
+                      className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold tracking-wide transition-all relative flex items-center gap-2 cursor-pointer ${
+                        isActive
+                          ? 'bg-white/15 text-white border border-white/25 shadow-glass-sm'
+                          : 'glass-mirror-card text-gray-400 hover:text-white border border-white/5'
+                      }`}
                     >
                       <span>{tab.label}</span>
                       <span
-                        className={`text-[11px] px-1.5 py-0.2 rounded-sm font-extrabold ${isActive ? 'bg-[#E50914] text-white' : 'bg-white/10 text-gray-400'
-                          }`}
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
+                          isActive ? 'bg-[#E50914] text-white shadow-neon-red' : 'bg-white/10 text-gray-400'
+                        }`}
                       >
                         {tab.count}
                       </span>
-
-                      {isActive && (
-                        <span className="absolute -bottom-[13px] left-0 w-full h-[3px] bg-[#E50914]" />
-                      )}
                     </button>
                   );
                 })}
@@ -579,20 +565,20 @@ const Profile = (props) => {
 
               {/* Search Within List & Sort Dropdown */}
               <div className="flex items-center gap-3">
-                <div className="relative flex-1 sm:w-52">
-                  <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                <div className="relative flex-1 sm:w-56">
+                  <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
                   <input
                     type="text"
                     value={listQuery}
                     onChange={(e) => setListQuery(e.target.value)}
                     placeholder="Filter My List..."
-                    className="w-full bg-black/60 border border-white/20 focus:border-white text-xs sm:text-sm text-white pl-8 pr-7 py-1.5 rounded-[3px] focus:outline-none transition"
+                    className="w-full glass-input text-xs sm:text-sm text-white pl-9 pr-8 py-2 rounded-xl focus:outline-none transition"
                   />
                   {listQuery && (
                     <button
                       type="button"
                       onClick={() => setListQuery('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-xs"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-xs cursor-pointer"
                     >
                       <i className="fa-solid fa-xmark" />
                     </button>
@@ -603,12 +589,12 @@ const Profile = (props) => {
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   aria-label="Sort My List"
-                  className="bg-black/80 border border-white/25 hover:border-white text-xs sm:text-sm text-white font-semibold px-3 py-1.5 rounded-[3px] focus:outline-none cursor-pointer"
+                  className="glass-input text-xs sm:text-sm text-white font-semibold px-3 py-2 rounded-xl focus:outline-none cursor-pointer"
                 >
-                  <option value="default">Order Added</option>
-                  <option value="rating">Top Rated</option>
-                  <option value="year">Release Year</option>
-                  <option value="az">Title (A-Z)</option>
+                  <option value="default" className="bg-[#0c0c14] text-white">Order Added</option>
+                  <option value="rating" className="bg-[#0c0c14] text-white">Top Rated</option>
+                  <option value="year" className="bg-[#0c0c14] text-white">Release Year</option>
+                  <option value="az" className="bg-[#0c0c14] text-white">Title (A-Z)</option>
                 </select>
               </div>
             </div>

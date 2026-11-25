@@ -16,22 +16,29 @@ class ErrorBoundary extends React.Component {
 
     render() {
         if (this.state.hasError) {
+            const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+
             return (
-                <div style={{ textAlign: 'center', padding: '50px', color: '#fff' }}>
-                    <h2>Something went wrong loading this page.</h2>
-                    <button
-                        onClick={() => window.location.reload()}
-                        style={{
-                            padding: '10px 20px',
-                            background: '#e50914',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        Reload Page
-                    </button>
+                <div className="min-h-[50vh] flex items-center justify-center p-6 bg-[#07070a]">
+                    <div className="glass-modal max-w-md p-8 rounded-3xl text-center border border-white/15 shadow-glass-lg">
+                        <div className="w-16 h-16 rounded-2xl glass-mirror flex items-center justify-center mx-auto mb-4 text-[#E50914] shadow-neon-red">
+                            <i className={`fa-solid ${isOffline ? 'fa-wifi-slash' : 'fa-triangle-exclamation'} text-2xl`} />
+                        </div>
+                        <h2 className="text-xl font-bold text-white mb-2">
+                            {isOffline ? 'Connection Lost' : 'Something went wrong loading this section.'}
+                        </h2>
+                        <p className="text-sm text-gray-400 mb-6">
+                            {isOffline
+                                ? 'Unable to load page assets while offline. Check your internet connection and reload.'
+                                : 'A temporary error occurred while rendering the content.'}
+                        </p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="glass-btn-primary px-6 py-2.5 text-sm font-bold text-white rounded-xl shadow-neon-red cursor-pointer"
+                        >
+                            {isOffline ? 'Retry Connection' : 'Reload Page'}
+                        </button>
+                    </div>
                 </div>
             );
         }

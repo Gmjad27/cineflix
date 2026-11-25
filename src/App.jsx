@@ -1,4 +1,4 @@
-import React, { useEffect, useState, lazy, Suspense } from "react";
+import React, { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import Nav from "./components/Nav/Nav";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -8,6 +8,8 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import MovieViewAll from "./pages/ViewAll/MovieViewAll.jsx";
 import ScrollToTop from "./components/ScrollToTop";
 import PWAInstallPrompt from "./components/PWAInstallPrompt/PWAInstallPrompt";
+import { NetworkProvider, useNetworkStatus } from "./context/NetworkContext";
+import NetworkStatusAlert from "./components/NetworkStatus/NetworkStatusAlert";
 
 
 const Home = lazy(() => import("./pages/Home/Home"));
@@ -36,19 +38,20 @@ const safeParse = (value, fallback) => {
 // ✅ Fallback UI shown while lazy chunks load
 function PageLoader() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#141414] text-white">
-      <div className="w-12 h-12 border-4 border-white/20 border-t-[#E50914] rounded-full animate-spin mb-4"></div>
-      <div className="text-sm tracking-[0.2em] uppercase font-semibold text-gray-400 animate-pulse">
-        Loading...
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#07070a] text-white">
+      <div className="relative flex items-center justify-center">
+        <div className="w-16 h-16 rounded-full border-2 border-white/10 border-t-[#E50914] animate-spin shadow-[0_0_20px_rgba(229,9,20,0.5)]"></div>
+        <span className="absolute font-black text-[#E50914] text-lg">C</span>
+      </div>
+      <div className="text-xs tracking-[0.3em] uppercase font-semibold text-gray-400 animate-pulse mt-4">
+        Loading CineFlix...
       </div>
     </div>
   );
 }
 
-function App() {
-  // useEffect(() => {
-  //   window.location.replace("https://cineflix.jadavgirish67.workers.dev/");
-  // }, []);
+function AppContent() {
+  const { isOnline, wasOffline } = useNetworkStatus();
 
   const [introPlaying, setIntroPlaying] = useState(() => {
     if (sessionStorage.getItem('hasSeenIntro')) {
@@ -64,40 +67,45 @@ function App() {
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [toast, setToast] = useState({ show: false, message: '', isError: false });
 
-  useEffect(() => {
-    let active = true;
-    const loadCatalog = async () => {
-      try {
-        const [items, sections] = await Promise.all([
-          fetchTMDBCatalog({ moviePages: 3, tvPages: 3 }),
-          fetchTMDBHomeSections(),
-        ]);
-        if (active) {
-          const merged = [
-            ...items,
-            ...(sections.heroBanner || []),
-            ...((sections.rails || []).flatMap((rail) => rail.items || [])),
-          ];
-          const unique = [];
-          const seen = new Set();
-          merged.forEach((entry) => {
-            const key = `${entry?.type}:${entry?.tmdbId}`;
-            if (!entry || seen.has(key)) return;
-            seen.add(key);
-            unique.push(entry);
-          });
-          setCatalog(unique);
-          setHomeSections(sections);
-        }
-      } catch (error) {
-        console.error("Failed to load TMDB catalog:", error);
-      } finally {
-        if (active) setCatalogLoading(false);
-      }
-    };
-    loadCatalog();
-    return () => { active = false; };
+  const loadCatalog = useCallback(async () => {
+    setCatalogLoading(true);
+    try {
+      const [items, sections] = await Promise.all([
+        fetchTMDBCatalog({ moviePages: 3, tvPages: 3 }),
+        fetchTMDBHomeSections(),
+      ]);
+      const merged = [
+        ...items,
+        ...(sections.heroBanner || []),
+        ...((sections.rails || []).flatMap((rail) => rail.items || [])),
+      ];
+      const unique = [];
+      const seen = new Set();
+      merged.forEach((entry) => {
+        const key = `${entry?.type}:${entry?.tmdbId}`;
+        if (!entry || seen.has(key)) return;
+        seen.add(key);
+        unique.push(entry);
+      });
+      setCatalog(unique);
+      setHomeSections(sections);
+    } catch (error) {
+      console.error("Failed to load TMDB catalog:", error);
+    } finally {
+      setCatalogLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadCatalog();
+  }, [loadCatalog]);
+
+  // When returning online and catalog is currently empty, automatically refresh
+  useEffect(() => {
+    if (wasOffline && catalog.length === 0) {
+      loadCatalog();
+    }
+  }, [wasOffline, catalog.length, loadCatalog]);
 
   const [El, setEl] = useState(() => safeParse(localStorage.getItem('El'), []));
 
@@ -158,10 +166,10 @@ function App() {
 
   const play = (tid) => setTID(tid);
 
-  const sharedProps = { data: catalog, loading: catalogLoading, add, e: El, play };
+  const sharedProps = { data: catalog, loading: catalogLoading, add, e: El, play, onRetryCatalog: loadCatalog, isOnline };
 
   return (
-    <div className="h-full bg-[#141414] text-white font-sans  relative min-h-dvh">
+    <div className="h-full bg-[#07070a] text-white font-sans relative min-h-dvh">
 
       
 
@@ -178,6 +186,9 @@ function App() {
           />
         </div>
       )}
+
+      {/* Global Network Status Alert (No Internet / Weak Internet / Back Online) */}
+      <NetworkStatusAlert />
 
       {
         // Your existing Router code here
@@ -261,18 +272,18 @@ function App() {
       {/* Toast Notification */}
       <PWAInstallPrompt />
       <div
-        className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3 rounded-full shadow-2xl backdrop-blur-md border transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] pointer-events-none
+        className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-5 py-3 rounded-full shadow-2xl backdrop-blur-2xl border transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] pointer-events-none
     ${toast.show ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95'}
     ${toast.isError
-            ? 'bg-zinc-900/95 border-[#E50914]/50 text-white shadow-[#E50914]/20'
-            : 'bg-zinc-900/95 border-green-500/50 text-white shadow-green-500/20'
+            ? 'bg-[#0f0709]/90 border-[#E50914]/50 text-white shadow-[0_10px_30px_rgba(229,9,20,0.35),inset_0_1px_1px_rgba(255,255,255,0.2)]'
+            : 'bg-[#070f0a]/90 border-emerald-500/50 text-white shadow-[0_10px_30px_rgba(16,185,129,0.35),inset_0_1px_1px_rgba(255,255,255,0.2)]'
           }`}
       >
-        <div className={`flex items-center justify-center w-6 h-6 rounded-full shrink-0 ${toast.isError ? 'bg-[#E50914]/20 text-[#E50914]' : 'bg-green-500/20 text-green-400'
+        <div className={`flex items-center justify-center w-6 h-6 rounded-full shrink-0 ${toast.isError ? 'bg-[#E50914]/25 text-[#E50914] shadow-[0_0_10px_#E50914]' : 'bg-emerald-500/25 text-emerald-400 shadow-[0_0_10px_#10b981]'
           }`}>
           <i className={`fa-solid text-xs ${toast.isError ? 'fa-xmark' : 'fa-check'}`}></i>
         </div>
-        <span className="font-medium tracking-wide text-sm whitespace-nowrap">
+        <span className="font-semibold tracking-wide text-xs sm:text-sm whitespace-nowrap">
           {toast.message}
         </span>
       </div>
@@ -280,4 +291,10 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <NetworkProvider>
+      <AppContent />
+    </NetworkProvider>
+  );
+}

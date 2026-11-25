@@ -7,7 +7,6 @@ import { STUDIO_COLLECTIONS, getStudioConfig } from '../../content/studios';
 import Footer from '../../components/Footer/Footer';
 import Skeleton from '../../components/Skeleton/Skeleton';
 import RailRow from '../../components/RailRow/RailRow';
-import Snowfall from 'react-snowfall';
 
 /**
  * One tile in the horizontally-scrolling "Studios" strip.
@@ -91,10 +90,10 @@ const Studio = (props) => {
   // Loading skeleton
   if (props.loading || (studioLoading && studioData.length === 0)) {
     return (
-      <div className="min-h-screen w-full bg-[#141414] text-white">
+      <div className="min-h-screen w-full bg-[#07070a] text-white">
         <div className="h-[30vh] md:h-[45vh] flex items-center justify-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-[#141414]" />
-          <div className="w-48 md:w-72 h-12 md:h-20 rounded-lg bg-white/10 animate-pulse relative z-10" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-[#07070a]" />
+          <div className="w-48 md:w-72 h-12 md:h-20 rounded-2xl glass-mirror animate-pulse relative z-10" />
         </div>
         <div className="px-6 md:px-12 lg:px-16 mt-4 space-y-12 pb-20">
           {[1, 2, 3].map((section) => (
@@ -108,39 +107,28 @@ const Studio = (props) => {
   const themeColor = studioConfig?.color || '#333333';
 
   return (
-    <div className="min-h-screen w-full bg-[#141414] text-white font-sans selection:bg-white/90 selection:text-black">
-
-      <Snowfall
-        style={{
-          position: 'fixed',
-          width: '100vw',
-          height: '100vh',
-          zIndex: 999, // Lower than your intro video (10000) and toast (9999), but above normal page content
-          pointerEvents: 'none',
-        }}
-        snowflakeCount={100} // Optional: adjust particle density
-      />
+    <div className="min-h-screen w-full bg-[#07070a] text-white font-sans selection:bg-[#E50914] selection:text-white">
       {/* ── Cinematic Hero Section ── */}
-      <div className="relative w-full h-[30vh] md:h-[45vh] flex items-center justify-center overflow-hidden bg-[#141414]">
+      <div className="relative w-full h-[32vh] md:h-[48vh] flex items-center justify-center overflow-hidden bg-[#07070a]">
         {/* Ambient background glow based on studio color */}
         <div
-          className="absolute top-[-20%] w-[120%] h-[120%] opacity-40 blur-[80px] md:blur-[120px] mix-blend-screen transition-colors duration-700 pointer-events-none"
+          className="absolute top-[-20%] w-[120%] h-[120%] opacity-40 blur-[80px] md:blur-[140px] mix-blend-screen transition-colors duration-700 pointer-events-none"
           style={{
-            background: `radial-gradient(circle at center, ${themeColor} 0%, transparent 60%)`
+            background: `radial-gradient(circle at center, ${themeColor} 0%, transparent 65%)`
           }}
         />
         {/* Vignette fade to dark at the bottom */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#141414]/10 via-[#141414]/40 to-[#141414] pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#07070a]/50 to-[#07070a] pointer-events-none" />
 
         <div className="relative z-10 flex flex-col items-center transform translate-y-4 md:translate-y-8 animate-fade-in-up">
           {studioConfig?.img ? (
             <img
               src={studioConfig.img}
               alt={studioConfig.label}
-              className="w-[220px] md:w-[620px] object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]"
+              className="w-[220px] md:w-[620px] object-contain drop-shadow-[0_12px_30px_rgba(0,0,0,0.9)]"
             />
           ) : (
-            <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60 drop-shadow-xl">
+            <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/60 drop-shadow-2xl">
               {studioName || 'Studio'}
             </h1>
           )}
@@ -154,12 +142,12 @@ const Studio = (props) => {
         {/* ── Curated Content Rails ── */}
         <div className="space-y-10 md:space-y-14">
           {rails.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center bg-white/5 rounded-2xl border border-white/10 mx-2">
-              <div className="w-20 h-20 mb-6 rounded-full bg-white/5 flex items-center justify-center">
-                <i className="fa-solid fa-film text-3xl text-white/40"></i>
+            <div className="glass-modal max-w-lg mx-auto p-10 rounded-3xl text-center border border-white/10 shadow-glass-md my-12">
+              <div className="w-20 h-20 mb-6 rounded-2xl glass-mirror flex items-center justify-center mx-auto text-white/40 shadow-glass-sm">
+                <i className="fa-solid fa-film text-3xl"></i>
               </div>
-              <h2 className="text-2xl md:text-3xl font-bold mb-3 text-white/90">No titles available</h2>
-              <p className="text-white/50 text-base md:text-lg max-w-md px-4">
+              <h2 className="text-2xl md:text-3xl font-bold mb-3 text-white">No titles available</h2>
+              <p className="text-gray-400 text-sm md:text-base max-w-md mx-auto">
                 We're currently updating our catalog for {studioConfig?.label || studioName}. Check back soon or explore another studio above.
               </p>
             </div>

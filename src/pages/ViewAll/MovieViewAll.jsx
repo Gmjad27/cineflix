@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import Card from '../../components/Card/Card';
 import Watch from '../../components/Watch/Watch';
+import Skeleton from '../../components/Skeleton/Skeleton';
 
 // Memoized Card to prevent unnecessary re-renders
 const MemoizedCard = memo(Card, (prevProps, nextProps) => {
@@ -110,14 +111,14 @@ const MovieViewAll = (props) => {
   const visibleItems = useMemo(() => items.slice(0, visibleCount), [items, visibleCount]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-[#E50914] selection:text-white pb-24">
+    <div className="min-h-screen bg-[#07070a] text-white font-sans selection:bg-[#E50914] selection:text-white pb-24">
 
       {/* ─── Cinematic Header ─── */}
-      <header className="relative pt-24 pb-8 px-6 md:px-12 lg:px-16 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1a1a24] via-[#0a0a0a] to-[#0a0a0a] border-b border-white/5">
+      <header className="relative pt-24 pb-8 px-6 md:px-12 lg:px-16 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/[0.04] via-transparent to-transparent border-b border-white/[0.08]">
         <div className="max-w-[1600px] mx-auto flex items-center gap-5 sm:gap-8">
           <button
             onClick={() => navigate(-1)}
-            className="group flex items-center justify-center w-12 h-12 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:-translate-x-1 backdrop-blur-sm shadow-lg"
+            className="group flex items-center justify-center w-12 h-12 rounded-2xl glass-mirror hover:border-white/40 transition-all duration-300 hover:-translate-x-1 shadow-glass-sm cursor-pointer"
             aria-label="Go back"
           >
             <svg
@@ -138,7 +139,7 @@ const MovieViewAll = (props) => {
 
           <div className="h-10 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent hidden sm:block"></div>
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 tracking-tight drop-shadow-sm truncate">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400 tracking-tight drop-shadow-sm truncate">
             {pageTitle}
           </h1>
         </div>
@@ -146,7 +147,9 @@ const MovieViewAll = (props) => {
 
       {/* ─── Grid Content ─── */}
       <main className="max-w-[1600px] mx-auto px-6 md:px-12 lg:px-16 pt-12">
-        {visibleItems.length > 0 ? (
+        {props.loading || (items.length === 0 && searchParams.get('items')) ? (
+          <Skeleton type="card" count={24} />
+        ) : visibleItems.length > 0 ? (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-10 animate-[fadeIn_0.5s_ease-out]">
               {visibleItems.map((item) => (
@@ -169,7 +172,7 @@ const MovieViewAll = (props) => {
               <div className="flex justify-center mt-14">
                 <button
                   onClick={loadMore}
-                  className="px-8 py-3 bg-white/10 border border-white/20 text-white font-semibold rounded-full hover:bg-white/20 transition-all duration-300 backdrop-blur-sm shadow-lg active:scale-95"
+                  className="glass-btn-secondary px-8 py-3.5 text-white font-semibold rounded-2xl transition-all duration-300 shadow-glass-sm active:scale-95 cursor-pointer"
                 >
                   Load More ({items.length - visibleCount} remaining)
                 </button>
@@ -177,11 +180,11 @@ const MovieViewAll = (props) => {
             )}
           </>
         ) : (
-          /* ─── Premium Empty State ─── */
-          <div className="flex flex-col items-center justify-center py-32 text-center animate-[fadeIn_0.5s_ease-out]">
-            <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-8 border border-white/10 shadow-inner">
+          /* ─── Premium Glass Empty State ─── */
+          <div className="glass-modal max-w-lg mx-auto p-12 rounded-3xl text-center border border-white/10 shadow-glass-md my-16 animate-[fadeIn_0.5s_ease-out]">
+            <div className="w-20 h-20 glass-mirror rounded-2xl flex items-center justify-center mb-6 mx-auto shadow-glass-sm text-gray-400">
               <svg
-                className="w-12 h-12 text-gray-500"
+                className="w-10 h-10 text-gray-400"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -189,13 +192,13 @@ const MovieViewAll = (props) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
             </div>
-            <h2 className="text-3xl font-bold text-white mb-4 tracking-tight">No titles found</h2>
-            <p className="text-gray-400 text-lg max-w-md mb-10 font-light">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 tracking-tight">No titles found</h2>
+            <p className="text-gray-400 text-sm md:text-base max-w-md mx-auto mb-8 font-light">
               There are currently no titles available in this collection. Try exploring a different category or return home.
             </p>
             <button
               onClick={() => navigate(-1)}
-              className="px-8 py-3 bg-white text-black font-semibold rounded-full hover:bg-gray-200 transition-all duration-200 shadow-lg shadow-white/10 active:scale-95"
+              className="glass-btn-primary px-8 py-3.5 text-white font-bold rounded-2xl shadow-neon-red active:scale-95 cursor-pointer"
             >
               Explore Something Else
             </button>

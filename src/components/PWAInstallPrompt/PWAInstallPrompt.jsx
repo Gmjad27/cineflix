@@ -65,26 +65,26 @@ const PWAInstallPrompt = () => {
 
   return (
     <aside
-      className="fixed bottom-5 left-4 right-4 z-[9998] mx-auto flex max-w-md items-center gap-4 rounded-2xl border border-white/10 bg-[#181818]/95 p-4 text-white shadow-2xl shadow-black/50 backdrop-blur-xl"
+      className="fixed bottom-5 left-4 right-4 z-[9998] mx-auto flex max-w-md items-center gap-4 rounded-2xl border border-white/20 glass-modal p-4 text-white shadow-glass-lg"
       role="dialog"
       aria-label="Install CineFlix"
     >
-      <img src="/icon.svg" alt="" className="h-10 w-10 rounded object-contain" />
+      <img src="/icon.svg" alt="" className="h-10 w-10 rounded-xl object-contain glass-mirror p-1" />
       <div className="min-w-0 flex-1">
-        <p className="font-semibold">Install CineFlix</p>
-        <p className="mt-1 text-xs text-gray-400">Get quicker access to your entertainment.</p>
+        <p className="font-bold text-sm">Install CineFlix</p>
+        <p className="mt-0.5 text-xs text-gray-400">Get faster access to movies and live sports.</p>
       </div>
       <button
         type="button"
         onClick={install}
-        className="shrink-0 rounded-lg bg-[#E50914] px-3 py-2 text-sm font-semibold transition hover:bg-[#f51b26]"
+        className="shrink-0 rounded-xl glass-btn-primary px-4 py-2 text-xs font-bold transition shadow-neon-red cursor-pointer"
       >
         Install
       </button>
       <button
         type="button"
         onClick={dismiss}
-        className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-[#292929] text-gray-300 hover:text-white"
+        className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full border border-white/20 glass-modal text-gray-300 hover:text-white cursor-pointer shadow-glass-sm"
         aria-label="Dismiss install prompt"
       >
         <span aria-hidden="true">&times;</span>
