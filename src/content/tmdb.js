@@ -1,6 +1,6 @@
 import { getStudioConfig } from "./studios";
 
-const TMDB_BASE_URL = "https://cineflix-tmdb-api.jadavgirish67.workers.dev/api/tmdb";
+const TMDB_BASE_URL = import.meta.env.VITE_API;
 // Updated base URL without the hardcoded 'original' size
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/";
 

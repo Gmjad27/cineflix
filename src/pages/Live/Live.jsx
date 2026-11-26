@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import LiveRailRow from '../../components/Live/LiveRailRow';
+import LiveHeroBanner from '../../components/Live/LiveHeroBanner';
+import RailRow from '../../components/RailRow/RailRow';
 import LiveMatchCard from '../../components/Live/LiveMatchCard';
 import LiveTVCard from '../../components/Live/LiveTVCard';
 import Footer from '../../components/Footer/Footer';
 import { useLiveFavorites } from '../../hooks/useLiveFavorites';
-import { ShimmerBlock } from '../../components/Skeleton/Skeleton';
+import Skeleton, { ShimmerBlock } from '../../components/Skeleton/Skeleton';
 import { useNetworkStatus } from '../../context/NetworkContext';
 import OfflineScreen from '../../components/NetworkStatus/OfflineScreen';
 import {
@@ -81,6 +82,20 @@ const Live = () => {
     }
   }, [categoryList, selectedCategory]);
 
+  // Spotlight slides for HeroBanner (top live matches prioritized, fallback to channels)
+  const spotlightSlides = useMemo(() => {
+    const liveOnly = matches.filter(
+      (m) =>
+        m.status !== 'upcoming' &&
+        m.category_name !== 'upcoming-matches' &&
+        !(m.starts_at && m.starts_at * 1000 > Date.now())
+    );
+    const pool = liveOnly.length > 0 ? liveOnly : matches;
+    const sorted = [...pool].sort((a, b) => (b.viewers || 0) - (a.viewers || 0));
+    const topMatches = sorted.slice(0, 5);
+    return topMatches.length > 0 ? topMatches : LIVE_CHANNELS.slice(0, 4);
+  }, [matches]);
+
   // Filtered Matches & Channels based on category & search
   const filteredMatches = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -152,12 +167,14 @@ const Live = () => {
     [navigate]
   );
 
-  // Loading Skeleton State
+  // Loading Skeleton State (Includes Live HeroBanner Skeleton)
   if (isLoading && matches.length === 0) {
     return (
-      <div className="min-h-screen bg-[#07070a] text-white pt-[58px] md:pt-[76px] pb-20 px-3 sm:px-6 lg:px-12">
+      <div className="min-h-screen bg-[#07070a] text-white pt-[58px] md:pt-0 pb-24 md:pb-16 overflow-x-hidden">
+        <Skeleton type="live-hero" />
+
         {/* Filter bar shimmer */}
-        <div className="flex items-center justify-between py-4 border-b border-white/10 mb-6">
+        <div className="max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-12 flex items-center justify-between py-3.5 border-b border-white/10 mb-6">
           <div className="flex items-center gap-2 overflow-hidden">
             {[1, 2, 3, 4, 5].map((i) => (
               <ShimmerBlock key={i} className="w-20 h-7 rounded-full shrink-0" />
@@ -166,8 +183,8 @@ const Live = () => {
           <ShimmerBlock className="w-56 h-8 rounded-xl hidden sm:block" />
         </div>
 
-        {/* 3 Rail Shimmers matching screenshot */}
-        <div className="space-y-8">
+        {/* 3 Rail Shimmers matching layout */}
+        <div className="max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-12 space-y-8">
           {[1, 2, 3].map((row) => (
             <div key={row} className="space-y-3">
               <div className="flex items-center justify-between">
@@ -179,7 +196,7 @@ const Live = () => {
               </div>
               <div className="flex gap-3 overflow-hidden">
                 {[1, 2, 3, 4, 5].map((card) => (
-                  <div key={card} className="w-[260px] shrink-0 space-y-2">
+                  <div key={card} className="w-[215px] sm:w-[260px] shrink-0 space-y-2">
                     <ShimmerBlock className="w-full aspect-video rounded-xl" />
                     <ShimmerBlock className="w-3/4 h-4 rounded" />
                   </div>
@@ -195,7 +212,7 @@ const Live = () => {
   // Offline State
   if (!isLoading && !isOnline && matches.length === 0) {
     return (
-      <div className="min-h-screen bg-[#07070a] pt-[76px] pb-20">
+      <div className="min-h-screen bg-[#07070a] pt-[58px] md:pt-[76px] pb-24">
         <OfflineScreen
           onRetry={() => loadData(true)}
           title="Live Sports & TV Offline"
@@ -205,9 +222,24 @@ const Live = () => {
     );
   }
 
+  const hasAnyResults =
+    liveNowMatches.length > 0 ||
+    upcomingMatches.length > 0 ||
+    filteredChannels.length > 0;
+
   return (
-    <div className="min-h-screen bg-[#07070a] text-white selection:bg-[#E50914] selection:text-white pt-[58px] md:pt-[76px] pb-20 overflow-x-hidden">
-      {/* ── STICKY CONTROL & SEARCH DOCK ── */}
+    <div className="min-h-screen bg-[#07070a] text-white selection:bg-[#E50914] selection:text-white pt-[58px] overflow-x-hidden">
+      {/* ── 1. LIVE SPOTLIGHT HERO BANNER (Mobile-Responsive + Swipeable) ── */}
+      <LiveHeroBanner
+        slides={spotlightSlides}
+        onWatch={handleOpenStream}
+        isFavorite={isFavorite}
+        onToggleFavorite={toggleFavorite}
+        onRefresh={() => loadData(true)}
+        isRefreshing={isRefreshing}
+      />
+
+      {/* ── 2. STICKY CONTROL & SEARCH DOCK ── */}
       <div className="sticky top-[58px] md:top-[76px] z-30 bg-[#07070a]/95 backdrop-blur-2xl border-b border-white/[0.08] shadow-lg">
         <div className="max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-12 py-2.5 sm:py-3 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 sm:gap-4">
           {/* Sport Category Pills */}
@@ -228,7 +260,7 @@ const Live = () => {
                   className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold capitalize transition-all cursor-pointer select-none active:scale-95 ${
                     isActive
                       ? 'bg-[#E50914] text-white shadow-[0_0_15px_rgba(229,9,20,0.45)]'
-                      : 'bg-white/[0.05] text-gray-300 border border-white/10 active:bg-white/15 sm:hover:bg-white/[0.1]'
+                      : 'bg-white/[0.05] text-gray-300 border border-white/10 active:bg-white/15 md:hover:bg-white/[0.1]'
                   }`}
                 >
                   <span>{label}</span>
@@ -256,14 +288,14 @@ const Live = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search match, team or channel..."
                 aria-label="Search match, team or channel"
-                className="w-full bg-white/[0.06] focus:bg-white/[0.09] border border-white/10 focus:border-[#E50914] rounded-xl pl-9 pr-8 py-1.5 sm:py-2 text-xs sm:text-sm text-white placeholder-gray-400 outline-none transition-all shadow-inner"
+                className="w-full bg-white/[0.06] focus:bg-white/[0.09] border border-white/10 focus:border-[#E50914] rounded-xl pl-9 pr-8 py-2 text-xs sm:text-sm text-white placeholder-gray-400 outline-none transition-all shadow-inner"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
                   aria-label="Clear search"
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-400 active:text-white sm:hover:text-white"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-400 active:text-white md:hover:text-white cursor-pointer"
                 >
                   <i className="fa-solid fa-xmark text-xs" />
                 </button>
@@ -275,65 +307,110 @@ const Live = () => {
               onClick={() => loadData(true)}
               disabled={isRefreshing}
               title="Refresh Live Streams"
-              className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/[0.06] border border-white/10 text-gray-300 hover:text-white transition active:scale-90 cursor-pointer shrink-0 disabled:opacity-60"
+              aria-label="Refresh Live Streams"
+              className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/[0.06] border border-white/10 text-gray-300 md:hover:text-white md:hover:bg-white/15 transition active:scale-90 active:bg-white/15 cursor-pointer shrink-0 disabled:opacity-60"
             >
-              <i className={`fa-solid fa-arrows-rotate text-xs ${isRefreshing ? 'animate-spin text-red-500' : ''}`} />
+              <i
+                className={`fa-solid fa-arrows-rotate text-xs ${
+                  isRefreshing ? 'animate-spin text-red-500' : ''
+                }`}
+              />
             </button>
           </div>
         </div>
       </div>
 
-      {/* ── 3 DISTINCT MAIN RAILS (Matching User's Reference Screenshot) ── */}
+      {/* ── 3. MAIN BROADCAST RAILS ── */}
       <main className="max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-12 pt-5 sm:pt-7 space-y-6 sm:space-y-8">
-        {/* ── ROW 1: LIVE | Live Now ── */}
-        <LiveRailRow
-          tag="LIVE"
-          title="Live Now"
-          items={liveNowMatches}
-          renderItem={(match) => (
-            <LiveMatchCard
-              key={match.id}
-              match={match}
-              variant="live"
-              onSelect={handleOpenStream}
-              isFavorite={isFavorite(match)}
-              onToggleFavorite={toggleFavorite}
+        {hasAnyResults ? (
+          <>
+            {/* ROW 1: LIVE | Live Now */}
+            <RailRow
+              tag="LIVE"
+              showAccentBar
+              showExploreAll={false}
+              headerArrows
+              eager
+              title="Live Now"
+              items={liveNowMatches}
+              renderItem={(match) => (
+                <LiveMatchCard
+                  key={match.id}
+                  match={match}
+                  variant="live"
+                  onSelect={handleOpenStream}
+                  isFavorite={isFavorite(match)}
+                  onToggleFavorite={toggleFavorite}
+                />
+              )}
             />
-          )}
-        />
 
-        {/* ── ROW 2: | Upcoming Matches ── */}
-        <LiveRailRow
-          tag={null}
-          title="Upcoming Matches"
-          items={upcomingMatches}
-          renderItem={(match) => (
-            <LiveMatchCard
-              key={match.id}
-              match={match}
-              variant="upcoming"
-              onSelect={handleOpenStream}
-              isFavorite={isFavorite(match)}
-              onToggleFavorite={toggleFavorite}
+            {/* ROW 2: | Upcoming Matches */}
+            <RailRow
+              tag={null}
+              showAccentBar
+              showExploreAll={false}
+              headerArrows
+              eager
+              title="Upcoming Matches"
+              items={upcomingMatches}
+              renderItem={(match) => (
+                <LiveMatchCard
+                  key={match.id}
+                  match={match}
+                  variant="upcoming"
+                  onSelect={handleOpenStream}
+                  isFavorite={isFavorite(match)}
+                  onToggleFavorite={toggleFavorite}
+                />
+              )}
             />
-          )}
-        />
 
-        {/* ── ROW 3: TV | Trending Channels ── */}
-        <LiveRailRow
-          tag="TV"
-          title="Trending Channels"
-          items={filteredChannels}
-          renderItem={(channel) => (
-            <LiveTVCard
-              key={channel.id}
-              channel={channel}
-              onSelect={handleOpenStream}
-              isFavorite={isFavorite(channel)}
-              onToggleFavorite={toggleFavorite}
+            {/* ROW 3: TV | Trending Channels */}
+            <RailRow
+              tag="TV"
+              showAccentBar
+              showExploreAll={false}
+              headerArrows
+              eager
+              title="Trending Channels"
+              items={filteredChannels}
+              renderItem={(channel) => (
+                <LiveTVCard
+                  key={channel.id}
+                  channel={channel}
+                  onSelect={handleOpenStream}
+                  isFavorite={isFavorite(channel)}
+                  onToggleFavorite={toggleFavorite}
+                />
+              )}
             />
-          )}
-        />
+          </>
+        ) : (
+          <div className="my-12 py-12 px-4 text-center rounded-2xl bg-[#10101a] border border-white/10 max-w-md mx-auto">
+            <div className="w-12 h-12 rounded-full bg-red-600/15 border border-red-500/30 flex items-center justify-center mx-auto mb-3 text-red-500">
+              <i className="fa-solid fa-satellite-dish text-lg" />
+            </div>
+            <h3 className="text-base sm:text-lg font-bold text-white mb-1">
+              No streams found
+            </h3>
+            <p className="text-xs sm:text-sm text-gray-400 mb-4">
+              {searchQuery
+                ? `Nothing matched "${searchQuery}". Try another team, league, or channel.`
+                : 'No streams available in this category right now.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedCategory('all');
+                setSearchQuery('');
+              }}
+              className="px-5 py-2 rounded-xl bg-[#E50914] text-white text-xs font-bold active:scale-95 transition cursor-pointer"
+            >
+              Reset Filters
+            </button>
+          </div>
+        )}
 
         <Footer />
       </main>

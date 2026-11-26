@@ -178,7 +178,7 @@ const LiveStreaming = () => {
             type="button"
             onClick={handleBack}
             aria-label="Back to browse"
-            className="flex items-center justify-center gap-1.5 px-2.5 py-2 sm:px-3 sm:py-1.5 rounded-xl bg-white/10 active:bg-white/20 sm:hover:bg-white/15 active:scale-95 border border-white/10 text-white text-xs sm:text-sm font-bold cursor-pointer transition-all shrink-0"
+            className="flex items-center justify-center gap-1.5 px-2.5 py-2 sm:px-3 sm:py-1.5 rounded-xl bg-white/10 active:bg-white/20 md:hover:bg-white/15 active:scale-95 border border-white/10 text-white text-xs sm:text-sm font-bold cursor-pointer transition-all shrink-0"
           >
             <i className="fa-solid fa-arrow-left text-xs" />
             <span className="hidden sm:inline">Back</span>
@@ -213,7 +213,7 @@ const LiveStreaming = () => {
             className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all cursor-pointer border active:scale-90 ${
               isFavorite(channel)
                 ? 'bg-red-600 text-white border-red-500 shadow-md'
-                : 'bg-white/[0.06] active:bg-white/15 sm:hover:bg-white/15 text-gray-300 border-white/10'
+                : 'bg-white/[0.06] active:bg-white/15 md:hover:bg-white/15 text-gray-300 border-white/10'
             }`}
           >
             <i
@@ -229,7 +229,7 @@ const LiveStreaming = () => {
             onClick={() => setTheaterMode((prev) => !prev)}
             aria-label={theaterMode ? 'Exit theater mode' : 'Theater mode'}
             title={theaterMode ? 'Exit theater mode' : 'Theater mode'}
-            className="hidden md:flex items-center justify-center w-9 h-9 rounded-xl bg-white/[0.06] hover:bg-white/15 border border-white/10 text-gray-300 hover:text-white text-xs cursor-pointer transition-all"
+            className="hidden md:flex items-center justify-center w-9 h-9 rounded-xl bg-white/[0.06] md:hover:bg-white/15 border border-white/10 text-gray-300 md:hover:text-white text-xs cursor-pointer transition-all"
           >
             <i
               className={`fa-solid ${
@@ -244,7 +244,7 @@ const LiveStreaming = () => {
             onClick={handleRefreshPlayer}
             aria-label="Reload Video Stream"
             title="Reload Video Stream"
-            className="flex items-center justify-center w-8 h-8 sm:w-auto sm:px-3 sm:py-1.5 rounded-xl bg-white/[0.06] active:bg-white/15 sm:hover:bg-white/15 border border-white/10 text-gray-300 sm:hover:text-white text-xs font-semibold cursor-pointer transition-all active:scale-90"
+            className="flex items-center justify-center w-8 h-8 sm:w-auto sm:px-3 sm:py-1.5 rounded-xl bg-white/[0.06] active:bg-white/15 md:hover:bg-white/15 border border-white/10 text-gray-300 md:hover:text-white text-xs font-semibold cursor-pointer transition-all active:scale-90"
           >
             <i className="fa-solid fa-rotate-right text-[11px]" />
             <span className="hidden sm:inline ml-1.5">Reload</span>
@@ -256,7 +256,7 @@ const LiveStreaming = () => {
             onClick={handleShareStream}
             aria-label="Share stream link"
             title="Share stream link"
-            className="flex items-center justify-center w-8 h-8 sm:w-auto sm:px-3 sm:py-1.5 rounded-xl bg-white/[0.06] active:bg-white/15 sm:hover:bg-white/15 border border-white/10 text-gray-300 sm:hover:text-white text-xs font-semibold cursor-pointer transition-all active:scale-90"
+            className="flex items-center justify-center w-8 h-8 sm:w-auto sm:px-3 sm:py-1.5 rounded-xl bg-white/[0.06] active:bg-white/15 md:hover:bg-white/15 border border-white/10 text-gray-300 md:hover:text-white text-xs font-semibold cursor-pointer transition-all active:scale-90"
           >
             <i
               className={`fa-solid ${
@@ -342,7 +342,7 @@ const LiveStreaming = () => {
                 type="button"
                 onClick={() => checkConnection()}
                 disabled={isChecking}
-                className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold text-xs tracking-wider transition-all shadow-[0_0_15px_rgba(229,9,20,0.4)] flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                className="px-5 py-2 rounded-xl bg-red-600 md:hover:bg-red-700 active:scale-95 text-white font-bold text-xs tracking-wider transition-all shadow-[0_0_15px_rgba(229,9,20,0.4)] flex items-center gap-2 cursor-pointer disabled:opacity-60"
               >
                 <i className={`fa-solid fa-arrows-rotate text-xs ${isChecking ? 'animate-spin' : ''}`} />
                 <span>{isChecking ? 'Reconnecting...' : 'Retry Now'}</span>
@@ -450,7 +450,7 @@ const LiveStreaming = () => {
                     className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer border active:scale-95 ${
                       isSelected
                         ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white border-white/20 shadow-md'
-                        : 'bg-white/[0.06] active:bg-white/15 sm:hover:bg-white/15 text-gray-300 border-white/10'
+                        : 'bg-white/[0.06] active:bg-white/15 md:hover:bg-white/15 text-gray-300 border-white/10'
                     }`}
                   >
                     <span>{s.name || `Server ${idx + 1}`}</span>
@@ -477,7 +477,7 @@ const LiveStreaming = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/live')}
-                  className="text-[11px] sm:text-xs text-red-400 active:text-red-300 sm:hover:text-red-300 font-semibold cursor-pointer active:scale-95"
+                  className="text-[11px] sm:text-xs text-red-400 active:text-red-300 md:hover:text-red-300 font-semibold cursor-pointer active:scale-95"
                 >
                   View All Hub →
                 </button>
@@ -512,7 +512,7 @@ const LiveStreaming = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/live')}
-                  className="text-[11px] sm:text-xs text-red-400 active:text-red-300 sm:hover:text-red-300 font-semibold cursor-pointer active:scale-95"
+                  className="text-[11px] sm:text-xs text-red-400 active:text-red-300 md:hover:text-red-300 font-semibold cursor-pointer active:scale-95"
                 >
                   View All Hub →
                 </button>

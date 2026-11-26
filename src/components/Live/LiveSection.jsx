@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import LiveRailRow from './LiveRailRow';
+import RailRow from '../RailRow/RailRow';
 import LiveTVCard from './LiveTVCard';
 import LiveMatchCard from './LiveMatchCard';
 import { useLiveFavorites } from '../../hooks/useLiveFavorites';
@@ -147,9 +147,13 @@ const LiveSection = ({
     return (
       <div className="space-y-6 sm:space-y-8 my-4">
         {/* ROW 1: LIVE | Live Now */}
-        <LiveRailRow
+        <RailRow
           tag="LIVE"
-          title="Live Now"
+          showAccentBar
+          showExploreAll={false}
+          headerArrows
+          eager
+          titleAlt="Live Now"
           items={liveNowMatches}
           renderItem={(match) => (
             <LiveMatchCard
@@ -164,9 +168,13 @@ const LiveSection = ({
         />
 
         {/* ROW 2: | Upcoming Matches */}
-        <LiveRailRow
+        <RailRow
           tag={null}
-          title="Upcoming Matches"
+          showAccentBar
+          showExploreAll={false}
+          headerArrows
+          eager
+          titleAlt="Upcoming Matches"
           items={upcomingMatches}
           renderItem={(match) => (
             <LiveMatchCard
@@ -181,9 +189,13 @@ const LiveSection = ({
         />
 
         {/* ROW 3: TV | Trending Channels */}
-        <LiveRailRow
+        <RailRow
           tag="TV"
-          title="Trending Channels"
+          showAccentBar
+          showExploreAll={false}
+          headerArrows
+          eager
+          titleAlt="Trending Channels"
           items={filteredChannels}
           renderItem={(channel) => (
             <LiveTVCard
@@ -202,8 +214,12 @@ const LiveSection = ({
   // ── SINGLE RAIL / CUSTOM MODE ──
   if (externalChannels && !externalMatches) {
     return (
-      <LiveRailRow
+      <RailRow
         tag={tag || 'TV'}
+        showAccentBar
+        showExploreAll={false}
+        headerArrows
+        eager
         title={title || 'Trending Channels'}
         items={filteredChannels}
         renderItem={(channel) => (
@@ -220,8 +236,12 @@ const LiveSection = ({
   }
 
   return (
-    <LiveRailRow
+    <RailRow
       tag={tag || 'LIVE'}
+      showAccentBar
+      showExploreAll={false}
+      headerArrows
+      eager
       title={title || 'Live Now'}
       items={filteredMatches}
       renderItem={(match) => (

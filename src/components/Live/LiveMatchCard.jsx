@@ -143,9 +143,10 @@ const LiveMatchCard = ({
         }
       }}
       className={`
-        group relative flex flex-col shrink-0
-        w-[230px] sm:w-[260px] md:w-[285px] lg:w-[300px]
+        group relative flex flex-col shrink-0 snap-start
+        w-[215px] sm:w-[255px] md:w-[285px] lg:w-[300px]
         cursor-pointer select-none touch-manipulation
+        active:scale-[0.98] transition-transform duration-150
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-xl
         ${className}
       `}
@@ -155,10 +156,10 @@ const LiveMatchCard = ({
         className={`
           relative aspect-video w-full overflow-hidden rounded-xl sm:rounded-2xl
           bg-gradient-to-br ${gradientClass}
-          border border-white/10 group-hover:border-white/30
-          shadow-[0_4px_16px_rgba(0,0,0,0.6)] group-hover:shadow-[0_8px_25px_rgba(0,0,0,0.85)]
-          transition-all duration-300 ease-out
-          group-hover:scale-[1.02]
+          border border-white/10 md:group-hover:border-white/30
+          shadow-[0_4px_16px_rgba(0,0,0,0.6)] md:group-hover:shadow-[0_8px_25px_rgba(0,0,0,0.85)]
+          md:transition-all md:duration-300 md:ease-out
+          md:group-hover:scale-[1.02]
         `}
       >
         {/* If Action Poster Exists (Motorsport, Supercars, Special events) */}
@@ -168,7 +169,7 @@ const LiveMatchCard = ({
             alt=""
             loading="lazy"
             onError={() => setPosterError(true)}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="absolute inset-0 w-full h-full object-cover md:transition-transform md:duration-500 md:group-hover:scale-105"
           />
         ) : (
           /* Subtle Ambient Sports Texture/Backdrop */
@@ -179,40 +180,42 @@ const LiveMatchCard = ({
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/40" />
 
         {/* ── TOP BADGES ROW ── */}
-        <div className="absolute top-2 left-2 right-2 sm:top-2.5 sm:left-2.5 sm:right-2.5 flex items-center justify-between gap-1.5 z-10">
+        <div className="absolute top-1.5 left-1.5 right-1.5 sm:top-2.5 sm:left-2.5 sm:right-2.5 flex items-center justify-between gap-1.5 z-10">
           {/* Top Left Badge */}
           {isUpcoming ? (
-            <span className="inline-flex items-center px-2 py-0.5 rounded bg-[#092238]/95 border border-cyan-500/40 text-cyan-200 font-extrabold text-[9px] sm:text-[10px] tracking-wide shadow-sm">
+            <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded bg-[#092238]/95 border border-cyan-500/40 text-cyan-200 font-extrabold text-[8px] sm:text-[10px] tracking-wide shadow-sm">
               {countdownText}
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#e50914] text-white font-black text-[9px] sm:text-[10px] tracking-wider uppercase shadow-sm">
+            <span className="inline-flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded bg-[#e50914] text-white font-black text-[8px] sm:text-[10px] tracking-wider uppercase shadow-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
               LIVE
             </span>
           )}
 
           {/* Top Right Badge */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1 sm:gap-1.5">
             {isUpcoming ? (
-              <span className="inline-flex items-center px-2 py-0.5 rounded bg-black/70 backdrop-blur-md border border-white/10 text-gray-200 font-bold text-[9px] sm:text-[10px] tracking-wide shadow-sm">
+              <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded bg-black/70 backdrop-blur-md border border-white/10 text-gray-200 font-bold text-[8px] sm:text-[10px] tracking-wide shadow-sm">
                 {startTimeText}
               </span>
             ) : match?.viewers > 0 ? (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-md border border-white/10 text-gray-300 font-bold text-[9px]">
-                <i className="fa-solid fa-users text-[8px] text-red-500" />
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-md border border-white/10 text-gray-300 font-bold text-[8px] sm:text-[9px]">
+                <i className="fa-solid fa-users text-[7px] sm:text-[8px] text-red-500" />
                 <span>{match.viewers}</span>
               </span>
             ) : null}
 
-            {/* Favorite toggle on hover/touch */}
+            {/* Favorite toggle: Always accessible on mobile, hover-revealed on desktop */}
             {onToggleFavorite && (
               <button
                 type="button"
                 onClick={handleFavoriteClick}
                 aria-label={isFavorite ? 'Remove favorite' : 'Add favorite'}
-                className={`w-6 h-6 rounded-full flex items-center justify-center transition-opacity cursor-pointer backdrop-blur-md ${
-                  isFavorite ? 'opacity-100 text-red-500' : 'opacity-0 group-hover:opacity-100 text-gray-400 hover:text-white'
+                className={`w-6 h-6 rounded-full flex items-center justify-center transition-opacity cursor-pointer backdrop-blur-md active:scale-90 ${
+                  isFavorite
+                    ? 'opacity-100 text-red-500 bg-black/60 border border-red-500/40'
+                    : 'opacity-85 md:opacity-0 md:group-hover:opacity-100 text-gray-300 bg-black/50 md:hover:text-white'
                 }`}
               >
                 <i className={`text-[10px] ${isFavorite ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}`} />
@@ -223,10 +226,10 @@ const LiveMatchCard = ({
 
         {/* ── CENTER ARENA: Team 1 vs Team 2 Matchup ── */}
         {!hasActionPoster && hasTeamBadges && (
-          <div className="absolute inset-x-2 top-8 bottom-6 sm:top-9 sm:bottom-7 flex items-center justify-center gap-2 sm:gap-3 px-1">
+          <div className="absolute inset-x-2 top-7 bottom-5 sm:top-9 sm:bottom-7 flex items-center justify-center gap-1.5 sm:gap-3 px-1">
             {/* Team 1 / Home */}
             <div className="flex flex-col items-center justify-center flex-1 min-w-0">
-              <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl flex items-center justify-center p-1 transition-transform group-hover:scale-105">
+              <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center p-0.5 sm:p-1 md:transition-transform md:group-hover:scale-105">
                 {!homeBadgeError && homeTeam.badge ? (
                   <img
                     src={homeTeam.badge}
@@ -236,7 +239,7 @@ const LiveMatchCard = ({
                     className="max-h-full max-w-full object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]"
                   />
                 ) : (
-                  <span className="text-xs font-black text-white bg-white/10 w-10 h-10 rounded-xl flex items-center justify-center border border-white/15">
+                  <span className="text-[10px] sm:text-xs font-black text-white bg-white/10 w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center border border-white/15">
                     {getTeamMonogram(homeTeam.name)}
                   </span>
                 )}
@@ -245,14 +248,14 @@ const LiveMatchCard = ({
 
             {/* Center VS Emblem */}
             <div className="flex flex-col items-center justify-center shrink-0">
-              <span className="text-[9px] sm:text-[10px] font-black tracking-widest text-gray-300/90 bg-black/50 px-2 py-0.5 rounded-full border border-white/15 shadow-sm">
+              <span className="text-[8px] sm:text-[10px] font-black tracking-widest text-gray-300/90 bg-black/50 px-1.5 sm:px-2 py-0.5 rounded-full border border-white/15 shadow-sm">
                 VS
               </span>
             </div>
 
             {/* Team 2 / Away */}
             <div className="flex flex-col items-center justify-center flex-1 min-w-0">
-              <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl flex items-center justify-center p-1 transition-transform group-hover:scale-105">
+              <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center p-0.5 sm:p-1 md:transition-transform md:group-hover:scale-105">
                 {!awayBadgeError && awayTeam.badge ? (
                   <img
                     src={awayTeam.badge}
@@ -262,7 +265,7 @@ const LiveMatchCard = ({
                     className="max-h-full max-w-full object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]"
                   />
                 ) : (
-                  <span className="text-xs font-black text-white bg-white/10 w-10 h-10 rounded-xl flex items-center justify-center border border-white/15">
+                  <span className="text-[10px] sm:text-xs font-black text-white bg-white/10 w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center border border-white/15">
                     {getTeamMonogram(awayTeam.name)}
                   </span>
                 )}
@@ -272,8 +275,8 @@ const LiveMatchCard = ({
         )}
 
         {/* ── BOTTOM-LEFT INSIDE MEDIA BOX: CATEGORY / LEAGUE ── */}
-        <div className="absolute bottom-2 left-2.5 right-2.5 z-10 flex items-center justify-between">
-          <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-white/95 truncate drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+        <div className="absolute bottom-1.5 sm:bottom-2 left-2 sm:left-2.5 right-2 sm:right-2.5 z-10 flex items-center justify-between">
+          <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-wider text-white/95 truncate drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
             {categoryLabel}
           </span>
         </div>
@@ -281,7 +284,7 @@ const LiveMatchCard = ({
 
       {/* ── OUTSIDE CARD FOOTER: TITLE (Matching Reference Image) ── */}
       <h3
-        className="mt-1.5 px-0.5 text-xs sm:text-[13px] font-medium text-white/85 group-hover:text-white truncate transition-colors leading-snug"
+        className="mt-1.5 px-0.5 text-xs sm:text-[13px] font-medium text-white/90 md:text-white/85 md:group-hover:text-white truncate transition-colors leading-snug"
         title={titleText}
       >
         {titleText}
