@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import Card from '../../components/Card/Card';
-import Watch from '../../components/Watch/Watch';
 import { fetchTMDBTVSections } from '../../content/tmdb';
 import Footer from '../../components/Footer/Footer';
 import RailRow from '../../components/RailRow/RailRow';
@@ -9,6 +8,7 @@ import { useRailScroll } from '../../hooks/useRailScroll';
 import Skeleton from '../../components/Skeleton/Skeleton';
 import { useNetworkStatus } from '../../context/NetworkContext';
 import OfflineScreen from '../../components/NetworkStatus/OfflineScreen';
+import { getWatchPath, navigateToWatch } from '../../utils/watchNavigation';
 
 // Imported HeroBanner
 import HeroBanner from '../../components/HeroBanner/HeroBanner.jsx';
@@ -17,6 +17,7 @@ const HERO_ROTATE_MS = 8000;
 
 const Tv = (props) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { isOnline } = useNetworkStatus();
 
@@ -102,33 +103,27 @@ const Tv = (props) => {
   const railKeys = useMemo(() => sections.map((_, idx) => `rail-${idx}`), [sections]);
   const { scrollState, setTrackRef, onRailScroll, handleRailScroll } = useRailScroll(railKeys);
 
-  // ==========================================
-  // URL State Management for Watch Modal
-  // ==========================================
+  // Redirect legacy ?watch= deep-links to Watch page
   const watchId = searchParams.get('watch');
+  useEffect(() => {
+    if (watchId) {
+      navigate(getWatchPath(watchId, 'tv'), { replace: true });
+    }
+  }, [watchId, navigate]);
 
-  const watchItem = useMemo(() => {
-    if (!watchId) return null;
-    return allItems.find((item) => String(item.id) === String(watchId));
-  }, [watchId, allItems]);
-
-  const isWatchOpen = !!watchItem;
-
-  const openWatch = useCallback((id) => {
-    const selected = allItems.find((item) => String(item.id) === String(id));
-    if (!selected) return;
-
-    searchParams.set('watch', selected.id);
-    if (selected.name2) searchParams.set('name', selected.name2);
-    setSearchParams(searchParams);
-  }, [allItems, searchParams, setSearchParams]);
-
-  const clearWatchFromUrl = useCallback(() => {
-    searchParams.delete('watch');
-    searchParams.delete('name');
-    setSearchParams(searchParams);
-  }, [searchParams, setSearchParams]);
-  // ==========================================
+  const openWatch = useCallback(
+    (id) => {
+      if (!id) return;
+      const selected = allItems.find((item) => String(item.id) === String(id));
+      navigateToWatch(navigate, {
+        itemOrId: id,
+        fallbackType: 'tv',
+        item: selected,
+        currentLocation: location,
+      });
+    },
+    [allItems, navigate, location]
+  );
 
   // ==========================================
   // Loading state
@@ -208,35 +203,6 @@ const Tv = (props) => {
 
         <Footer />
       </div>
-
-      {/* ── Watch Modal (conditionally rendered) ── */}
-      {isWatchOpen && watchItem && (
-        <Watch
-          data={allItems}
-          sow={openWatch}
-          onClose={clearWatchFromUrl}
-          sid={watchItem?.id}
-          El={Array.isArray(props.e) && props.e.includes(watchItem?.id) ? 'ADDED' : '+'}
-          img={watchItem?.img}
-          type={watchItem?.type}
-          id={watchItem?.tmdbId}
-          s={watchItem?.episodes}
-          mname={watchItem?.name2}
-          name={watchItem?.nameImg}
-          name2={watchItem?.name2}
-          yr={watchItem?.releaseYear}
-          ua={watchItem?.ua}
-          season={watchItem?.season}
-          lan={watchItem?.language?.length || 0}
-          desc={watchItem?.desc}
-          cat={watchItem?.category}
-          rating={watchItem?.rating}
-          language={watchItem?.language}
-          add={props.add}
-          e={props.e}
-          play={props.play}
-        />
-      )}
     </div>
   );
 };

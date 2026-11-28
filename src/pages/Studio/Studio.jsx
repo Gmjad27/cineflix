@@ -1,12 +1,12 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import Card from '../../components/Card/Card';
-import Watch from '../../components/Watch/Watch';
 import { fetchTMDBStudioTitles, buildCreativeRails } from '../../content/tmdb';
 import { STUDIO_COLLECTIONS, getStudioConfig } from '../../content/studios';
 import Footer from '../../components/Footer/Footer';
 import Skeleton from '../../components/Skeleton/Skeleton';
 import RailRow from '../../components/RailRow/RailRow';
+import { getWatchPath, navigateToWatch } from '../../utils/watchNavigation';
 
 /**
  * One tile in the horizontally-scrolling "Studios" strip.
@@ -15,6 +15,7 @@ import RailRow from '../../components/RailRow/RailRow';
 
 const Studio = (props) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -56,36 +57,27 @@ const Studio = (props) => {
     [navigate]
   );
 
-  // Watch modal logic
+  // Redirect legacy ?watch= deep-links & openWatch navigation
   const watchId = searchParams.get('watch');
-  const watchItem = useMemo(() => {
-    if (!watchId) return null;
-    return allData.find((i) => String(i.id) === String(watchId));
-  }, [watchId, allData]);
-
-  const watchOpen = !!watchItem;
+  useEffect(() => {
+    if (watchId) {
+      navigate(getWatchPath(watchId), { replace: true });
+    }
+  }, [watchId, navigate]);
 
   const openWatch = useCallback(
-    (itemId) => {
+    (itemId, fallbackType) => {
+      if (!itemId) return;
       const selected = allData.find((i) => String(i.id) === String(itemId));
-      if (!selected) return;
-
-      setSearchParams((prev) => {
-        prev.set('watch', selected.id);
-        if (selected.name2) prev.set('name', selected.name2);
-        return prev;
+      navigateToWatch(navigate, {
+        itemOrId: itemId,
+        fallbackType,
+        item: selected,
+        currentLocation: location,
       });
     },
-    [allData, setSearchParams]
+    [allData, navigate, location]
   );
-
-  const clearWatchFromUrl = useCallback(() => {
-    setSearchParams((prev) => {
-      prev.delete('watch');
-      prev.delete('name');
-      return prev;
-    });
-  }, [setSearchParams]);
 
   // Loading skeleton
   if (props.loading || (studioLoading && studioData.length === 0)) {
@@ -184,35 +176,6 @@ const Studio = (props) => {
       </div>
 
       <Footer />
-
-      {/* ── Watch Modal ── */}
-      {watchOpen && watchItem && (
-        <Watch
-          data={allData}
-          sow={openWatch}
-          onClose={clearWatchFromUrl}
-          sid={watchItem.id}
-          El={Array.isArray(props.e) && props.e.includes(watchItem.id) ? 'ADDED' : '+'}
-          img={watchItem.img}
-          type={watchItem.type}
-          id={watchItem.tmdbId}
-          s={watchItem.episodes}
-          mname={watchItem.name2}
-          name={watchItem.nameImg}
-          name2={watchItem.name}
-          yr={watchItem.releaseYear}
-          ua={watchItem.ua}
-          season={watchItem.season}
-          lan={watchItem.language?.length || 0}
-          desc={watchItem.desc}
-          cat={watchItem.category}
-          rating={watchItem.rating}
-          language={watchItem.language}
-          add={props.add}
-          e={props.e}
-          play={props.play}
-        />
-      )}
     </div>
   );
 };

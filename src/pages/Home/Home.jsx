@@ -1,16 +1,15 @@
 import React, { useEffect, useMemo, useState, useCallback, lazy, Suspense } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import Watch from '../../components/Watch/Watch';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import RailRow from '../../components/RailRow/RailRow.jsx';
 import { useRailScroll } from '../../hooks/useRailScroll';
 import PrivacyPolicyPopup, { PRIVACY_POLICY_STORAGE_KEY } from '../../components/PrivacyPolicyPopup/PrivacyPolicyPopup.jsx';
 import HeroBanner from '../../components/HeroBanner/HeroBanner.jsx';
-import { fetchTMDBDetails } from '../../content/tmdb.js';
 import Skeleton from '../../components/Skeleton/Skeleton';
 import { STUDIO_COLLECTIONS } from '../../content/studios.js';
 import { getContinueWatching, removeContinueWatching } from '../../utils/continueWatching';
 import { useNetworkStatus } from '../../context/NetworkContext';
 import OfflineScreen from '../../components/NetworkStatus/OfflineScreen';
+import { getWatchPath, navigateToWatch } from '../../utils/watchNavigation';
 
 const Card = lazy(() => import('../../components/Card/Card'));
 const Card2 = lazy(() => import('../../components/Card/Card2'));
@@ -21,6 +20,7 @@ const HERO_ROTATE_MS = 8000;
 
 function Home(props) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { isOnline } = useNetworkStatus();
 
@@ -62,76 +62,22 @@ function Home(props) {
 
   const currentHero = mediaData[heroIndex % Math.max(mediaData.length, 1)] || null;
 
-  // ==========================================
-  // Async Fallback URL State Management
-  // ==========================================
+  // Redirect legacy ?watch= deep-links to the dedicated Watch page
   const watchId = searchParams.get('watch');
-  const [fetchedWatchItem, setFetchedWatchItem] = useState(null);
-  const [isWatchLoading, setIsWatchLoading] = useState(false);
-
-  const localWatchItem = useMemo(() => {
-    if (!watchId) return null;
-    return [...mediaData, ...data].find((item) => String(item.id) === String(watchId));
-  }, [watchId, mediaData, data]);
-
   useEffect(() => {
-    if (!watchId || localWatchItem) {
-      setFetchedWatchItem(null);
-      return;
+    if (watchId) {
+      navigate(getWatchPath(watchId), { replace: true });
     }
-
-    let isMounted = true;
-    const fetchWatchItem = async () => {
-      setIsWatchLoading(true);
-      try {
-        const [mediaType, tmdbId] = watchId.split('_');
-        if (!mediaType || !tmdbId) throw new Error('Invalid watch ID format');
-
-        const details = await fetchTMDBDetails(mediaType, tmdbId);
-        if (!details || !isMounted) return;
-
-        setFetchedWatchItem({
-          id: watchId,
-          tmdbId: Number(tmdbId),
-          type: mediaType,
-          img: details.mbg,
-          name: details.mbg,
-          name2: details.title,
-          nameImg2: details.nameImg2,
-          releaseYear: details.year || new Date().getFullYear(),
-          ua: details.ageRating,
-          season: details.seasonLabel,
-          desc: details.desc,
-          category: details.categories,
-          language: details.languages,
-          episodes: details.episodes,
-          rating: 0,
-        });
-      } catch (error) {
-        console.error('Failed to fetch direct watch item:', error);
-        if (isMounted) setFetchedWatchItem(null);
-      } finally {
-        if (isMounted) setIsWatchLoading(false);
-      }
-    };
-
-    fetchWatchItem();
-    return () => {
-      isMounted = false;
-    };
-  }, [watchId, localWatchItem]);
-
-  const watchItem = localWatchItem || fetchedWatchItem;
-  const watchOpen = Boolean(watchItem);
+  }, [watchId, navigate]);
 
   // Auto-rotate Hero Banner (Desktop hover pause only; never sticks on mobile touch)
   useEffect(() => {
-    if (mediaData.length < 2 || isHeroPaused || watchOpen) return undefined;
+    if (mediaData.length < 2 || isHeroPaused) return undefined;
     const interval = setInterval(() => {
       setHeroIndex((prev) => (prev + 1) % mediaData.length);
     }, HERO_ROTATE_MS);
     return () => clearInterval(interval);
-  }, [mediaData.length, isHeroPaused, watchOpen]);
+  }, [mediaData.length, isHeroPaused]);
 
   // Preload next hero backdrop image
   useEffect(() => {
@@ -145,23 +91,20 @@ function Home(props) {
   }, [heroIndex, mediaData]);
 
   const openWatch = useCallback(
-    (id, name2) => {
+    (id, fallbackType) => {
       if (!id) return;
-      const nextParams = new URLSearchParams(searchParams);
-      nextParams.set('watch', id);
-      if (name2) nextParams.set('name', name2);
-      setSearchParams(nextParams);
+      const selected = [...mediaData, ...data].find(
+        (item) => String(item.id) === String(id)
+      );
+      navigateToWatch(navigate, {
+        itemOrId: id,
+        fallbackType,
+        item: selected,
+        currentLocation: location,
+      });
     },
-    [searchParams, setSearchParams]
+    [mediaData, data, navigate, location]
   );
-
-  const clearWatchFromUrl = useCallback(() => {
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.delete('watch');
-    nextParams.delete('name');
-    setSearchParams(nextParams);
-    setFetchedWatchItem(null);
-  }, [searchParams, setSearchParams]);
 
   // ==========================================
   // Continue Watching Handlers
@@ -440,42 +383,6 @@ function Home(props) {
           <Footer />
         </Suspense>
       </div>
-
-      {/* Direct URL Watch Loading Indicator */}
-      {isWatchLoading && (
-        <div className="fixed inset-0 z-[100] flex justify-center items-start pt-0 sm:pt-8 overflow-y-auto bg-black/80 backdrop-blur-xl px-4">
-          <Skeleton type="detail" />
-        </div>
-      )}
-
-      {/* Watch Modal */}
-      {watchOpen && watchItem && (
-        <Watch
-          data={data}
-          sow={openWatch}
-          onClose={clearWatchFromUrl}
-          sid={watchItem.id}
-          El={Array.isArray(props.e) && props.e.includes(watchItem.id) ? 'ADDED' : '+'}
-          img={watchItem.img}
-          type={watchItem.type}
-          id={watchItem.tmdbId}
-          s={watchItem.episodes}
-          mname={watchItem.name2}
-          name={watchItem.nameImg2 || watchItem.name2}
-          name2={watchItem.name}
-          yr={watchItem.releaseYear}
-          ua={watchItem.ua}
-          season={watchItem.season}
-          lan={watchItem.language?.length || 0}
-          desc={watchItem.desc}
-          cat={watchItem.category}
-          language={watchItem.language}
-          rating={watchItem.rating}
-          add={props.add}
-          e={props.e}
-          play={props.play}
-        />
-      )}
     </main>
   );
 }

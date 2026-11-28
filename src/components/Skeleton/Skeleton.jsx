@@ -105,9 +105,9 @@ export function StudioRail({ count = 6 }) {
 // ─── 5. Detail Modal / Watch Dialog ──────────────────────────────────────
 export function DetailPage() {
   return (
-    <div className="w-full max-w-[950px] mx-auto p-4 sm:p-6 md:p-8 bg-[#0e0e14] rounded-3xl border border-white/10 space-y-6">
+    <div className="w-full max-w-[950px] md:max-w-[1600px] mx-auto p-4 sm:p-6 md:px-12 lg:px-16 md:py-8 bg-[#0e0e14] md:bg-transparent rounded-3xl md:rounded-none border border-white/10 md:border-none space-y-6">
       {/* Backdrop area */}
-      <ShimmerBlock className="w-full h-[35vh] sm:h-[45vh] rounded-2xl" />
+      <ShimmerBlock className="w-full h-[35vh] sm:h-[45vh] md:h-[60vh] rounded-2xl" />
 
       <div className="flex flex-col md:flex-row gap-6 md:gap-8">
         <ShimmerBlock className="w-36 sm:w-44 md:w-52 aspect-[2/3] rounded-xl flex-shrink-0 mx-auto md:mx-0 shadow-lg" />

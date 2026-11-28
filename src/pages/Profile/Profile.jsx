@@ -1,10 +1,9 @@
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import Card from '../../components/Card/Card';
 import Footer from '../../components/Footer/Footer';
-import Watch from '../../components/Watch/Watch';
 import Skeleton from '../../components/Skeleton/Skeleton';
-import { fetchTMDBDetails } from '../../content/tmdb.js';
+import { getWatchPath, navigateToWatch } from '../../utils/watchNavigation';
 
 /* ───────────────────────────── helpers & constants ───────────────────────────── */
 
@@ -44,6 +43,7 @@ const resolveWatchId = (item) => {
 
 const Profile = (props) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const data = Array.isArray(props.data) ? props.data : [];
@@ -193,111 +193,32 @@ const Profile = (props) => {
     window.location.href = '/login';
   };
 
-  /* ────────────────── Watch Modal Async State ────────────────── */
+  /* ────────────────── Watch Page Navigation ────────────────── */
   const watchId = searchParams.get('watch');
-  const [fetchedWatchItem, setFetchedWatchItem] = useState(null);
-  const [isWatchLoading, setIsWatchLoading] = useState(false);
-
-  const localWatchItem = useMemo(() => {
-    if (!watchId) return null;
-    const normalizedTarget = String(watchId).replace(':', '_');
-    return [...data, ...watchListItems].find(
-      (item) =>
-        resolveWatchId(item) === normalizedTarget ||
-        String(item.id) === String(watchId)
-    );
-  }, [watchId, data, watchListItems]);
-
   useEffect(() => {
-    if (!watchId || localWatchItem) {
-      setFetchedWatchItem(null);
-      return;
+    if (watchId) {
+      navigate(getWatchPath(watchId), { replace: true });
     }
-
-    let isMounted = true;
-    const fetchWatchItem = async () => {
-      setIsWatchLoading(true);
-      try {
-        const normalized = String(watchId).replace(':', '_');
-        const [mediaType, tmdbId] = normalized.split('_');
-        if (!mediaType || !tmdbId) return;
-
-        const details = await fetchTMDBDetails(mediaType, tmdbId);
-        if (!details || !isMounted) return;
-
-        setFetchedWatchItem({
-          id: `${mediaType}_${tmdbId}`,
-          tmdbId: Number(tmdbId),
-          type: mediaType,
-          img: details.mbg,
-          name: details.mbg,
-          name2: details.title,
-          nameImg2: details.nameImg2,
-          releaseYear: details.year || new Date().getFullYear(),
-          ua: details.ageRating,
-          season: details.seasonLabel,
-          desc: details.desc,
-          category: details.categories,
-          language: details.languages,
-          episodes: details.episodes,
-          rating: details.rating || 0,
-        });
-      } catch (error) {
-        console.error('Failed to fetch details:', error);
-      } finally {
-        if (isMounted) setIsWatchLoading(false);
-      }
-    };
-
-    fetchWatchItem();
-    return () => {
-      isMounted = false;
-    };
-  }, [watchId, localWatchItem]);
-
-  const watchItem = localWatchItem || fetchedWatchItem;
-  const watchOpen = Boolean(watchItem);
+  }, [watchId, navigate]);
 
   const openWatch = useCallback(
-    (id, name2) => {
+    (id, fallbackType) => {
       if (!id) return;
-      const cleanId = String(id).replace(':', '_');
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          next.set('watch', cleanId);
-          if (name2) next.set('name', name2);
-          return next;
-        },
-        { replace: true }
+      const normalizedTarget = String(id).replace(':', '_');
+      const selected = [...data, ...watchListItems].find(
+        (item) =>
+          resolveWatchId(item) === normalizedTarget ||
+          String(item.id) === String(id)
       );
+      navigateToWatch(navigate, {
+        itemOrId: id,
+        fallbackType,
+        item: selected,
+        currentLocation: location,
+      });
     },
-    [setSearchParams]
+    [data, watchListItems, navigate, location]
   );
-
-  const clearWatchFromUrl = useCallback(() => {
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        next.delete('watch');
-        next.delete('name');
-        return next;
-      },
-      { replace: true }
-    );
-    setFetchedWatchItem(null);
-  }, [setSearchParams]);
-
-  const isWatchItemInList = useMemo(() => {
-    if (!watchItem) return false;
-    const colonKey = `${watchItem.type}:${watchItem.tmdbId}`;
-    const underscoreKey = `${watchItem.type}_${watchItem.tmdbId}`;
-    return (
-      rawListProp.includes(colonKey) ||
-      rawListProp.includes(underscoreKey) ||
-      rawListProp.includes(watchItem.id)
-    );
-  }, [watchItem, rawListProp]);
 
   /* Loading State */
   if (props.loading) {
@@ -627,42 +548,6 @@ const Profile = (props) => {
       </main>
 
       <Footer />
-
-      {/* Direct URL Watch Loading Spinner */}
-      {isWatchLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs">
-          <div className="w-10 h-10 border-4 border-[#E50914] border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
-
-      {/* ═══════════════════════ WATCH MODAL ═══════════════════════ */}
-      {watchOpen && watchItem && (
-        <Watch
-          data={data}
-          sow={openWatch}
-          onClose={clearWatchFromUrl}
-          sid={resolveWatchId(watchItem)}
-          El={isWatchItemInList ? 'ADDED' : '+'}
-          img={watchItem.img}
-          type={watchItem.type}
-          id={watchItem.tmdbId}
-          s={watchItem.episodes}
-          mname={watchItem.name2}
-          name={watchItem.nameImg2 || watchItem.nameImg || watchItem.name2}
-          name2={watchItem.name}
-          yr={watchItem.releaseYear}
-          ua={watchItem.ua}
-          season={watchItem.season}
-          lan={watchItem.language?.length || 0}
-          desc={watchItem.desc}
-          cat={watchItem.category}
-          rating={watchItem.rating}
-          language={watchItem.language}
-          add={props.add}
-          e={rawListProp}
-          play={props.play}
-        />
-      )}
     </div>
   );
 };

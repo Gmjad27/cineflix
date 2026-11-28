@@ -1,13 +1,13 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import Card from '../../components/Card/Card';
-import Watch from '../../components/Watch/Watch';
 import { searchTMDBTitles } from '../../content/tmdb';
 import Footer from '../../components/Footer/Footer';
 import Skeleton from '../../components/Skeleton/Skeleton';
 import RailRow from '../../components/RailRow/RailRow';
 import { useRailScroll } from '../../hooks/useRailScroll';
 import { useNetworkStatus } from '../../context/NetworkContext';
+import { getWatchPath, navigateToWatch } from '../../utils/watchNavigation';
 
 /* ---------- helpers ---------- */
 const scoreItem = (item, value) => {
@@ -27,6 +27,7 @@ const scoreItem = (item, value) => {
 /* ---------- main component ---------- */
 const Search = (props) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { isOnline, isWeak } = useNetworkStatus();
 
@@ -118,31 +119,27 @@ const Search = (props) => {
 
   const { scrollState, setTrackRef, onRailScroll, handleRailScroll } = useRailScroll(railKeys);
 
-  /* ---------- watch modal ---------- */
+  /* ---------- watch page navigation ---------- */
   const watchId = searchParams.get('watch');
-  const watchItem = useMemo(() => {
-    if (!watchId) return null;
-    return combinedForLookup.find((item) => String(item.id) === String(watchId));
-  }, [watchId, combinedForLookup]);
-  const watchOpen = !!watchItem;
+  useEffect(() => {
+    if (watchId) {
+      navigate(getWatchPath(watchId), { replace: true });
+    }
+  }, [watchId, navigate]);
 
-  const openWatch = useCallback((id) => {
-    const selected = combinedForLookup.find((item) => String(item.id) === String(id));
-    if (!selected) return;
-    setSearchParams((prev) => {
-      prev.set('watch', selected.id);
-      if (selected.name2) prev.set('name', selected.name2);
-      return prev;
-    });
-  }, [combinedForLookup, setSearchParams]);
-
-  const clearWatchFromUrl = useCallback(() => {
-    setSearchParams((prev) => {
-      prev.delete('watch');
-      prev.delete('name');
-      return prev;
-    });
-  }, [setSearchParams]);
+  const openWatch = useCallback(
+    (id, fallbackType) => {
+      if (!id) return;
+      const selected = combinedForLookup.find((item) => String(item.id) === String(id));
+      navigateToWatch(navigate, {
+        itemOrId: id,
+        fallbackType,
+        item: selected,
+        currentLocation: location,
+      });
+    },
+    [combinedForLookup, navigate, location]
+  );
 
   /* ---------- card renderer ---------- */
   const renderHotstarCard = useCallback(
@@ -359,35 +356,6 @@ const Search = (props) => {
       </div>
 
       <Footer />
-
-      {/* ── Watch Modal ── */}
-      {watchOpen && watchItem && (
-        <Watch
-          data={combinedForLookup}
-          sow={openWatch}
-          onClose={clearWatchFromUrl}
-          sid={watchItem.id}
-          El={Array.isArray(props.e) && props.e.includes(watchItem.id) ? 'ADDED' : '+'}
-          img={watchItem.img}
-          type={watchItem.type}
-          id={watchItem.tmdbId}
-          s={watchItem.episodes}
-          mname={watchItem.name2}
-          name={watchItem.nameImg}
-          name2={watchItem.name}
-          yr={watchItem.releaseYear}
-          ua={watchItem.ua}
-          season={watchItem.season}
-          lan={watchItem.language?.length || 0}
-          desc={watchItem.desc}
-          cat={watchItem.category}
-          rating={watchItem.rating}
-          language={watchItem.language}
-          add={props.add}
-          e={props.e}
-          play={props.play}
-        />
-      )}
     </div>
   );
 };

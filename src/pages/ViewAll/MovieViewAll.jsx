@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
-import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import Card from '../../components/Card/Card';
-import Watch from '../../components/Watch/Watch';
 import Skeleton from '../../components/Skeleton/Skeleton';
+import { getWatchPath, navigateToWatch } from '../../utils/watchNavigation';
 
 // Memoized Card to prevent unnecessary re-renders
 const MemoizedCard = memo(Card, (prevProps, nextProps) => {
@@ -14,18 +14,14 @@ const MemoizedCard = memo(Card, (prevProps, nextProps) => {
 });
 
 const MovieViewAll = (props) => {
-  const location = useLocation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
 
   // Page State
   const [items, setItems] = useState([]);
   const [pageTitle, setPageTitle] = useState('Full Library');
   const [visibleCount, setVisibleCount] = useState(24); // Pagination: initial items to show
-
-  // Watch Modal State
-  const [watchOpen, setWatchOpen] = useState(false);
-  const [watchItem, setWatchItem] = useState(null);
 
   // Stabilize props.data with useMemo
   const appData = useMemo(() => Array.isArray(props.data) ? props.data : [], [props.data]);
@@ -60,47 +56,29 @@ const MovieViewAll = (props) => {
   }, [searchParams]);
 
   // ==========================================
-  // Watch Modal Logic
+  // Watch Page Navigation
   // ==========================================
-  const openWatch = useCallback((id) => {
-    const selected = combinedData.find((item) => item.id === id);
-    if (!selected) return;
+  const openWatch = useCallback(
+    (id, fallbackType) => {
+      if (!id) return;
+      const selected = combinedData.find((item) => String(item.id) === String(id));
+      navigateToWatch(navigate, {
+        itemOrId: id,
+        fallbackType,
+        item: selected,
+        currentLocation: location,
+      });
+    },
+    [combinedData, navigate, location]
+  );
 
-    setWatchItem(selected);
-    setWatchOpen(true);
-
-    // Preserve existing URL params (items, title) while appending watch params
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set('watch', selected.id);
-    newParams.set('name', selected.name2);
-    // Use replace to avoid adding too many history entries
-    navigate(`${location.pathname}?${newParams.toString()}`, { replace: true });
-  }, [combinedData, searchParams, navigate, location.pathname]);
-
-  const clearWatchFromUrl = useCallback(() => {
-    setWatchOpen(false);
-
-    // Remove watch params but keep the page content params
-    const newParams = new URLSearchParams(searchParams);
-    newParams.delete('watch');
-    newParams.delete('name');
-    navigate(`${location.pathname}?${newParams.toString()}`, { replace: true });
-  }, [searchParams, navigate, location.pathname]);
-
-  // Handle deep-linking directly to a watch modal inside ViewAll
+  // Redirect legacy ?watch= deep-link inside ViewAll
   useEffect(() => {
-    const watchId = Number(searchParams.get('watch'));
-    if (!watchId) {
-      setWatchOpen(false);
-      return;
+    const watchId = searchParams.get('watch');
+    if (watchId) {
+      navigate(getWatchPath(watchId), { replace: true });
     }
-
-    const selected = combinedData.find((item) => item.id === watchId);
-    if (!selected) return;
-
-    setWatchItem(selected);
-    setWatchOpen(true);
-  }, [searchParams, combinedData]);
+  }, [searchParams, navigate]);
 
   // Pagination handler
   const loadMore = useCallback(() => {
@@ -205,35 +183,6 @@ const MovieViewAll = (props) => {
           </div>
         )}
       </main>
-
-      {/* ─── Watch Modal ─── */}
-      {watchOpen && watchItem && (
-        <Watch
-          data={combinedData}
-          sow={openWatch}
-          onClose={clearWatchFromUrl}
-          sid={watchItem?.id}
-          El={Array.isArray(props.e) && props.e.includes(watchItem?.id) ? 'ADDED' : '+'}
-          img={watchItem?.img}
-          type={watchItem?.type}
-          id={watchItem?.tmdbId}
-          s={watchItem?.episodes}
-          mname={watchItem?.name2}
-          name={watchItem?.nameImg2 || watchItem?.name2}
-          name2={watchItem?.name}
-          yr={watchItem?.releaseYear}
-          ua={watchItem?.ua}
-          season={watchItem?.season}
-          lan={watchItem?.language?.length || 0}
-          desc={watchItem?.desc}
-          cat={watchItem?.category}
-          rating={watchItem?.rating}
-          language={watchItem?.language}
-          add={props.add}
-          e={props.e}
-          play={props.play}
-        />
-      )}
     </div>
   );
 };

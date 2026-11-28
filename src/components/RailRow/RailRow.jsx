@@ -5,13 +5,16 @@ import useInView from '../../hooks/useInView';
 export default function RailRow({
     title,
     titleAlt,
-    items,
+    items = [],
     renderItem,
     eager = false,
+    ranked = false,
+    showViewAll = true,
 }) {
     const navigate = useNavigate();
-    const [sectionRef, inView] = useInView('500px 0px');
+    const [sectionRef, inView] = useInView('400px 0px');
     const trackRef = useRef(null);
+    const rafRef = useRef(null);
 
     const [isAtStart, setIsAtStart] = useState(true);
     const [isAtEnd, setIsAtEnd] = useState(false);
@@ -21,100 +24,148 @@ export default function RailRow({
     const shouldRender = eager || inView;
 
     const handleNativeScroll = useCallback(() => {
-        if (!trackRef.current) return;
-        const { scrollLeft, scrollWidth, clientWidth } = trackRef.current;
+        if (rafRef.current) return;
 
-        setIsAtStart(scrollLeft <= 2);
-        setIsAtEnd(Math.ceil(scrollLeft + clientWidth) >= scrollWidth - 2);
+        rafRef.current = requestAnimationFrame(() => {
+            rafRef.current = null;
+            const el = trackRef.current;
+            if (!el) return;
 
-        const pages = Math.max(1, Math.ceil(scrollWidth / clientWidth));
-        const maxScroll = Math.max(1, scrollWidth - clientWidth);
-        const currentPage = Math.min(
-            pages - 1,
-            Math.round((scrollLeft / maxScroll) * (pages - 1))
-        );
+            const { scrollLeft, scrollWidth, clientWidth } = el;
+            const maxScroll = Math.max(0, scrollWidth - clientWidth);
 
-        setTotalPages(pages);
-        setActivePage(currentPage);
+            setIsAtStart(scrollLeft <= 2);
+            setIsAtEnd(maxScroll <= 2 || Math.ceil(scrollLeft) >= maxScroll - 2);
+
+            const pages = Math.max(1, Math.ceil(scrollWidth / Math.max(1, clientWidth)));
+            const currentPage =
+                maxScroll > 0
+                    ? Math.min(pages - 1, Math.round((scrollLeft / maxScroll) * (pages - 1)))
+                    : 0;
+
+            setTotalPages(pages);
+            setActivePage(currentPage);
+        });
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        };
     }, []);
 
     const scrollByDirection = (direction) => {
-        if (trackRef.current) {
-            const scrollAmount = trackRef.current.clientWidth * 0.82;
-            trackRef.current.scrollBy({
-                left: scrollAmount * direction,
-                behavior: 'smooth',
-            });
-        }
+        const el = trackRef.current;
+        if (!el) return;
+
+        el.scrollBy({
+            left: el.clientWidth * 0.85 * direction,
+            behavior: 'smooth',
+        });
+    };
+
+    const scrollToPage = (pageIndex) => {
+        const el = trackRef.current;
+        if (!el || totalPages <= 1) return;
+
+        const maxScroll = el.scrollWidth - el.clientWidth;
+        el.scrollTo({
+            left: (pageIndex / (totalPages - 1)) * maxScroll,
+            behavior: 'smooth',
+        });
     };
 
     useEffect(() => {
-        window.addEventListener('resize', handleNativeScroll);
-        return () => window.removeEventListener('resize', handleNativeScroll);
-    }, [handleNativeScroll]);
+        if (!shouldRender) return;
+        handleNativeScroll();
 
-    useEffect(() => {
-        if (shouldRender) {
-            handleNativeScroll();
-        }
-    }, [shouldRender, items, handleNativeScroll]);
+        window.addEventListener('resize', handleNativeScroll, { passive: true });
+        return () => window.removeEventListener('resize', handleNativeScroll);
+    }, [shouldRender, items.length, handleNativeScroll]);
 
     const handleViewAll = () => {
         if (!items || items.length === 0) return;
 
-        const itemsParam = encodeURIComponent(JSON.stringify(items));
         const titleParam = encodeURIComponent(title || 'Explore All');
-
-        navigate(`/viewall?title=${titleParam}&items=${itemsParam}`);
+        navigate(`/viewall?title=${titleParam}`, {
+            state: { title: title || 'Explore All', items },
+        });
     };
+
+    if (shouldRender && (!items || items.length === 0)) return null;
+
+    const canExplore = showViewAll && items.length > 0;
 
     return (
         <section
             ref={sectionRef}
-            className="relative flex flex-col space-y-3 md:space-y-4 mb-10 group/rail z-10 hover:z-30"
+            style={{ contentVisibility: 'auto', containIntrinsicSize: '0 320px' }}
+            className="relative flex flex-col space-y-3 md:space-y-4 mb-10 md:mb-12 group/rail z-10 hover:z-30"
         >
-            {/* Optional Alt Header */}
             {titleAlt && (
-                <h2 className="px-2 md:px-0 text-[15px] sm:text-xl md:text-2xl font-bold tracking-tight text-white/90 group-hover/rail:text-white transition-colors flex items-center gap-3 font-sans">
-                    {titleAlt}
-                </h2>
+                <div className="px-2 md:px-0">
+                    <span className="text-[17px] sm:text-xl md:text-2xl font-extrabold tracking-tight text-white/95 group-hover/rail:text-white transition-colors font-sans">
+                        {titleAlt}
+                    </span>
+                </div>
             )}
 
-            {/* Netflix Glass Header Row */}
+            {/* Header */}
             {title && (
-                <div
-                    onClick={handleViewAll}
-                    className="flex items-center justify-between px-2 md:px-0 z-10 cursor-pointer select-none"
-                >
-                    <div className="flex items-center gap-3 group/title">
-                        {/* Netflix Signature Red Accent Bar */}
-                        <span className="h-5 sm:h-6 w-1 rounded-full bg-[#E50914] shadow-[0_0_12px_rgba(229,9,20,0.85)] transition-all duration-300 group-hover/rail:h-7" />
+                <div className="flex items-center justify-between px-2 md:px-0 z-20 select-none">
+                    <button
+                        type="button"
+                        onClick={canExplore ? handleViewAll : undefined}
+                        disabled={!canExplore}
+                        className={`flex items-center gap-3 text-left group/title focus:outline-none ${canExplore ? 'cursor-pointer' : 'cursor-default'
+                            }`}
+                    >
+                        <span
+                            className={`w-1 rounded-full transition-all duration-200 ${ranked
+                                    ? 'h-6 sm:h-7 bg-gradient-to-b from-[#E50914] to-amber-500'
+                                    : 'h-5 sm:h-6 bg-[#E50914] group-hover/rail:h-7'
+                                }`}
+                        />
 
                         <h2
-                            title={`Explore all ${title}`}
-                            className="text-[16px] sm:text-xl md:text-2xl font-bold tracking-tight text-white/90 group-hover/rail:text-white transition-colors font-sans drop-shadow-sm"
+                            title={canExplore ? `Explore all ${title}` : title}
+                            className="text-[17px] sm:text-xl md:text-2xl font-extrabold tracking-tight text-white/95 group-hover/rail:text-white transition-colors font-sans"
                         >
                             {title}
                         </h2>
 
-                        {/* Frosted Glass Explore Pill */}
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.06] hover:bg-[#E50914]/20 backdrop-blur-md border border-white/10 group-hover/rail:border-[#E50914]/40 text-xs font-semibold text-white/75 group-hover/rail:text-white transition-all duration-300 sm:opacity-0 sm:-translate-x-2 sm:group-hover/rail:opacity-100 sm:group-hover/rail:translate-x-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
-                            <span className="text-[#E50914] group-hover/rail:text-red-400 transition-colors">
-                                Explore All
+                        {ranked && (
+                            <span className="px-2 py-0.5 rounded-md bg-[#E50914]/20 border border-[#E50914]/40 text-[10px] sm:text-xs font-black uppercase tracking-wider text-red-400">
+                                Top 10
                             </span>
-                            <i className="fa-solid fa-chevron-right text-[9px] text-white/70 group-hover/rail:translate-x-0.5 transition-transform" />
-                        </div>
-                    </div>
+                        )}
 
-                    {/* Netflix Segmented Glass Pagination Indicator */}
+                        {canExplore && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900/90 hover:bg-[#E50914]/25 border border-white/15 group-hover/rail:border-[#E50914]/45 text-xs font-semibold text-white/80 group-hover/rail:text-white transition-all duration-200 sm:invisible sm:opacity-0 sm:-translate-x-2 sm:group-hover/rail:visible sm:group-hover/rail:opacity-100 sm:group-hover/rail:translate-x-0">
+                                <span className="text-[#E50914] group-hover/rail:text-red-300">
+                                    Explore All
+                                </span>
+                                <i className="fa-solid fa-chevron-right text-[9px] text-white/75" />
+                            </span>
+                        )}
+                    </button>
+
+                    {/* Page Indicators (Hidden & uncomposited until hover) */}
                     {totalPages > 1 && (
-                        <div className="hidden md:flex items-center gap-1 px-2 py-1 rounded-full bg-black/30 backdrop-blur-md border border-white/[0.06] opacity-0 group-hover/rail:opacity-100 transition-opacity duration-300">
+                        <div
+                            role="tablist"
+                            aria-label={`${title} pages`}
+                            className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-neutral-900/90 border border-white/10 invisible opacity-0 group-hover/rail:visible group-hover/rail:opacity-100 transition-opacity duration-200"
+                        >
                             {Array.from({ length: totalPages }).map((_, idx) => (
-                                <span
+                                <button
                                     key={idx}
-                                    className={`h-[3px] rounded-full transition-all duration-300 ${idx === activePage
-                                            ? 'w-4 bg-[#E50914] shadow-[0_0_8px_rgba(229,9,20,0.9)]'
-                                            : 'w-2.5 bg-white/25'
+                                    type="button"
+                                    aria-label={`Go to page ${idx + 1}`}
+                                    onClick={() => scrollToPage(idx)}
+                                    className={`h-1 rounded-full transition-all duration-200 cursor-pointer ${idx === activePage
+                                            ? 'w-5 bg-[#E50914]'
+                                            : 'w-2.5 bg-white/25 hover:bg-white/50'
                                         }`}
                                 />
                             ))}
@@ -123,26 +174,27 @@ export default function RailRow({
                 </div>
             )}
 
-            {/* Scroll Container Wrapper */}
+            {/* Track & Paddles */}
             <div className="relative">
-                {/* Left Glass Paddle (Netflix Full-Height Edge Style) */}
+                {/* Left Paddle */}
                 <button
                     type="button"
                     aria-label={`Scroll ${title} left`}
                     onClick={() => scrollByDirection(-1)}
-                    className={`hidden md:flex absolute -left-3 lg:-left-5 top-0 bottom-0 z-40 w-11 lg:w-14 items-center justify-center rounded-xl bg-black/45 hover:bg-black/70 backdrop-blur-xl border border-white/10 hover:border-white/25 text-white shadow-[0_8px_32px_rgba(0,0,0,0.65),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all duration-300 group/btn ${isAtStart
-                            ? 'opacity-0 pointer-events-none -translate-x-2'
-                            : 'opacity-0 group-hover/rail:opacity-100 translate-x-0'
+                    className={`hidden md:flex absolute -left-3 lg:-left-5 top-0 bottom-0 z-40 w-11 lg:w-14 items-center justify-center rounded-2xl bg-neutral-950/85 hover:bg-neutral-900 border border-white/15 hover:border-[#E50914]/60 text-white shadow-xl transition-all duration-200 group/btn cursor-pointer ${isAtStart
+                            ? 'invisible opacity-0 pointer-events-none'
+                            : 'invisible opacity-0 group-hover/rail:visible group-hover/rail:opacity-100'
                         }`}
                 >
-                    <i className="fa-solid fa-chevron-left text-2xl lg:text-3xl text-white/85 group-hover/btn:text-[#E50914] group-hover/btn:scale-125 transition-all duration-200 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]" />
+                    <i className="fa-solid fa-chevron-left text-2xl lg:text-3xl text-white/90 group-hover/btn:text-[#E50914] group-hover/btn:scale-110 transition-transform duration-150" />
                 </button>
 
                 {shouldRender ? (
                     <div
                         ref={trackRef}
                         onScroll={handleNativeScroll}
-                        className="flex items-center gap-2.5 sm:gap-3.5 overflow-x-auto snap-x snap-mandatory md:snap-none scroll-smooth py-10 -my-10 px-2 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&>div:first-child>div]:!origin-left [&>div:first-child>a]:!origin-left [&>div:last-child>div]:!origin-right [&>div:last-child>a]:!origin-right"
+                        className={`flex items-center overflow-x-auto snap-x snap-mandatory md:snap-none scroll-smooth py-10 -my-10 px-2 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&>div:first-child>div]:!origin-left [&>div:first-child>a]:!origin-left [&>div:last-child>div]:!origin-right [&>div:last-child>a]:!origin-right ${ranked ? 'gap-4 sm:gap-6' : 'gap-2.5 sm:gap-3.5'
+                            }`}
                     >
                         {items.map((item, idx) => (
                             <div className="snap-start flex-shrink-0" key={item.id ?? idx}>
@@ -151,7 +203,7 @@ export default function RailRow({
                         ))}
                     </div>
                 ) : (
-                    /* Frosted Glass Skeleton Loader */
+                    /* Lightweight Skeleton Loader */
                     <div
                         className="flex items-center gap-2.5 sm:gap-3.5 py-10 -my-10 px-2 md:px-0 overflow-hidden"
                         aria-hidden="true"
@@ -159,23 +211,23 @@ export default function RailRow({
                         {Array.from({ length: 8 }).map((_, idx) => (
                             <div
                                 key={idx}
-                                className="flex-shrink-0 w-32 sm:w-36 md:w-44 lg:w-48 xl:w-56 aspect-[2/3] rounded-lg bg-white/[0.04] backdrop-blur-md border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] animate-pulse"
+                                className="flex-shrink-0 w-32 sm:w-36 md:w-44 lg:w-48 xl:w-56 aspect-[2/3] rounded-xl bg-white/[0.05] border border-white/10"
                             />
                         ))}
                     </div>
                 )}
 
-                {/* Right Glass Paddle (Netflix Full-Height Edge Style) */}
+                {/* Right Paddle */}
                 <button
                     type="button"
                     aria-label={`Scroll ${title} right`}
                     onClick={() => scrollByDirection(1)}
-                    className={`hidden md:flex absolute -right-3 lg:-right-5 top-0 bottom-0 z-40 w-11 lg:w-14 items-center justify-center rounded-xl bg-black/45 hover:bg-black/70 backdrop-blur-xl border border-white/10 hover:border-white/25 text-white shadow-[0_8px_32px_rgba(0,0,0,0.65),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all duration-300 group/btn ${isAtEnd
-                            ? 'opacity-0 pointer-events-none translate-x-2'
-                            : 'opacity-0 group-hover/rail:opacity-100 translate-x-0'
+                    className={`hidden md:flex absolute -right-3 lg:-right-5 top-0 bottom-0 z-40 w-11 lg:w-14 items-center justify-center rounded-2xl bg-neutral-950/85 hover:bg-neutral-900 border border-white/15 hover:border-[#E50914]/60 text-white shadow-xl transition-all duration-200 group/btn cursor-pointer ${isAtEnd
+                            ? 'invisible opacity-0 pointer-events-none'
+                            : 'invisible opacity-0 group-hover/rail:visible group-hover/rail:opacity-100'
                         }`}
                 >
-                    <i className="fa-solid fa-chevron-right text-2xl lg:text-3xl text-white/85 group-hover/btn:text-[#E50914] group-hover/btn:scale-125 transition-all duration-200 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]" />
+                    <i className="fa-solid fa-chevron-right text-2xl lg:text-3xl text-white/90 group-hover/btn:text-[#E50914] group-hover/btn:scale-110 transition-transform duration-150" />
                 </button>
             </div>
         </section>

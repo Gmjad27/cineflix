@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import Nav from "./components/Nav/Nav";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import "./App.css";
 import { fetchTMDBCatalog, fetchTMDBHomeSections } from "./content/tmdb.js";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -10,6 +10,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import PWAInstallPrompt from "./components/PWAInstallPrompt/PWAInstallPrompt";
 import { NetworkProvider, useNetworkStatus } from "./context/NetworkContext";
 import NetworkStatusAlert from "./components/NetworkStatus/NetworkStatusAlert";
+import useMediaQuery from "./hooks/useMediaQuery";
 
 
 const Home = lazy(() => import("./pages/Home/Home"));
@@ -23,6 +24,7 @@ const Search = lazy(() => import("./pages/Search/Search"));
 const Login = lazy(() => import("./pages/Auth/Login"));
 const Signup = lazy(() => import("./pages/Auth/Signup"));
 const Studio = lazy(() => import("./pages/Studio/Studio"));
+const Watch = lazy(() => import("./pages/Watch/Watch"));
 
 const safeParse = (value, fallback) => {
   if (value === null || value === undefined || value === "undefined" || value === "null" || value === "") {
@@ -47,6 +49,113 @@ function PageLoader() {
         Loading CineFlix...
       </div>
     </div>
+  );
+}
+
+function AppRoutes({ sharedProps, homeSections, sow, El, studio, Img }) {
+  const location = useLocation();
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const backgroundLocation = isDesktop ? location.state?.backgroundLocation : null;
+
+  return (
+    <>
+      <Routes location={backgroundLocation || location}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+
+        <Route path="/" element={
+          <ProtectedRoute>
+            <Nav />
+            <Home {...sharedProps} homeSections={homeSections} stu={sow} />
+          </ProtectedRoute>
+        } />
+        <Route path="/movies" element={
+          <ProtectedRoute>
+            <Nav />
+            <Movie {...sharedProps} />
+          </ProtectedRoute>
+        } />
+        <Route path="/tv" element={
+          <ProtectedRoute>
+            <Nav />
+            <Tv {...sharedProps} />
+          </ProtectedRoute>
+        } />
+        <Route path="/live" element={
+          <ProtectedRoute>
+            <Nav />
+            <Live {...sharedProps} />
+          </ProtectedRoute>
+        } />
+        <Route path="/sports" element={<Navigate to="/live" replace />} />
+        <Route path="/search" element={
+          <ProtectedRoute>
+            <Nav />
+            <Search {...sharedProps} />
+          </ProtectedRoute>
+        } />
+        <Route path="/studio/:id" element={
+          <ProtectedRoute>
+            <Nav />
+            <Studio {...sharedProps} studio={studio} img={Img} />
+          </ProtectedRoute>
+        } />
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <Nav />
+            <Profile {...sharedProps} E={El} stu={sow} />
+          </ProtectedRoute>
+        } />
+        <Route path="/watch/:type/:id" element={
+          <ProtectedRoute>
+            <Nav />
+            <Watch {...sharedProps} />
+          </ProtectedRoute>
+        } />
+        <Route path="/watch/:watchId" element={
+          <ProtectedRoute>
+            <Nav />
+            <Watch {...sharedProps} />
+          </ProtectedRoute>
+        } />
+        <Route path="/streaming/:tmdbId/:season/:episode" element={
+          <ProtectedRoute>
+            {/* <Nav /> */}
+            <Streaming />
+          </ProtectedRoute>
+        } />
+        <Route path="/streaming/:tmdbId" element={
+          <ProtectedRoute>
+            {/* <Nav /> */}
+            <Streaming />
+          </ProtectedRoute>
+        } />
+        <Route path="/live-stream/:streamId" element={<ProtectedRoute><LiveStreaming /></ProtectedRoute>} />
+        <Route path="/viewall" element={
+          <ProtectedRoute>
+            <Nav />
+            <MovieViewAll {...sharedProps} sow={sow} />
+          </ProtectedRoute>
+        } />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+
+      {/* Desktop JioHotstar-style Watch Popup Overlay */}
+      {backgroundLocation && (
+        <Routes>
+          <Route path="/watch/:type/:id" element={
+            <ProtectedRoute>
+              <Watch {...sharedProps} isModal />
+            </ProtectedRoute>
+          } />
+          <Route path="/watch/:watchId" element={
+            <ProtectedRoute>
+              <Watch {...sharedProps} isModal />
+            </ProtectedRoute>
+          } />
+        </Routes>
+      )}
+    </>
   );
 }
 
@@ -190,84 +299,21 @@ function AppContent() {
       {/* Global Network Status Alert (No Internet / Weak Internet / Back Online) */}
       <NetworkStatusAlert />
 
-      {
-        // Your existing Router code here
-        <Router>
-          <ScrollToTop />
-          <ErrorBoundary>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-
-                <Route path="/" element={
-                  <ProtectedRoute>
-                    <Nav />
-                    <Home {...sharedProps} homeSections={homeSections} stu={sow} />
-                  </ProtectedRoute>
-                } />
-                <Route path="/movies" element={
-                  <ProtectedRoute>
-                    <Nav />
-                    <Movie {...sharedProps} />
-                  </ProtectedRoute>
-                } />
-                <Route path="/tv" element={
-                  <ProtectedRoute>
-                    <Nav />
-                    <Tv {...sharedProps} />
-                  </ProtectedRoute>
-                } />
-                <Route path="/live" element={
-                  <ProtectedRoute>
-                    <Nav />
-                    <Live {...sharedProps} />
-                  </ProtectedRoute>
-                } />
-                <Route path="/sports" element={<Navigate to="/live" replace />} />
-                <Route path="/search" element={
-                  <ProtectedRoute>
-                    <Nav />
-                    <Search {...sharedProps} />
-                  </ProtectedRoute>
-                } />
-                <Route path="/studio/:id" element={
-                  <ProtectedRoute>
-                    <Nav />
-                    <Studio {...sharedProps} studio={studio} img={Img} />
-                  </ProtectedRoute>
-                } />
-                <Route path="/profile" element={
-                  <ProtectedRoute>
-                    <Nav />
-                    <Profile {...sharedProps} E={El} stu={sow} />
-                  </ProtectedRoute>
-                } />
-                <Route path="/streaming/:tmdbId/:season/:episode" element={
-                  <ProtectedRoute>
-                    {/* <Nav /> */}
-                    <Streaming />
-                  </ProtectedRoute>
-                } />
-                <Route path="/streaming/:tmdbId" element={
-                  <ProtectedRoute>
-                    {/* <Nav /> */}
-                    <Streaming />
-                  </ProtectedRoute>
-                } />
-                <Route path="/live-stream/:streamId" element={<ProtectedRoute><LiveStreaming /></ProtectedRoute>} />
-                <Route path="/viewall" element={
-                  <ProtectedRoute>
-                    <Nav />
-                    <MovieViewAll {...sharedProps} sow={sow} />
-                  </ProtectedRoute>
-                } />
-                <Route path="*" element={<Navigate to="/" />} />
-              </Routes>
-            </Suspense>
-          </ErrorBoundary>
-        </Router>
-      }
+      <Router>
+        <ScrollToTop />
+        <ErrorBoundary>
+          <Suspense fallback={<PageLoader />}>
+            <AppRoutes
+              sharedProps={sharedProps}
+              homeSections={homeSections}
+              sow={sow}
+              El={El}
+              studio={studio}
+              Img={Img}
+            />
+          </Suspense>
+        </ErrorBoundary>
+      </Router>
 
       {/* Toast Notification */}
       <PWAInstallPrompt />
